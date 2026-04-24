@@ -7,10 +7,10 @@ public abstract class Persona {
     protected String email;
     protected int telefono;
 
-    protected Persona() {
+    public Persona() {
     }
 
-    protected Persona(String nombre, String apellido, int rut, String email, int telefono) {
+    public Persona(String nombre, String apellido, int rut, String email, int telefono) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.rut = rut;
@@ -18,43 +18,43 @@ public abstract class Persona {
         this.telefono = telefono;
     }
 
-    protected String getNombre() {
+    public String getNombre() {
         return nombre;
     }
 
-    protected void setNombre(String nombre) {
+    public void setNombre(String nombre) {
         this.nombre = nombre;
     }
 
-    protected String getApellido() {
+    public String getApellido() {
         return apellido;
     }
 
-    protected void setApellido(String apellido) {
+    public void setApellido(String apellido) {
         this.apellido = apellido;
     }
 
-    protected int getRut() {
+    public int getRut() {
         return rut;
     }
 
-    protected void setRut(int rut) {
+    public void setRut(int rut) {
         this.rut = rut;
     }
 
-    protected String getEmail() {
+    public String getEmail() {
         return email;
     }
 
-    protected void setEmail(String email) {
+    public void setEmail(String email) {
         this.email = email;
     }
 
-    protected int getTelefono() {
+    public int getTelefono() {
         return telefono;
     }
 
-    protected void setTelefono(int telefono) {
+    public void setTelefono(int telefono) {
         this.telefono = telefono;
     }
 
