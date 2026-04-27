@@ -2,7 +2,7 @@ package com.mycompany.proyectobarberia.Logica;
 
 public class Empleado extends Persona {
     
-    public String rango;
+    private String rango;
 
     public Empleado() {
     }
