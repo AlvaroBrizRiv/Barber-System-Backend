@@ -1,6 +1,7 @@
 package com.mycompany.proyectobarberia.Logica;
 
 public abstract class Persona {
+    protected int id;
     protected String nombre;
     protected String apellido;
     protected int rut;
@@ -10,12 +11,20 @@ public abstract class Persona {
     public Persona() {
     }
 
-    public Persona(String nombre, String apellido, int rut, String email, int telefono) {
+    public Persona(int id, String nombre, String apellido, int rut, String email, int telefono) {
+        this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
         this.rut = rut;
         this.email = email;
         this.telefono = telefono;
+    }
+    public int getId(){
+            return id;
+    }
+    
+    public void setId (int id){
+        this.id = id;
     }
 
     public String getNombre() {
