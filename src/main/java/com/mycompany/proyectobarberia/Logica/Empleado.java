@@ -7,8 +7,8 @@ public class Empleado extends Persona {
     public Empleado() {
     }
 
-    public Empleado(String rango, String nombre, String apellido, int rut, String email, int telefono) {
-        super(nombre, apellido, rut, email, telefono);
+    public Empleado(String rango, int id, String nombre, String apellido, int rut, String email, int telefono) {
+        super(id, nombre, apellido, rut, email, telefono);
         this.rango = rango;
     }
 

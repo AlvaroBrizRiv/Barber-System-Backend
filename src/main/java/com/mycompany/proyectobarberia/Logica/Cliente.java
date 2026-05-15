@@ -7,8 +7,8 @@ public class Cliente extends Persona {
     public Cliente() {
     }
     
-    public Cliente(int puntoFidelidad, String nombre, String apellido, int rut, String email, int telefono) {
-        super(nombre, apellido, rut, email, telefono);
+    public Cliente(int puntoFidelidad, int id, String nombre, String apellido, int rut, String email, int telefono) {
+        super(id, nombre, apellido, rut, email, telefono);
         this.puntoFidelidad = puntoFidelidad;
     }
     
