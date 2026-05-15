@@ -1,12 +1,12 @@
 package com.mycompany.proyectobarberia.Logica;
 
 public abstract class Persona {
-    protected int id;
-    protected String nombre;
-    protected String apellido;
-    protected int rut;
-    protected String email;
-    protected int telefono;
+    private int id;
+    private String nombre;
+    private String apellido;
+    private int rut;
+    private String email;
+    private int telefono;
 
     public Persona() {
     }

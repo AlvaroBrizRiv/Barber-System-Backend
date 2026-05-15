@@ -1,8 +1,8 @@
 package com.mycompany.proyectobarberia.Logica;
 
 public class Producto {
-    int id, precio, cantidad;
-    String producto;
+    private int id, precio, cantidad;
+    private String producto;
 
     public Producto() {
     }
