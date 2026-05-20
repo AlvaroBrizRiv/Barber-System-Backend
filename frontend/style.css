@@ -1,0 +1,7 @@
+
+        .bg-dark-gray {
+            background-color: #2f3542 !important; /* Gris oscuro grafito */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+        }

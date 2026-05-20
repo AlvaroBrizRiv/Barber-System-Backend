@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbería System - Reserva de Citas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <style>
+        .bg-dark-gray {
+            background-color: #2f3542 !important; /* Gris oscuro grafito */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <span class="icon-text">
+                        <span class="icon">✂️</span>
+                        <strong>Barberia System</strong>
+                    </span>
+                </a>
+                
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbarMenu" class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item is-active" href="#">Inicio</a>
+                    <a class="navbar-item" href="#">Mis Citas</a>
+                    <a class="navbar-item" href="#">Barberos</a>
+                </div>
+
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-light is-small">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero is-light is-fullheight-with-navbar">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-8-tablet is-6-desktop is-5-widescreen">
+                        
+                        <div class="box has-background-white large-padding">
+                            <div class="has-text-centered mb-5">
+                                <h1 class="title is-3 has-text-dark">Reserva tu Cita</h1>
+                        <p class="subtitle is-6 has-text-grey mt-2">
+                                    Diseño alineado a la normativa de protección y privacidad de datos.
+                                </p>
+                        </div>
+                            
+                            <hr class="has-background-light">
+
+                            <div class="notification is-light has-text-centered">
+                                <p class="has-text-grey">
+                        
+                        <form id="formCita">
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Nombre</label>
+                <div class="control">
+                    <input class="input" type="text" id="nombre" placeholder="Ej. Álvaro" required>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Apellido</label>
+                <div class="control">
+                    <input class="input" type="text" id="apellido" placeholder="Ej. Brizuela" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">RUT (sin puntos ni guión)</label>
+                <div class="control">
+                    <input class="input" type="number" id="rut" placeholder="Ej. 12345678" required>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Teléfono</label>
+                <div class="control">
+                    <input class="input" type="tel" id="telefono" placeholder="Ej. 912345678" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label has-text-grey-dark">Correo Electrónico</label>
+        <div class="control">
+            <input class="input" type="email" id="email" placeholder="alvaro@ejemplo.com" required>
+        </div>
+    </div>
+    <hr class="has-background-light">
+    
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Selecciona tu Barbero</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select id="empleadoId" required>
+                            <option value="" disabled selected>Selecciona un profesional</option>
+                            <option value="1">Juan Pinilla (Senior)</option>
+                            <option value="2">Mauro Silva (Junior)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Servicio</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select id="servicio" required>
+                            <option value="" disabled selected>¿Qué servicio deseas?</option>
+                            <option value="Corte de Cabello">Corte de Cabello Premium</option>
+                            <option value="Perfilado de Barba">Perfilado de Barba + Toalla Húmeda</option>
+                            <option value="Combo Completo">Combo: Corte & Barba</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Fecha</label>
+                <div class="control">
+                    <input class="input" type="date" id="fecha" required>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="label has-text-grey-dark">Hora disponible</label>
+                <div class="control">
+                    <input class="input" type="time" id="hora" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="field mt-5">
+        <div class="control">
+            <button type="submit" class="button is-dark is-fullwidth is-medium">
+                <strong>Confirmar y Agendar Cita ✂️</strong>
+            </button>
+        </div>
+    </div>
+</form>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
