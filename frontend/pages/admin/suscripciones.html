@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripciones — Barbería System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/pages/admin/suscripciones.css">
+</head>
+<body>
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>BARBER SYSTEM</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <p class="nav-section">Administración</p>
+            <a href="dashboard.html" class="nav-item">Panel General</a>
+            <a href="suscripciones.html" class="nav-item active">Suscripciones</a>
+            <a href="productos.html" class="nav-item">Tienda / Inventario</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+                <p id="userName">Admin</p>
+                <span>Administrador</span>
+            </div>
+            <button class="btn-logout" onclick="Auth.logout()" title="Cerrar sesión">✕</button>
+        </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <main class="main">
+        <header class="topbar">
+            <h1>Gestión de Suscripciones</h1>
+            <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo Plan</button>
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 style="color: var(--gold);">Planes Actuales</h3>
+                </div>
+                <div class="card-body">
+                    <table id="tablaSuscripciones">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Mensual</th>
+                                <th>Por Cita</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Llenado dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ══ MODAL NUEVA SUSCRIPCIÓN ══ -->
+    <div class="modal-overlay" id="modalSuscripcion">
+        <div class="modal-content">
+            <h2 style="color: var(--gold); margin-bottom: 1.5rem; font-size: 1.2rem;">Crear Plan de Suscripción</h2>
+            
+            <div class="form-group">
+                <label>Nombre del Plan</label>
+                <input type="text" id="subNombre" class="form-control" placeholder="Ej: Plan VIP Mensual">
+            </div>
+            
+            <div class="form-group">
+                <label>Tipo de Suscripción</label>
+                <select id="subTipo" class="form-control" onchange="togglePrecios()">
+                    <option value="MENSUAL">Mensual</option>
+                    <option value="POR_CITA">Por Cita</option>
+                    <option value="AMBAS">Ambas (Mixto)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="groupMensual">
+                <label>Precio Mensual ($)</label>
+                <input type="number" id="subPrecioMensual" class="form-control" placeholder="Ej: 30000">
+            </div>
+
+            <div class="form-group" id="groupCita" style="display: none;">
+                <label>Precio por Cita ($)</label>
+                <input type="number" id="subPrecioCita" class="form-control" placeholder="Ej: 5000">
+            </div>
+
+            <div class="form-group">
+                <label>Descripción / Beneficios</label>
+                <textarea id="subDescripcion" class="form-control" rows="3" placeholder="Detalles del plan..."></textarea>
+            </div>
+
+            <div id="subError" class="error-msg"></div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarSuscripcion()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../js/api.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/pages/admin/suscripciones.js"></script>
+</body>
+</html>

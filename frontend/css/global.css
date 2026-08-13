@@ -1,0 +1,181 @@
+/* === RESET Y VARIABLES GLOBALES === */
+:root {
+    --gold: #D4AF37;
+    --gold-dark: #8B6914;
+    --gold-light: #F5D57A;
+    --bg: #0a0a0a;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --card: #131313;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-gold: rgba(212, 175, 55, 0.25);
+    --text: #fff;
+    --text2: rgba(255, 255, 255, 0.65);
+    --text3: rgba(255, 255, 255, 0.3);
+    --success: #2ECC71;
+    --error: #E74C3C;
+    --gold-gradient: linear-gradient(135deg, var(--gold), var(--gold-dark));
+}
+
+/* Reseteo básico de márgenes y paddings para todos los elementos */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Configuración básica del cuerpo de la página */
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* === TIPOGRAFÍA GLOBAL === */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap');
+
+/* Título de sección general */
+.section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+    margin-bottom: 1.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border-gold);
+    letter-spacing: 1px;
+}
+
+/* === CLASES DE LAYOUT === */
+/* Contenedor principal de la página con ancho máximo */
+.container-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3.5rem 6%;
+}
+
+/* Contenedor principal estrecho */
+.container-narrow {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 5rem;
+}
+
+/* === CLASES UTILITARIAS === */
+/* Botón principal dorado */
+.btn-primary, .btn-gold {
+    background: var(--gold-gradient);
+    color: #000;
+    border: none;
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Efecto hover para el botón principal */
+.btn-primary:hover, .btn-gold:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+    color: #000;
+}
+
+/* Botón fantasma (borde transparente) */
+.btn-ghost, .btn-outline {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    padding: 0.75rem 1.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+/* Efecto hover para el botón fantasma */
+.btn-ghost:hover, .btn-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.05);
+}
+
+/* Contenedor de alerta (mensajes de error/éxito) */
+.alert {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+/* Variantes de alerta */
+.alert.error { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: #E74C3C; }
+.alert.success { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.4); color: #2ECC71; }
+.alert.visible { display: block; }
+
+/* Etiquetas estilo badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* === MEDIA QUERIES GLOBALES (MOBILE) === */
+@media (max-width: 768px) {
+    /* Ajustes para barra de navegación en móviles */
+    .navbar-menu {
+        display: none;
+        flex-direction: column;
+        background: var(--bg);
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+    }
+    .navbar-menu.is-active {
+        display: flex;
+    }
+    
+    /* Sidebar de dashboard colapsable en móvil */
+    .dashboard-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .dashboard-sidebar.is-active {
+        transform: translateX(0);
+    }
+    
+    /* Cambio de grids a 1 columna en pantallas pequeñas */
+    .columns, .grid, .form-grid {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Ajustes de tipografía para móviles muy pequeños */
+    .section-title {
+        font-size: 1.3rem;
+    }
+}

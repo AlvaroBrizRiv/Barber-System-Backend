@@ -5,7 +5,7 @@
 /* Configuración General y de Tipografía */
 body {
     font-family: 'Montserrat', sans-serif;
-    background-color: #1a1a1a;
+    background-color: #543232;
     overflow-x: hidden;
 }
 
@@ -37,7 +37,7 @@ body {
     background-color: transparent !important;
     color: #ffffff !important;
     transform: scale(1.08); /* Agranda sutilmente el botón */
-    border-bottom: 2px solid #ffffff; /* Subrayado elegante */
+    border-bottom: 2px solid #686363; /* Subrayado elegante */
 }
 
 /* Estilo del Botón Enmarcado Central (Murdock Style) */

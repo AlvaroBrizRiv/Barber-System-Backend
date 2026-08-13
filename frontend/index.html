@@ -1,65 +1,134 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="es-CL">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barberia System - Bem-vindo</title>
+    <meta name="description" content="Sistema de Barbería — Agenda tu cita en la mejor barbería de tu ciudad. Corte de cabello, barba y productos de aseo masculino premium.">
+    <title>Barbería System — Plataforma Oficial</title>
+
+    <!--
+        CSS Externos — Separados por responsabilidad (sin código espagueti):
+        1. Bulma     → Framework CSS de grillas y utilidades de layout
+        2. global.css → Variables, reset, botones, navbar compartidos
+        3. index.css  → Estilos exclusivos de la página de inicio
+    -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 
-    <nav class="navbar is-transparent" style="position: absolute; width: 100%; z-index: 10;">
-        <div class="container mt-4">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="index.html">
-                    <div style="border: 2px solid #ffffff; padding: 5px 15px; text-align: center;">
-                        <span class="has-text-white font-classic" style="font-size: 0.8rem; display: block; tracking: 3px;">BERBEARIA</span>
-                        <span class="has-text-grey-light" style="font-size: 0.5rem; display: block;">2026</span>
-                    </div>
-                </a>
-            </div>
+    <!-- Navbar Global Dinámica -->
+    <div id="navbar-root"></div>
 
-            <div class="navbar-menu">
-                <div class="navbar-end" style="width: 100%; justify-content: center; gap: 25px;">
-                    <a class="navbar-item menu-link-custom" href="index.html">inicio</a>
-                    <a class="navbar-item menu-link-custom" href="#">servicios</a>
-                    <a class="navbar-item menu-link-custom" href="#">equipo</a>
-                    <a class="navbar-item menu-link-custom" href="#">contacto</a>
-                    <a class="navbar-item menu-link-custom has-text-weight-bold" href="reserva.html" style="color: #ffdd57 !important;">agendar cita</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <section class="hero is-fullheight bg-barber-vintage" style="position: relative;">
-        
-        <span class="slider-arrow arrow-left">&#12296;</span>
-        <span class="slider-arrow arrow-right">&#12297;</span>
-
+    <!-- ═══ HERO PRINCIPAL ════════════════════════════════════════ -->
+    <section class="hero is-fullheight bg-barber-vintage" style="position: relative; min-height: 85vh;">
         <div class="hero-body">
-            <div class="container has-text-centered mt-6">
-                <p class="subtitle is-5 has-text-white font-classic mb-2" style="text-transform: lowercase; opacity: 0.9;">
-                    ben vindo ao berbearia
+            <div class="container has-text-centered mt-4">
+                <p class="subtitle is-5 has-text-white font-classic mb-2"
+                   style="text-transform: uppercase; opacity: 0.85; letter-spacing: 4px; color: #D4AF37 !important;">
+                    Plataforma Oficial de Barberías
                 </p>
-                <h1 class="title is-1 has-text-white font-classic" style="font-size: 4.5rem; font-weight: 400; line-height: 1.1;">
-                    La Barbería
+                <h1 class="title is-1 has-text-white font-classic"
+                    style="font-size: 4.2rem; font-weight: 700; line-height: 1.1; letter-spacing: 2px;">
+                    Barbería System
                 </h1>
-                
-                <div class="mt-6">
-                    <a href="reserva.html" class="button btn-murdock font-classic">
-                        see how we do it
+                <p class="has-text-white mt-3" style="opacity: 0.8; font-size: 1.1rem; letter-spacing: 1px; max-width: 650px; margin: 0 auto;">
+                    Ingresa a tu barbería favorita para agendar turnos con barberos profesionales y adquirir productos de cuidado personal masculino.
+                </p>
+
+                <div class="mt-6" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                    <a href="#barberias" class="btn-gold font-classic">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
+                        Explorar Barberías
+                    </a>
+                    <a href="#servicios" class="btn-ghost font-classic">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                        Nuestros Servicios
                     </a>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="slider-dots">
-            <span class="dot is-active"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
+    <!-- ═══ SECCIÓN: BARBERÍAS DISPONIBLES ═══════════════════════ -->
+    <section id="barberias" class="section" style="background: #0f0f0f; padding: 6rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <div class="has-text-centered mb-6">
+                <p class="has-text-grey-light" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px;">Red de Salones</p>
+                <h2 class="title font-classic has-text-white mt-2" style="letter-spacing: 3px; font-size: 2.3rem;">
+                    Nuestras Barberías
+                </h2>
+                <div style="width: 60px; height: 2px; background: #D4AF37; margin: 1rem auto;"></div>
+                <p class="has-text-grey-light" style="max-width: 500px; margin: 0 auto;">Selecciona una barbería para acceder a su catálogo de servicios, barberos disponibles y tienda de productos exclusivos.</p>
+            </div>
+            
+            <div class="columns is-multiline is-centered" id="barberias-grid">
+                <div class="column has-text-centered has-text-grey">
+                    <p>Cargando barberías disponibles...</p>
+                </div>
+            </div>
         </div>
     </section>
 
+    <!-- ═══ SECCIÓN: SERVICIOS ═══════════════════════════════════ -->
+    <section id="servicios" class="section" style="background: #080808; padding: 6rem 1.5rem;">
+        <div class="container">
+            <div class="has-text-centered mb-6">
+                <p class="has-text-grey-light" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px;">Excelencia & Estilo</p>
+                <h2 class="title font-classic has-text-white mt-2" style="letter-spacing: 3px; font-size: 2.3rem;">
+                    Servicios Profesionales
+                </h2>
+                <div style="width: 60px; height: 2px; background: #D4AF37; margin: 1rem auto;"></div>
+            </div>
+            <div class="columns is-centered is-multiline">
+                <div class="column is-3 servicio-card has-text-centered">
+                    <div class="service-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                    </div>
+                    <h3 class="font-classic has-text-white is-size-5 mb-2">Corte de Cabello</h3>
+                    <p class="has-text-grey-light is-size-7">Técnicas avanzadas de corte clásico y moderno adaptadas a tu estructura facial y estilo.</p>
+                </div>
+                <div class="column is-3 servicio-card has-text-centered">
+                    <div class="service-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3 class="font-classic has-text-white is-size-5 mb-2">Perfilado de Barba</h3>
+                    <p class="has-text-grey-light is-size-7">Arreglo y perfilado con navaja, toalla caliente y aceites botánicos de hidratación profunda.</p>
+                </div>
+                <div class="column is-3 servicio-card has-text-centered">
+                    <div class="service-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <h3 class="font-classic has-text-white is-size-5 mb-2">Tratamientos VIP</h3>
+                    <p class="has-text-grey-light is-size-7">Exfoliación facial, mascarillas de carbón activado y planes de suscripción para miembros.</p>
+                </div>
+                <div class="column is-3 servicio-card has-text-centered">
+                    <div class="service-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <h3 class="font-classic has-text-white is-size-5 mb-2">Productos Exclusivos</h3>
+                    <p class="has-text-grey-light is-size-7">Pomadas fijadoras, tónicos capilares y ceras mate de primera línea para cuidado diario.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" style="background: #050505; color: rgba(255,255,255,0.6); padding: 3rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.06);">
+        <div class="content has-text-centered">
+            <p class="font-classic has-text-white mb-2" style="letter-spacing: 2px;">BARBERÍA SYSTEM</p>
+            <p style="font-size: 0.85rem;">Gestión inteligente de salones, citas y venta directa por barbería.</p>
+            <p style="font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-top: 1rem;">© 2026 Barbería System. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts Core -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/pages/index.js"></script>
 </body>
 </html>

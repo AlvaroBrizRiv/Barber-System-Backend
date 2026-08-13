@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Citas — Barbería System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/pages/mis-citas.css">
+</head>
+<body>
+
+    <div id="navbar-root"></div>
+
+    <header>
+        <h1>Mis Citas Agendadas</h1>
+        <p>Revisa el estado de tus turnos, agenda de servicios y califica a tus barberos.</p>
+    </header>
+
+    <div class="tabs-container">
+        <button class="tab active" onclick="cambiarTab('proximas', this)">Próximas Citas</button>
+        <button class="tab" onclick="cambiarTab('historial', this)">Historial Completo</button>
+    </div>
+
+    <div class="citas-container" id="citasContenedor">
+        <div class="empty-state">Cargando tus citas agendadas...</div>
+    </div>
+
+    <!-- Modal Calificación -->
+    <div class="modal-overlay" id="modalCalificacion">
+        <div class="modal-box">
+            <h2>Calificar Atención</h2>
+            
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">Calificación a la Barbería:</p>
+            <div class="stars">
+                <input type="radio" name="starBarberia" id="b5" value="5"><label for="b5">★</label>
+                <input type="radio" name="starBarberia" id="b4" value="4"><label for="b4">★</label>
+                <input type="radio" name="starBarberia" id="b3" value="3"><label for="b3">★</label>
+                <input type="radio" name="starBarberia" id="b2" value="2"><label for="b2">★</label>
+                <input type="radio" name="starBarberia" id="b1" value="1"><label for="b1">★</label>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">Calificación al Barbero:</p>
+            <div class="stars">
+                <input type="radio" name="starBarbero" id="e5" value="5"><label for="e5">★</label>
+                <input type="radio" name="starBarbero" id="e4" value="4"><label for="e4">★</label>
+                <input type="radio" name="starBarbero" id="e3" value="3"><label for="e3">★</label>
+                <input type="radio" name="starBarbero" id="e2" value="2"><label for="e2">★</label>
+                <input type="radio" name="starBarbero" id="e1" value="1"><label for="e1">★</label>
+            </div>
+
+            <textarea id="calComentario" class="form-control" rows="3" placeholder="Deja un comentario sobre tu experiencia (opcional)"></textarea>
+
+            <div id="calError" style="color:#E74C3C; font-size:0.8rem; margin-bottom:1rem;"></div>
+
+            <div style="display:flex; justify-content:flex-end; gap:0.8rem;">
+                <button class="btn-submit" style="background:transparent; border:1px solid var(--border); color:var(--text-secondary);" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-submit" onclick="enviarCalificacion()">Enviar Calificación</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/pages/mis-citas.js"></script>
+</body>
+</html>

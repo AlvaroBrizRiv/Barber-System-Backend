@@ -1,0 +1,149 @@
+{
+  "nav": {
+    "inicio": "Inicio",
+    "tienda": "Tienda",
+    "reservar": "Reservar Cita",
+    "misCitas": "Mis Citas",
+    "perfil": "Mi Perfil",
+    "cerrarSesion": "Cerrar Sesión",
+    "iniciarSesion": "Iniciar Sesión",
+    "registrarse": "Registrarse",
+    "carrito": "Carrito"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "registro": "Crear Cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "nombre": "Nombre",
+    "apellido": "Apellido",
+    "telefono": "Teléfono",
+    "documento": "Documento de identidad",
+    "tipoDocumento": "Tipo de documento",
+    "pais": "País",
+    "iniciarSesion": "Iniciar Sesión",
+    "creandoCuenta": "Creando cuenta...",
+    "ingresando": "Ingresando...",
+    "sinCuenta": "¿No tienes cuenta?",
+    "conCuenta": "¿Ya tienes cuenta?"
+  },
+  "perfil": {
+    "titulo": "Mi Perfil",
+    "editar": "Editar Perfil",
+    "guardar": "Guardar Cambios",
+    "cancelar": "Cancelar",
+    "fotoUrl": "URL de foto de perfil",
+    "idioma": "Idioma preferido",
+    "puntos": "Puntos de fidelidad",
+    "suscripciones": "Mis Suscripciones",
+    "sinSuscripciones": "No tienes suscripciones activas."
+  },
+  "home": {
+    "titulo": "La Experiencia Barbería Definitiva",
+    "subtitulo": "Agenda tu cita en la mejor barbería de tu ciudad",
+    "explorar": "Explorar Barberías",
+    "barberias": "Barberías Disponibles",
+    "buscar": "Buscar barberías...",
+    "cargando": "Cargando barberías..."
+  },
+  "barberia": {
+    "agendar": "Agendar Cita",
+    "tienda": "Ver Tienda",
+    "servicios": "Nuestros Servicios",
+    "barberos": "Nuestros Barberos",
+    "calificaciones": "Opiniones",
+    "sinCalificaciones": "Aún no hay calificaciones.",
+    "promedio": "Calificación promedio",
+    "desde": "Desde"
+  },
+  "reserva": {
+    "titulo": "Reservar Cita",
+    "paso1": "Barbería",
+    "paso2": "Barbero",
+    "paso3": "Servicio",
+    "paso4": "Fecha y Hora",
+    "paso5": "Confirmación",
+    "selBarbero": "Selecciona un barbero",
+    "selServicio": "Selecciona un servicio",
+    "selFecha": "Selecciona una fecha",
+    "selHora": "Selecciona una hora",
+    "confirmar": "Confirmar Cita",
+    "notas": "Notas adicionales (opcional)",
+    "exitoso": "¡Cita agendada exitosamente!",
+    "duracion": "min"
+  },
+  "citas": {
+    "titulo": "Mis Citas",
+    "proximas": "Próximas Citas",
+    "historial": "Historial",
+    "sinProximas": "No tienes citas próximas.",
+    "sinHistorial": "No tienes citas en el historial.",
+    "cancelar": "Cancelar Cita",
+    "calificar": "Calificar Atención",
+    "estados": {
+      "PENDIENTE": "Pendiente",
+      "CONFIRMADA": "Confirmada",
+      "COMPLETADA": "Completada",
+      "CANCELADA": "Cancelada"
+    }
+  },
+  "tienda": {
+    "titulo": "Cuidado Premium",
+    "subtitulo": "Productos seleccionados por nuestros maestros barberos",
+    "todos": "Todos",
+    "filtrar": "Filtrar por categoría",
+    "agregar": "Agregar al Carrito",
+    "agotado": "Agotado",
+    "iniciarSesionComprar": "Debes iniciar sesión para comprar.",
+    "categorias": {
+      "SHAMPOO": "Shampoo",
+      "BALSAMO": "Bálsamo",
+      "CREMA_BARBEAR": "Crema de Afeitar",
+      "CREMA_MODELADORA": "Crema Modeladora",
+      "ACEITE_BARBA": "Aceite de Barba",
+      "CERA_CABELLO": "Cera para Cabello",
+      "LOCION": "Loción",
+      "OTRO": "Otros"
+    }
+  },
+  "carrito": {
+    "titulo": "Tu Carrito",
+    "vacio": "Tu carrito está vacío.",
+    "total": "Total",
+    "finalizar": "Finalizar Compra",
+    "eliminar": "Eliminar",
+    "cantidad": "Cantidad",
+    "seguirComprando": "Seguir Comprando",
+    "compraExitosa": "¡Compra realizada! Gracias por tu pedido.",
+    "procesando": "Procesando..."
+  },
+  "admin": {
+    "dashboard": "Panel de Control",
+    "agenda": "Agenda del Día",
+    "empleados": "Empleados",
+    "servicios": "Servicios",
+    "productos": "Productos",
+    "suscripciones": "Suscripciones",
+    "nuevo": "Nuevo",
+    "guardar": "Guardar",
+    "cancelar": "Cancelar",
+    "activar": "Activar",
+    "desactivar": "Desactivar",
+    "confirmar": "Confirmar",
+    "completar": "Completar",
+    "roles": {
+      "BARBERO": "Barbero",
+      "ADMIN_BARBERIA": "Administrador"
+    }
+  },
+  "errores": {
+    "servidor": "No se pudo conectar con el servidor.",
+    "sesion": "Tu sesión ha expirado. Por favor inicia sesión nuevamente.",
+    "permiso": "No tienes permisos para acceder aquí.",
+    "requeridos": "Por favor completa todos los campos requeridos."
+  },
+  "idiomas": {
+    "es": "Español",
+    "ptBR": "Português (Brasil)"
+  }
+}

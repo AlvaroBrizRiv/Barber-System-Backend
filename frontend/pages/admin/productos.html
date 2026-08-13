@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario y Productos — Barbería System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/pages/admin/productos.css">
+</head>
+<body>
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>BARBER SYSTEM</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <p class="nav-section">Administración</p>
+            <a href="dashboard.html" class="nav-item">Panel General</a>
+            <a href="suscripciones.html" class="nav-item">Suscripciones</a>
+            <a href="productos.html" class="nav-item active">Tienda / Inventario</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+                <p id="userName">Admin</p>
+                <span>Administrador</span>
+            </div>
+            <button class="btn-logout" onclick="Auth.logout()" title="Cerrar sesión">✕</button>
+        </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <main class="main">
+        <header class="topbar">
+            <h1>Inventario de Productos</h1>
+            <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo Producto</button>
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 style="color: var(--gold);">Catálogo Actual</h3>
+                </div>
+                <div class="card-body">
+                    <table id="tablaProductos">
+                        <thead>
+                            <tr>
+                                <th>IMG</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Llenado dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ══ MODAL NUEVO PRODUCTO ══ -->
+    <div class="modal-overlay" id="modalProducto">
+        <div class="modal-content">
+            <h2 style="color: var(--gold); margin-bottom: 1.5rem; font-size: 1.2rem;">Crear Producto</h2>
+            
+            <div class="form-group">
+                <label>Nombre del Producto</label>
+                <input type="text" id="prodNombre" class="form-control" placeholder="Ej: Shampoo Anticaspa Pro">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Precio ($)</label>
+                    <input type="number" id="prodPrecio" class="form-control" placeholder="Ej: 15000">
+                </div>
+                <div class="form-group">
+                    <label>Stock Inicial</label>
+                    <input type="number" id="prodStock" class="form-control" placeholder="Ej: 10" value="0">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="prodCategoria" class="form-control">
+                    <option value="SHAMPOO">Shampoo</option>
+                    <option value="BALSAMO">Bálsamo</option>
+                    <option value="CREMA_BARBEAR">Crema de Barbear</option>
+                    <option value="CREMA_MODELADORA">Crema Modeladora</option>
+                    <option value="ACEITE_BARBA">Aceite de Barba</option>
+                    <option value="CERA_CABELLO">Cera para el Cabello</option>
+                    <option value="LOCION">Loción</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>URL de Imagen (Opcional)</label>
+                <input type="text" id="prodImagen" class="form-control" placeholder="https://ejemplo.com/imagen.png">
+            </div>
+
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="prodDescripcion" class="form-control" rows="3" placeholder="Detalles del producto..."></textarea>
+            </div>
+
+            <div id="prodError" class="error-msg"></div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarProducto()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../js/api.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/pages/admin/productos.js"></script>
+</body>
+</html>

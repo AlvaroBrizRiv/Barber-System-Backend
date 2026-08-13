@@ -1,0 +1,92 @@
+/* === MÓDULO: MI AGENDA PROFESIONAL === */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --gold: #D4AF37; --gold-dark: #8B6914;
+    --bg: #0a0a0a; --bg-card: #131313;
+    --border: rgba(255,255,255,0.08); --border-gold: rgba(212,175,55,0.25);
+    --success: #2ECC71; --warning: #F39C12; --danger: #E74C3C; --info: #3498DB;
+}
+
+body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: #fff; min-height: 100vh; }
+#navbar-root { width: 100%; position: sticky; top: 0; z-index: 1000; }
+
+.container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+/* Navegador de Fecha */
+.date-nav { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; }
+.date-arrow {
+    background: var(--bg-card); border: 1px solid var(--border); color: rgba(255,255,255,0.6);
+    width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.2rem; transition: all 0.2s;
+}
+.date-arrow:hover { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
+
+.date-display { text-align: center; cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.2s; }
+.date-display:hover { background: rgba(255,255,255,0.03); }
+.date-display .dia { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--gold); letter-spacing: 1px; }
+.date-display .fecha-str { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-top: 0.2rem; }
+.date-picker-hidden { position: absolute; opacity: 0; pointer-events: none; }
+
+/* Quick Stats */
+.quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 2.5rem; }
+.qs-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.2rem 1rem; text-align: center; transition: transform 0.2s;
+}
+.qs-card:hover { transform: translateY(-2px); border-color: var(--border-gold); }
+
+.qs-value { font-size: 1.8rem; font-weight: 700; font-family: 'Cinzel', serif; }
+.qs-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 0.3rem; font-weight: 600; }
+
+.qs-pending .qs-value { color: var(--warning); }
+.qs-confirm .qs-value { color: var(--info); }
+.qs-done .qs-value { color: var(--success); }
+.qs-cancel .qs-value { color: var(--danger); }
+
+/* Agenda Section */
+.agenda-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.agenda-header { padding: 1.2rem 1.8rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.agenda-header h2 { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold); letter-spacing: 1px; }
+.citas-count { font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 600; }
+
+.cita-item { padding: 1.4rem 1.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; gap: 1.5rem; transition: background 0.2s; }
+.cita-item:last-child { border-bottom: none; }
+.cita-item:hover { background: rgba(255,255,255,0.02); }
+
+.cita-hora { font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--gold); min-width: 65px; text-align: center; font-weight: 700; }
+.cita-hora .duracion { font-family: 'Montserrat', sans-serif; font-size: 0.68rem; color: rgba(255,255,255,0.35); display: block; font-weight: 400; }
+
+.cita-info { flex: 1; }
+.cita-cliente { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; color: #fff; }
+.cita-servicios { font-size: 0.8rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 0.4rem; }
+.cita-notas { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-top: 0.3rem; font-style: italic; }
+
+.cita-precio { font-size: 0.95rem; font-weight: 700; color: var(--gold); text-align: right; min-width: 80px; }
+
+/* Estados */
+.estado-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.estado-PENDIENTE { background: rgba(243,156,18,0.15); color: var(--warning); border: 1px solid rgba(243,156,18,0.3); }
+.estado-CONFIRMADA { background: rgba(52,152,219,0.15); color: var(--info); border: 1px solid rgba(52,152,219,0.3); }
+.estado-COMPLETADA { background: rgba(46,204,113,0.15); color: var(--success); border: 1px solid rgba(46,204,113,0.3); }
+.estado-CANCELADA { background: rgba(231,76,60,0.15); color: var(--danger); border: 1px solid rgba(231,76,60,0.3); }
+
+/* Botones */
+.btn-completar {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)); border: none; color: #000;
+    padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-completar:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
+
+.empty-state { padding: 4.5rem 2rem; text-align: center; color: rgba(255,255,255,0.35); }
+.empty-state .icon {
+    width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem; color: var(--gold);
+}
+
+/* Responsive mi-agenda */
+@media (max-width: 600px) {
+    .quick-stats { grid-template-columns: 1fr 1fr; }
+    .cita-precio { display: none; }
+    .cita-item { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+}

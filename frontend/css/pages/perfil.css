@@ -1,0 +1,111 @@
+/* === MÓDULO: PERFIL === */
+
+.perfil-main { max-width:860px; margin:2.5rem auto; padding:0 1.5rem 4rem; }
+
+/* Cabecera del perfil */
+.perfil-header {
+    display:flex; align-items:center; gap:2rem;
+    background:var(--card); border:1px solid var(--border-gold);
+    border-radius:14px; padding:2rem 2.5rem; margin-bottom:2rem;
+    position:relative; overflow:hidden;
+}
+
+/* Contenedor y avatar */
+.perfil-avatar-wrap { position:relative; flex-shrink:0; }
+.perfil-avatar {
+    width:100px; height:100px; border-radius:50%; object-fit:cover;
+    border:3px solid var(--gold); display:block;
+}
+.perfil-avatar-inicial {
+    width:100px; height:100px; border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-size:2.2rem; font-weight:700; color:#000;
+}
+
+/* Info del usuario */
+.perfil-info { flex:1; }
+.perfil-nombre { font-family:'Cinzel',serif; font-size:1.6rem; color:#fff; margin-bottom:0.3rem; }
+.perfil-email { color:var(--text2); font-size:0.88rem; margin-bottom:0.8rem; }
+.perfil-badges { display:flex; gap:0.6rem; flex-wrap:wrap; }
+
+/* Badges específicos */
+.badge-rol { background:rgba(212,175,55,0.15); border:1px solid var(--border-gold); color:var(--gold); }
+.badge-puntos { background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); color:var(--success); }
+
+/* Tarjeta principal */
+.perfil-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:2rem 2.5rem; margin-bottom:2rem;
+}
+.perfil-card-titulo {
+    font-family:'Cinzel',serif; font-size:1.25rem; color:var(--gold);
+    margin-bottom:1.5rem; padding-bottom:0.6rem;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:0.6rem;
+}
+
+/* Formulario */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+.form-group { display:flex; flex-direction:column; gap:0.4rem; }
+.form-group.full { grid-column:1 / -1; }
+.form-label { font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); }
+.form-input {
+    background:rgba(255,255,255,0.04); border:1px solid var(--border);
+    border-radius:8px; padding:0.75rem 1rem; color:#fff;
+    font-family:'Montserrat',sans-serif; font-size:0.9rem;
+    transition:border-color 0.2s;
+}
+.form-input:focus { outline:none; border-color:var(--gold); background:rgba(255,255,255,0.06); }
+.form-input:disabled { opacity:0.45; cursor:not-allowed; }
+
+/* Vista previa de foto */
+.foto-preview-wrap { display:flex; gap:1.2rem; align-items:center; margin-top:0.4rem; }
+.foto-preview { width:55px; height:55px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); display:none; }
+
+/* Botón de guardar */
+.btn-guardar {
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+    color:#000; border:none; padding:0.85rem 2.2rem; border-radius:8px;
+    font-family:'Montserrat',sans-serif; font-weight:800; font-size:0.85rem;
+    text-transform:uppercase; letter-spacing:1px; cursor:pointer;
+    margin-top:1.5rem; transition:all 0.25s ease;
+    display:inline-flex; align-items:center; gap:0.5rem;
+}
+.btn-guardar:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 6px 18px rgba(212,175,55,0.35); }
+.btn-guardar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* Suscripciones */
+.subs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.2rem; }
+.sub-card {
+    background:rgba(255,255,255,0.02); border:1px solid var(--border);
+    border-radius:10px; padding:1.4rem; transition:border-color 0.2s;
+    display:flex; flex-direction:column; justify-content:space-between;
+}
+.sub-card.activa-user { border-color:var(--gold); background:rgba(212,175,55,0.05); }
+.sub-titulo { font-weight:700; font-size:1rem; color:#fff; margin-bottom:0.4rem; }
+.sub-precio { font-family:'Cinzel',serif; font-size:1.3rem; color:var(--gold); font-weight:700; margin-bottom:0.6rem; }
+.sub-desc { font-size:0.82rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; flex:1; }
+
+/* Botón de acción de suscripción */
+.btn-sub-action {
+    background:transparent; border:1px solid var(--gold); color:var(--gold);
+    padding:0.5rem 1rem; border-radius:6px; font-weight:700; font-size:0.8rem;
+    cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.btn-sub-action:hover { background:var(--gold); color:#000; }
+
+/* Alertas del perfil */
+.msg-alert {
+    padding:0.9rem 1.2rem; border-radius:8px; font-size:0.85rem; font-weight:600;
+    margin-bottom:1.5rem; display:none;
+}
+.msg-alert.ok { background:rgba(46,204,113,0.15); border:1px solid var(--success); color:var(--success); }
+.msg-alert.err { background:rgba(231,76,60,0.15); border:1px solid var(--error); color:var(--error); }
+
+/* Responsividad */
+@media(max-width:600px) {
+    .form-grid { grid-template-columns:1fr; }
+    .perfil-header { flex-direction:column; text-align:center; }
+    .perfil-badges { justify-content:center; }
+}

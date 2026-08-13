@@ -1,177 +1,131 @@
+<!DOCTYPE html>
+<html lang="es-CL">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barbería System - Reserva de Citas</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Barbería System — Agenda tu cita con el barbero que prefieras. Elige barbería, barbero, fecha y hora.">
+    <title>Agendar Cita — Barbería System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/reserva.css">
 </head>
 <body>
+    <div id="navbar-root"></div>
 
-    <nav class="navbar is-black" role="navigation" aria-label="main navigation">
-        <div class="container">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="#">
-                    <span class="icon-text">
-                        <span class="icon">✂️</span>
-                        <strong>Barberia System</strong>
-                    </span>
-                </a>
-                
-                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                </a>
+    <div class="page-container">
+        <h1 class="page-title">Agendar Cita</h1>
+        <p class="page-sub">Elige tu barbería, barbero y horario preferido</p>
+
+        <!-- Steps indicator -->
+        <div class="steps">
+            <div class="step active" id="step1"><div class="step-circle">1</div><div class="step-label">Barbería</div></div>
+            <div class="step-line"></div>
+            <div class="step" id="step2"><div class="step-circle">2</div><div class="step-label">Barbero</div></div>
+            <div class="step-line"></div>
+            <div class="step" id="step3"><div class="step-circle">3</div><div class="step-label">Servicios</div></div>
+            <div class="step-line"></div>
+            <div class="step" id="step4"><div class="step-circle">4</div><div class="step-label">Fecha y Hora</div></div>
+            <div class="step-line"></div>
+            <div class="step" id="step5"><div class="step-circle">5</div><div class="step-label">Confirmar</div></div>
+        </div>
+
+        <!-- Panel 1: Barbería -->
+        <div class="panel active" id="panel1">
+            <h2 class="section-title">Selecciona una barbería</h2>
+            <div class="selection-grid" id="gridBarberias">
+                <div style="color:rgba(255,255,255,0.4);">Cargando barberías...</div>
             </div>
+            <div class="alert" id="alertBarberia"></div>
+            <div class="nav-btns">
+                <div></div>
+                <button class="btn btn-primary" onclick="irPaso(2)">Siguiente →</button>
+            </div>
+        </div>
 
-            <div id="navbarMenu" class="navbar-menu">
-                <div class="navbar-start">
-                    <a class="navbar-item is-active" href="#">Inicio</a>
-                    <a class="navbar-item" href="#">Mis Citas</a>
-                    <a class="navbar-item" href="#">Barberos</a>
+        <!-- Panel 2: Barbero -->
+        <div class="panel" id="panel2">
+            <h2 class="section-title">Selecciona tu barbero</h2>
+            <div class="selection-grid" id="gridBarberos">
+                <div style="color:rgba(255,255,255,0.4);">Selecciona primero una barbería</div>
+            </div>
+            <div class="alert" id="alertBarbero"></div>
+            <div class="nav-btns">
+                <button class="btn btn-outline" onclick="irPaso(1)">← Atrás</button>
+                <button class="btn btn-primary" onclick="irPaso(3)">Siguiente →</button>
+            </div>
+        </div>
+
+        <!-- Panel 3: Servicios -->
+        <div class="panel" id="panel3">
+            <h2 class="section-title">Selecciona los servicios</h2>
+            <div class="servicios-grid" id="gridServicios">
+                <div style="color:rgba(255,255,255,0.4);">Cargando servicios...</div>
+            </div>
+            <div class="alert" id="alertServicios"></div>
+            <div class="nav-btns">
+                <button class="btn btn-outline" onclick="irPaso(2)">← Atrás</button>
+                <button class="btn btn-primary" onclick="irPaso(4)">Siguiente →</button>
+            </div>
+        </div>
+
+        <!-- Panel 4: Fecha y hora -->
+        <div class="panel" id="panel4">
+            <h2 class="section-title">Elige fecha y hora</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="fechaCita" min="">
                 </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <select id="horaCita">
+                        <option value="">Selecciona una hora</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notas adicionales (opcional)</label>
+                <textarea id="notasCita" rows="3" placeholder="Ej: Quiero un corte fade, con perfilado de barba..."></textarea>
+            </div>
+            <div class="alert" id="alertFecha"></div>
+            <div class="nav-btns">
+                <button class="btn btn-outline" onclick="irPaso(3)">← Atrás</button>
+                <button class="btn btn-primary" onclick="irPaso(5)">Ver resumen →</button>
+            </div>
+        </div>
 
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <div class="buttons">
-                            <a class="button is-light is-small">Cerrar Sesión</a>
-                        </div>
-                    </div>
+        <!-- Panel 5: Confirmar -->
+        <div class="panel" id="panel5">
+            <h2 class="section-title">Confirma tu cita</h2>
+            <div class="resumen-card" id="resumen"></div>
+            <div class="alert" id="alertConfirmar"></div>
+            <div class="nav-btns">
+                <button class="btn btn-outline" onclick="irPaso(4)">← Atrás</button>
+                <button class="btn btn-primary" id="btnConfirmar" onclick="confirmarCita()">✓ Confirmar Cita</button>
+            </div>
+        </div>
+
+        <!-- Panel Éxito -->
+        <div class="panel" id="panelExito">
+            <div class="success-panel">
+                <div class="success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h2>¡Cita Agendada!</h2>
+                <p>Tu cita ha sido registrada exitosamente en el sistema.<br>El barbero y la administración ya pueden verla en su agenda.</p>
+                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                    <a href="pages/mis-citas.html" class="btn btn-outline" style="text-decoration:none;">Ver mis citas</a>
+                    <a href="index.html" class="btn btn-primary" style="text-decoration:none;">Ir al inicio</a>
                 </div>
             </div>
         </div>
-    </nav>
 
-    <section class="hero bg-dark-gray is-fullheight-with-navbar">
-        <div class="hero-body">
-            <div class="container">
-                <div class="columns is-centered">
-                    <div class="column is-8-tablet is-6-desktop is-5-widescreen">
-                        
-                        <div class="box has-background-white card-shadow">
-                            <div class="has-text-centered mb-5">
-                                <h1 class="title is-3 has-text-dark">Reserva tu Cita</h1>
-                                <p class="subtitle is-6 has-text-grey mt-2">
-                                    Diseño alineado a la normativa de protección y privacidad de datos.
-                                </p>
-                            </div>
-                            
-                            <hr class="has-background-light">
+    </div>
 
-                            <form id="formCita">
-                                <div class="columns">
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Nombre</label>
-                                            <div class="control">
-                                                <input class="input" type="text" id="nombre" placeholder="Ej. Álvaro" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Apellido</label>
-                                            <div class="control">
-                                                <input class="input" type="text" id="apellido" placeholder="Ej. Brizuela" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="columns">
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">RUT (sin puntos ni guión)</label>
-                                            <div class="control">
-                                                <input class="input" type="number" id="rut" placeholder="Ej. 12345678" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Teléfono</label>
-                                            <div class="control">
-                                                <input class="input" type="tel" id="telefono" placeholder="Ej. 912345678" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="field">
-                                    <label class="label has-text-grey-dark">Correo Electrónico</label>
-                                    <div class="control">
-                                        <input class="input" type="email" id="email" placeholder="alvaro@ejemplo.com" required>
-                                    </div>
-                                </div>
-                                
-                                <hr class="has-background-light">
-                                
-                                <div class="columns">
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Selecciona tu Barbero</label>
-                                            <div class="control">
-                                                <div class="select is-fullwidth">
-                                                    <select id="empleadoId" required>
-                                                        <option value="" disabled selected>Selecciona un profesional</option>
-                                                        <option value="1">Juan Pinilla (Senior)</option>
-                                                        <option value="2">Mauro Silva (Junior)</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Servicio</label>
-                                            <div class="control">
-                                                <div class="select is-fullwidth">
-                                                    <select id="servicio" required>
-                                                        <option value="" disabled selected>¿Qué servicio deseas?</option>
-                                                        <option value="Corte de Cabello">Corte de Cabello Premium</option>
-                                                        <option value="Perfilado de Barba">Perfilado de Barba + Toalla Húmeda</option>
-                                                        <option value="Combo Completo">Combo: Corte & Barba</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="columns">
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Fecha</label>
-                                            <div class="control">
-                                                <input class="input" type="date" id="fecha" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="column">
-                                        <div class="field">
-                                            <label class="label has-text-grey-dark">Hora disponible</label>
-                                            <div class="control">
-                                                <input class="input" type="time" id="hora" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="field mt-5">
-                                    <div class="control">
-                                        <button type="submit" class="button is-black is-fullwidth is-medium">
-                                            <strong>Confirmar y Agendar Cita ✂️</strong>
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-
-                        </div> </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <script src="app.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/pages/reserva.js"></script>
 </body>
 </html>

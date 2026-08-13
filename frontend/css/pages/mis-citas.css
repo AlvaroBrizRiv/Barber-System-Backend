@@ -1,0 +1,86 @@
+/* === MÓDULO: MIS CITAS === */
+
+.citas-main { max-width:900px; margin:2.5rem auto; padding:0 1.5rem 4rem; }
+
+/* Cabecera principal de la página Mis Citas */
+.citas-header {
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:2rem; border-bottom:1px solid var(--border-gold); padding-bottom:1rem;
+}
+.citas-titulo {
+    font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); margin-bottom:0.3rem;
+}
+.citas-sub { color:var(--text2); font-size:0.9rem; }
+
+/* Filtros de estado de citas */
+.filtros { display:flex; gap:0.5rem; margin-bottom:2rem; overflow-x:auto; padding-bottom:0.5rem; }
+.btn-filtro {
+    background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text2);
+    padding:0.6rem 1.2rem; border-radius:20px; font-size:0.8rem; font-weight:600;
+    cursor:pointer; transition:all 0.2s; white-space:nowrap;
+}
+.btn-filtro:hover { background:rgba(255,255,255,0.1); color:#fff; }
+.btn-filtro.activo { background:rgba(212,175,55,0.15); border-color:var(--gold); color:var(--gold); }
+
+/* Grid de citas */
+.citas-list { display:flex; flex-direction:column; gap:1.2rem; }
+
+/* Tarjeta individual de cita */
+.cita-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem; display:flex; gap:1.5rem;
+    align-items:center; transition:transform 0.2s, border-color 0.2s;
+}
+.cita-card:hover { border-color:rgba(212,175,55,0.4); transform:translateY(-2px); }
+
+/* Indicador visual de fecha */
+.cita-fecha-box {
+    background:rgba(212,175,55,0.08); border:1px solid var(--border-gold);
+    border-radius:10px; min-width:85px; text-align:center; padding:0.8rem 0;
+    display:flex; flex-direction:column; color:var(--gold); flex-shrink:0;
+}
+.cita-dia { font-size:1.8rem; font-weight:700; font-family:'Cinzel',serif; line-height:1; }
+.cita-mes { font-size:0.75rem; text-transform:uppercase; font-weight:600; letter-spacing:1px; margin-top:0.2rem; }
+.cita-hora { font-size:0.85rem; color:#fff; font-weight:600; margin-top:0.5rem; background:rgba(0,0,0,0.3); padding:0.2rem; border-radius:4px; }
+
+/* Información de la cita */
+.cita-info { flex:1; }
+.cita-barberia { font-weight:700; font-size:1.1rem; color:#fff; margin-bottom:0.2rem; }
+.cita-detalles { color:var(--text2); font-size:0.85rem; display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem; }
+.cita-detalles span { display:flex; align-items:center; gap:0.4rem; }
+
+/* Badges de estado de cita */
+.estado-badge {
+    display:inline-block; padding:0.2rem 0.8rem; border-radius:20px;
+    font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+}
+.estado-badge.completada { background:rgba(46,204,113,0.1); color:var(--success); border:1px solid rgba(46,204,113,0.3); }
+.estado-badge.pendiente { background:rgba(241,196,15,0.1); color:#F1C40F; border:1px solid rgba(241,196,15,0.3); }
+.estado-badge.cancelada { background:rgba(231,76,60,0.1); color:var(--error); border:1px solid rgba(231,76,60,0.3); }
+
+/* Acciones en la cita */
+.cita-acciones { display:flex; gap:0.8rem; flex-shrink:0; }
+.btn-accion {
+    background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff;
+    padding:0.6rem; border-radius:8px; cursor:pointer; transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center;
+}
+.btn-accion:hover { background:rgba(255,255,255,0.1); }
+.btn-accion.cancelar:hover { border-color:var(--error); color:var(--error); background:rgba(231,76,60,0.1); }
+.btn-accion.calificar { background:rgba(212,175,55,0.1); border-color:var(--border-gold); color:var(--gold); padding:0.6rem 1rem; font-size:0.8rem; font-weight:600; gap:0.4rem; }
+.btn-accion.calificar:hover { background:var(--gold); color:#000; }
+
+/* Pantalla de carga / vacío */
+.loader, .empty-state { text-align:center; padding:4rem 1rem; color:var(--text3); }
+.empty-state i { font-size:3rem; color:rgba(212,175,55,0.3); margin-bottom:1rem; }
+.empty-state p { font-size:0.95rem; margin-bottom:1.5rem; }
+
+/* Responsividad para móviles */
+@media(max-width:650px) {
+    .citas-header { flex-direction:column; align-items:center; text-align:center; gap:1rem; }
+    .cita-card { flex-direction:column; align-items:flex-start; gap:1rem; }
+    .cita-fecha-box { width:100%; flex-direction:row; justify-content:center; align-items:center; gap:1rem; padding:0.5rem; }
+    .cita-dia { font-size:1.4rem; }
+    .cita-mes, .cita-hora { margin:0; }
+    .cita-acciones { width:100%; justify-content:flex-end; border-top:1px solid var(--border); padding-top:1rem; }
+}

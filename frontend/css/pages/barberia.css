@@ -1,0 +1,102 @@
+/* === MÓDULO: BARBERÍA === */
+
+/* Sección principal del banner (Hero) */
+.hero {
+    position:relative; min-height:400px;
+    background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+    display:flex; align-items:flex-end; padding:4rem 6%;
+    overflow:hidden;
+}
+.hero::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(to right, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0.6));
+}
+.hero-bg {
+    position:absolute; inset:0; object-fit:cover; width:100%; height:100%;
+    opacity:0.25; filter:grayscale(40%);
+}
+.hero-content { position:relative; z-index:1; max-width:680px; }
+
+/* Etiqueta identificadora en el Hero */
+.hero-badge {
+    display:inline-block; background:rgba(212,175,55,0.12);
+    border:1px solid var(--border-gold); color:var(--gold);
+    padding:0.35rem 0.9rem; border-radius:20px;
+    font-size:0.75rem; font-weight:700; letter-spacing:2px; margin-bottom:1rem;
+}
+.hero-titulo { font-family:'Cinzel',serif; font-size:2.8rem; margin-bottom:0.8rem; line-height:1.15; color:#fff; }
+.hero-desc { color:var(--text2); line-height:1.7; margin-bottom:1.5rem; font-size:0.95rem; }
+
+/* Metadatos en el Hero (Ubicación, estrellas) */
+.hero-meta { display:flex; gap:1.8rem; align-items:center; color:var(--text2); font-size:0.85rem; flex-wrap:wrap; }
+.hero-meta span { display:flex; align-items:center; gap:0.4rem; }
+.stars-display { color:var(--gold); font-size:1rem; display:flex; align-items:center; gap:0.3rem; }
+
+/* Botones de acción en Hero */
+.hero-actions { display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap; }
+.btn-secondary {
+    background:rgba(255,255,255,0.04); border:1px solid var(--gold); color:var(--gold);
+    padding:0.85rem 2rem; border-radius:8px; font-family:'Montserrat',sans-serif;
+    font-weight:600; font-size:0.9rem; cursor:pointer; text-decoration:none;
+    display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
+}
+.btn-secondary:hover { background:rgba(212,175,55,0.12); transform: translateY(-2px); }
+
+/* Contenedor principal para la vista de barbería */
+.main { max-width:1200px; margin:0 auto; padding:3.5rem 6%; }
+
+/* Grid de servicios */
+.servicios-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:1.2rem; margin-bottom:3.5rem;
+}
+
+/* Tarjeta de servicio */
+.servicio-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem; transition:all 0.3s;
+}
+.servicio-card:hover { border-color:var(--border-gold); transform: translateY(-3px); }
+.servicio-nombre { font-size:1.05rem; font-weight:600; margin-bottom:0.4rem; color: #fff; }
+.servicio-desc { font-size:0.85rem; color:var(--text2); margin-bottom:1rem; line-height:1.5; }
+.servicio-footer { display:flex; justify-content:space-between; align-items:center; }
+.servicio-precio { font-family:'Cinzel',serif; color:var(--gold); font-weight:700; font-size:1.1rem; }
+.servicio-duracion { font-size:0.8rem; color:var(--text3); display:flex; align-items:center; gap:0.3rem; }
+
+/* Grid y tarjetas de barberos */
+.barberos-grid {
+    display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:3.5rem;
+}
+.barbero-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem; text-align:center;
+    width:190px; transition:all 0.3s;
+}
+.barbero-card:hover { border-color:var(--border-gold); transform: translateY(-3px); }
+.barbero-avatar {
+    width:84px; height:84px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--gold); margin:0 auto 0.8rem;
+}
+.barbero-avatar-inicial {
+    width:84px; height:84px; border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:700; color:#000; margin:0 auto 0.8rem;
+}
+.barbero-nombre { font-size:0.95rem; font-weight:600; color: #fff; }
+.barbero-rol { font-size:0.75rem; color:var(--gold); margin-top:0.3rem; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Lista de calificaciones */
+.calificaciones-list { display:flex; flex-direction:column; gap:1rem; margin-bottom:3.5rem; }
+.calificacion-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:1.2rem;
+}
+.cal-header { display:flex; justify-content:space-between; margin-bottom:0.5rem; }
+.cal-autor { font-weight:600; font-size:0.9rem; }
+.cal-estrellas { color:var(--gold); font-size:0.9rem; }
+.cal-comentario { font-size:0.85rem; color:var(--text2); line-height:1.5; }
+
+/* Utilidades para estados vacíos / loaders */
+.empty { text-align:center; color:var(--text3); padding:2rem; font-size:0.9rem; }
+.loader { text-align:center; color:var(--text3); padding:3rem; }

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Oficial — Barbería System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/pages/tienda.css">
+</head>
+<body>
+
+    <div id="navbar-root"></div>
+
+    <header>
+        <div id="barberiaBadge" class="barberia-badge-top">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
+            <span id="txtBarberiaNombre">Barbería Oficial</span>
+        </div>
+        <h1>Catálogo de Productos</h1>
+        <p>Selección exclusiva de insumos profesionales para barbería, cuidado capilar y afeitado de precisión.</p>
+    </header>
+
+    <div class="tienda-controls">
+        <div class="categorias-container" id="contenedorCategorias">
+            <button class="btn-categoria active" onclick="filtrarCategoria('TODOS', this)">Todos</button>
+            <button class="btn-categoria" onclick="filtrarCategoria('SHAMPOO', this)">Shampoo</button>
+            <button class="btn-categoria" onclick="filtrarCategoria('ACEITE_BARBA', this)">Aceites Barba</button>
+            <button class="btn-categoria" onclick="filtrarCategoria('CREMA_BARBEAR', this)">Afeitado</button>
+            <button class="btn-categoria" onclick="filtrarCategoria('CERA_CABELLO', this)">Ceras & Pomadas</button>
+            <button class="btn-categoria" onclick="filtrarCategoria('BALSAMO', this)">Bálsamos</button>
+        </div>
+
+        <button class="btn-cart-trigger" onclick="abrirCarrito()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span>Mi Carro</span>
+            <span class="cart-badge-pill" id="cartCountBadge">0</span>
+        </button>
+    </div>
+
+    <div class="productos-grid" id="gridProductos">
+        <!-- Generado dinámicamente -->
+    </div>
+
+    <!-- ═══ CART DRAWER ════════════════════════════════════════════ -->
+    <div class="cart-drawer-overlay" id="cartOverlay" onclick="cerrarCarrito(event)">
+        <div class="cart-drawer" onclick="event.stopPropagation()">
+            <div class="cart-header">
+                <div class="cart-header-title">Carrito de Compras</div>
+                <button class="btn-close-cart" onclick="cerrarCarrito()">&times;</button>
+            </div>
+            <div class="cart-items-list" id="cartItemsList">
+                <div class="empty-cart-state">Tu carrito está vacío.</div>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-subtotal-row">
+                    <span class="cart-subtotal-label">Total a Pagar:</span>
+                    <span class="cart-subtotal-val" id="cartTotalVal">$0</span>
+                </div>
+                <button class="btn-checkout" id="btnCheckout" onclick="finalizarCompra()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    Finalizar Compra (Simulado)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL CONFIRMACIÓN COMPRA ═════════════════════════════ -->
+    <div class="modal-success" id="modalCompraExitosa">
+        <div class="modal-box">
+            <div class="modal-icon-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 class="font-classic" style="color:#D4AF37; font-size:1.6rem; margin-bottom:0.8rem;">¡Compra Simulada con Éxito!</h2>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.6;">
+                Tu orden ha sido procesada correctamente y los artículos han salido de tu carrito de compras en el sistema.
+            </p>
+            <button class="btn-checkout" style="width:100%;" onclick="cerrarModalCompra()">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/pages/tienda.js"></script>
+</body>
+</html>

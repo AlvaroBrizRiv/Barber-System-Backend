@@ -1,0 +1,209 @@
+/**
+ * =====================================================================
+ * index.css — Estilos de la Página de Inicio (Landing Page)
+ * =====================================================================
+ * Este archivo contiene los estilos EXCLUSIVOS de index.html:
+ *   - Fondo hero de la barbería (imagen con overlay oscuro)
+ *   - Tarjetas de barberías disponibles (.barberia-card)
+ *   - Tarjetas de servicios (.servicio-card)
+ *   - Iconos circulares de servicios (.service-icon-box)
+ *   - Sección footer
+ *   - Media queries propias del index
+ *
+ * REQUIERE: css/global.css (para variables, botones y navbar)
+ * =====================================================================
+ */
+
+/* =====================================================================
+   SECCIÓN 1: Hero / Sección Principal
+   La imagen de fondo se superpone con un overlay oscuro para
+   garantizar que el texto sea legible.
+   ===================================================================== */
+
+/* Fondo del hero con imagen de barbería + degradado oscuro */
+.bg-barber-vintage {
+    background:
+        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+        url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1920')
+        no-repeat center center;
+    background-size: cover;
+    position: relative;
+    min-height: 85vh;
+}
+
+/* Sección de barberías con fondo ligeramente más claro */
+.section-barberias {
+    background: #0f0f0f;
+    padding: 6rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Sección de servicios con fondo más oscuro para contrastar */
+.section-servicios {
+    background: #080808;
+    padding: 6rem 1.5rem;
+}
+
+/* =====================================================================
+   SECCIÓN 2: Tarjetas de Barberías
+   Cada barbería disponible se muestra como una tarjeta con:
+   foto, nombre, dirección, teléfono y botón de acceso.
+   ===================================================================== */
+
+/* Contenedor de la tarjeta de barbería */
+.barberia-card {
+    background: #181818;
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Efecto hover: eleva la tarjeta y resalta el borde dorado */
+.barberia-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--gold);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+}
+
+/* Contenedor de la imagen de la barbería */
+.barberia-img-wrap {
+    height: 200px;
+    width: 100%;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+}
+
+/* Imagen de la barbería - cubre el espacio sin distorsión */
+.barberia-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+/* Zoom sutil en la imagen al hacer hover en la tarjeta padre */
+.barberia-card:hover .barberia-img-wrap img {
+    transform: scale(1.05);
+}
+
+/* Cuerpo de la tarjeta: nombre, dirección y botón */
+.barberia-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* =====================================================================
+   SECCIÓN 3: Tarjetas de Servicios
+   Grid de 4 servicios que ofrece la plataforma.
+   ===================================================================== */
+
+/* Tarjeta individual de servicio */
+.servicio-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.servicio-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(212,175,55,0.4);
+    background: rgba(255,255,255,0.04);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Caja circular que contiene el ícono SVG del servicio */
+.service-icon-box {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1.2rem;
+    border-radius: 50%;
+    background: rgba(212,175,55,0.1);
+    border: 1px solid rgba(212,175,55,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    transition: all 0.3s ease;
+}
+
+/* El ícono crece al hacer hover en la tarjeta padre */
+.servicio-card:hover .service-icon-box {
+    background: rgba(212,175,55,0.2);
+    transform: scale(1.1);
+}
+
+/* =====================================================================
+   SECCIÓN 4: Footer
+   ===================================================================== */
+
+/* Pie de página con fondo muy oscuro */
+.footer-custom {
+    background: #050505;
+    color: rgba(255,255,255,0.6);
+    padding: 3rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+}
+
+.footer-brand {
+    font-family: var(--font-heading);
+    color: #fff;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.footer-copy {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+    margin-top: 1rem;
+}
+
+/* =====================================================================
+   SECCIÓN 5: Responsive Design del Index
+   ===================================================================== */
+
+/* --- Tablets (menor a 1024px) --- */
+@media (max-width: 1024px) {
+    .section-barberias,
+    .section-servicios {
+        padding: 4rem 1.5rem;
+    }
+}
+
+/* --- Móvil (menor a 768px) --- */
+@media (max-width: 768px) {
+    /* Hero más pequeño */
+    .bg-barber-vintage {
+        min-height: 60vh;
+    }
+
+    /* Servicios en 1 columna */
+    .servicio-card {
+        padding: 1.5rem 1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* --- Teléfonos pequeños (menor a 480px) --- */
+@media (max-width: 480px) {
+    .section-barberias,
+    .section-servicios {
+        padding: 3rem 1rem;
+    }
+
+    .barberia-img-wrap {
+        height: 160px;
+    }
+}
