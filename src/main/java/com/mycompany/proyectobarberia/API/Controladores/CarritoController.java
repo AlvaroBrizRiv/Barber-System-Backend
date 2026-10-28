@@ -25,6 +25,10 @@ import java.util.Map;
  */
 public class CarritoController {
 
+    private CarritoController() {
+        // Constructor privado para evitar instanciación
+    }
+
     private static final CarritoDAO dao = new CarritoDAO();
 
     public static void registrarRutas() {
@@ -68,11 +72,12 @@ public class CarritoController {
         // Verifica que el rol sea CLIENTE
         SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam("barberia"));
 
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        int productoId = ((Number) body.get("productoId")).intValue();
-        int cantidad   = body.containsKey("cantidad") ? ((Number) body.get("cantidad")).intValue() : 1;
+        int productoId = ((Number) body.get("producto")).intValue();
+        int cantidad   = body.containsKey("cantidad")
+         ? ((Number) body.get("cantidad")).intValue() : 1;
 
         if (productoId <= 0) throw new BadRequestResponse("productoId inválido.");
         if (cantidad   <= 0) throw new BadRequestResponse("La cantidad debe ser mayor a 0.");
@@ -92,14 +97,14 @@ public class CarritoController {
         // Verifica que el rol sea CLIENTE
         SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam("barberia"));
         int productoId = Integer.parseInt(ctx.pathParam("productoId"));
 
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
         int cantidad = ((Number) body.get("cantidad")).intValue();
 
         dao.actualizarCantidad(clienteId, barberiaId, productoId, cantidad);
-        ctx.json(Map.of("mensaje", "Cantidad actualizada."));
+        ctx.json(Map.of("mensaje actualizado", "Cantidad actualizada."));
     }
 
     /**
@@ -112,11 +117,11 @@ public class CarritoController {
         // Verifica que el rol sea CLIENTE
         SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
-        int productoId = Integer.parseInt(ctx.pathParam("productoId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam("barberia"));
+        int productoId = Integer.parseInt(ctx.pathParam("producto"));
 
         dao.eliminarItem(clienteId, barberiaId, productoId);
-        ctx.json(Map.of("mensaje", "Producto eliminado del carrito."));
+        ctx.json(Map.of("mensaje eliminado", "Producto eliminado del carrito."));
     }
 
     /**
@@ -148,7 +153,7 @@ public class CarritoController {
         dao.vaciarCarrito(clienteId, barberiaId);
 
         ctx.status(200).json(Map.of(
-                "mensaje",      "Compra realizada exitosamente. ¡Gracias!",
+                "mensaje de compra",      "Compra realizada exitosamente. ¡Gracias!",
                 "totalCobrado", total,
                 "itemsComprados", items.size()
         ));

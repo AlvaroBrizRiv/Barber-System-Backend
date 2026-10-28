@@ -17,7 +17,7 @@ public class BarberiaDAO {
 
     private static final String SQL_SELECT_TODAS =
             "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, fecha_creacion " +
-            "FROM barberias WHERE activa = TRUE ORDER BY nombre";
+            "FROM barberias WHERE activa = 1 ORDER BY nombre";
 
     private static final String SQL_SELECT_POR_ID =
             "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, fecha_creacion " +
@@ -32,7 +32,7 @@ public class BarberiaDAO {
             "WHERE id=?";
 
     private static final String SQL_DESACTIVAR =
-            "UPDATE barberias SET activa=FALSE WHERE id=?";
+            "UPDATE barberias SET activa = 0 WHERE id=?";
 
     // ─────────────────────────────────────────────────────────────────
 

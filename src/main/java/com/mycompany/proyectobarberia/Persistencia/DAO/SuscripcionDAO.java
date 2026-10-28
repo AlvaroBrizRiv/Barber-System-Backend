@@ -29,7 +29,7 @@ public class SuscripcionDAO {
             "WHERE id=? AND barberia_id=?";
 
     private static final String SQL_TOGGLE_ACTIVA =
-            "UPDATE suscripciones SET activa = NOT activa WHERE id=? AND barberia_id=?";
+            "UPDATE suscripciones SET activa = CASE WHEN activa = 1 THEN 0 ELSE 1 END WHERE id=? AND barberia_id=?";
 
     // ─────────────────────────────────────────────────────────────────
 

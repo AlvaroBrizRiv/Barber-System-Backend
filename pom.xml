@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <exec.mainClass>com.mycompany.proyectobarberia.ProyectoBarberia</exec.mainClass>
         <!-- Versiones centralizadas -->
         <javalin.version>6.3.0</javalin.version>
@@ -22,12 +22,19 @@
         <hikari.version>5.1.0</hikari.version>
         <dotenv.version>3.0.2</dotenv.version>
         <mysql.version>8.3.0</mysql.version>
+        <mssql.version>12.8.1.jre11</mssql.version>
     </properties>
 
     <dependencies>
         <!-- ═══════════════════════════════════════════════════ -->
         <!--  BASE DE DATOS                                      -->
         <!-- ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>${mssql.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>

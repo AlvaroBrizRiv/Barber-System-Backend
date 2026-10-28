@@ -17,7 +17,7 @@ public class ServicioDAO {
 
     private static final String SQL_LISTAR_POR_BARBERIA =
             "SELECT id, barberia_id, nombre, descripcion, precio, duracion_minutos, activo " +
-            "FROM servicios WHERE barberia_id = ? AND activo = TRUE ORDER BY nombre";
+            "FROM servicios WHERE barberia_id = ? AND activo = 1 ORDER BY nombre";
 
     private static final String SQL_INSERT =
             "INSERT INTO servicios (barberia_id, nombre, descripcion, precio, duracion_minutos) " +
@@ -28,7 +28,7 @@ public class ServicioDAO {
             "WHERE id=? AND barberia_id=?";
 
     private static final String SQL_DESACTIVAR =
-            "UPDATE servicios SET activo=FALSE WHERE id=? AND barberia_id=?";
+            "UPDATE servicios SET activo = 0 WHERE id=? AND barberia_id=?";
 
     // ─────────────────────────────────────────────────────────────────
 

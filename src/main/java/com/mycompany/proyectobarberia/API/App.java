@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.mycompany.proyectobarberia.API.Controladores.*;
 import com.mycompany.proyectobarberia.API.Seguridad.SecurityMiddleware;
+import com.mycompany.proyectobarberia.Persistencia.Conexion;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
 import io.javalin.apibuilder.ApiBuilder;
@@ -35,7 +36,7 @@ public class App {
 
     /** Inicia el servidor Javalin con todas las configuraciones. */
     public static void iniciar() {
-        Dotenv env = Dotenv.configure().ignoreIfMissing().load();
+        Dotenv env = Conexion.cargarDotenv();
         int puerto     = Integer.parseInt(env.get("SERVER_PORT", "7070"));
         String corsOrigin = env.get("CORS_ORIGIN", "*");
 

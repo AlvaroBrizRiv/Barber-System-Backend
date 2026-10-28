@@ -27,7 +27,7 @@ public class ClienteDAO {
             "       p.fecha_registro, p.activo, c.puntos_fidelidad " +
             "FROM personas p " +
             "INNER JOIN clientes c ON p.id = c.id " +
-            "WHERE p.email = ? AND p.activo = TRUE";
+            "WHERE p.email = ? AND p.activo = 1";
 
     private static final String SQL_BUSCAR_POR_ID =
             "SELECT p.id, p.documento_identidad, p.tipo_documento, p.nombre, p.apellido, " +

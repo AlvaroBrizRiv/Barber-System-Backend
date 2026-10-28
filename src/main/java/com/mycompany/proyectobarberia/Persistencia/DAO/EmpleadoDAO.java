@@ -33,16 +33,16 @@ public class EmpleadoDAO {
             "INNER JOIN empleados e ON p.id = e.id ";
 
     private static final String SQL_BUSCAR_POR_EMAIL =
-            SQL_BASE_SELECT + "WHERE p.email = ? AND p.activo = TRUE";
+            SQL_BASE_SELECT + "WHERE p.email = ? AND p.activo = 1";
 
     private static final String SQL_LISTAR_POR_BARBERIA =
-            SQL_BASE_SELECT + "WHERE e.barberia_id = ? AND e.activo = TRUE ORDER BY p.nombre";
+            SQL_BASE_SELECT + "WHERE e.barberia_id = ? AND e.activo = 1 ORDER BY p.nombre";
 
     private static final String SQL_LISTAR_BARBEROS =
-            SQL_BASE_SELECT + "WHERE e.barberia_id = ? AND e.rol = 'BARBERO' AND e.activo = TRUE ORDER BY p.nombre";
+            SQL_BASE_SELECT + "WHERE e.barberia_id = ? AND e.rol = 'BARBERO' AND e.activo = 1 ORDER BY p.nombre";
 
     private static final String SQL_DESACTIVAR =
-            "UPDATE empleados SET activo = FALSE WHERE id = ? AND barberia_id = ?";
+            "UPDATE empleados SET activo = 0 WHERE id = ? AND barberia_id = ?";
 
     // ─── Escritura ────────────────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 package com.mycompany.proyectobarberia.API.Seguridad;
 
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
+import com.mycompany.proyectobarberia.Persistencia.Conexion;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -32,7 +33,7 @@ public class JwtUtils {
     private static final long EXPIRATION_MS;
 
     static {
-        Dotenv env = Dotenv.configure().ignoreIfMissing().load();
+        Dotenv env = Conexion.cargarDotenv();
 
         String secret = env.get("JWT_SECRET",
                 "cambiar_esta_clave_en_produccion_minimo_32_caracteres");

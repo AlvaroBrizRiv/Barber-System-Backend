@@ -28,10 +28,10 @@ public class CalificacionDAO {
             "FROM calificaciones WHERE barberia_id = ? ORDER BY fecha DESC";
 
     private static final String SQL_PROMEDIO_BARBERIA =
-            "SELECT AVG(estrellas_barberia) AS promedio FROM calificaciones WHERE barberia_id = ?";
+            "SELECT AVG(CAST(estrellas_barberia AS FLOAT)) AS promedio FROM calificaciones WHERE barberia_id = ?";
 
     private static final String SQL_PROMEDIO_BARBERO =
-            "SELECT AVG(estrellas_barbero) AS promedio FROM calificaciones WHERE empleado_id = ? AND barberia_id = ?";
+            "SELECT AVG(CAST(estrellas_barbero AS FLOAT)) AS promedio FROM calificaciones WHERE empleado_id = ? AND barberia_id = ?";
 
     private static final String SQL_YA_CALIFICADA =
             "SELECT COUNT(*) FROM calificaciones WHERE cita_id = ?";
