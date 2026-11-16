@@ -1,6 +1,7 @@
 package com.mycompany.proyectobarberia.API.Controladores;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.mycompany.proyectobarberia.API.dto.BarberoPublico;
 import com.mycompany.proyectobarberia.API.Seguridad.SecurityMiddleware;
 import com.mycompany.proyectobarberia.Logica.Empleado;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
@@ -61,7 +62,9 @@ public class EmpleadoController {
      */
     private static void listarBarberos(Context ctx) throws SQLException {
         int barberiaId = Integer.parseInt(ctx.pathParam("id"));
-        ctx.json(dao.listarBarberosPorBarberia(barberiaId));
+        ctx.json(dao.listarBarberosPorBarberia(barberiaId).stream()
+                .map(e -> new BarberoPublico(e.getId(), e.getNombre(), e.getApellido(), e.getFotoUrl()))
+                .toList());
     }
 
     /**
@@ -76,8 +79,8 @@ public class EmpleadoController {
     @SuppressWarnings("unchecked")
     private static void crear(Context ctx) throws SQLException {
         // Restricción a rol ADMIN_BARBERIA y obtención de la barbería del token
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaIdToken = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaIdToken = SecurityMiddleware.requerirBarberiaId(ctx);
 
         // Parseo de los campos obligatorios y opcionales
         Map<String, String> body = ctx.bodyAsClass(Map.class);
@@ -96,6 +99,8 @@ public class EmpleadoController {
             throw new BadRequestResponse(
                 "Campos requeridos: documentoIdentidad, nombre, email, password.");
         }
+
+        AuthController.validarPassword(password);
 
         // Valida el rol y bloquea la creación de un SUPERADMIN por esta vía
         Rol rol;
@@ -131,10 +136,10 @@ public class EmpleadoController {
      */
     private static void desactivar(Context ctx) throws SQLException {
         // Exige permisos de administración de barbería
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
         
         int empleadoId = Integer.parseInt(ctx.pathParam("id"));
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         // Desactiva si se cumplen ambas condiciones (mismo empleado y barbería correcta)
         boolean ok = dao.desactivar(empleadoId, barberiaId);

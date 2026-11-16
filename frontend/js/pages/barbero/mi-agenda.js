@@ -63,7 +63,9 @@ async function cargarAgenda() {
     const fechaIso = `${yyyy}-${mm}-${dd}`;
 
     try {
-        const citas = await Api.get(`/citas/mi-agenda?fecha=${fechaIso}`);
+        const usuarioActual = Auth.getUsuario();
+        const barberoId = usuarioActual ? usuarioActual.id : 0;
+        const citas = await Api.citas.agendaBarbero(barberoId, fechaIso);
 
         document.getElementById('qsPendientes').textContent  = citas.filter(c => c.estado === 'PENDIENTE').length;
         document.getElementById('qsConfirmadas').textContent = citas.filter(c => c.estado === 'CONFIRMADA').length;
@@ -86,30 +88,34 @@ async function cargarAgenda() {
         container.innerHTML = citas.map(c => `
             <div class="cita-item">
                 <div class="cita-hora">
-                    ${c.hora?.substring(0,5) || '--:--'}
+                    ${Utils.esc(c.hora?.substring(0,5) || '--:--')}
                     <span class="duracion">hrs</span>
                 </div>
                 <div class="cita-info">
                     <div class="cita-cliente">
-                        ${c.cliente?.nombre || ''} ${c.cliente?.apellido || ''}
+                        ${Utils.esc(c.cliente?.nombre || '')} ${Utils.esc(c.cliente?.apellido || '')}
                     </div>
                     <div class="cita-servicios">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        ${c.cliente?.telefono || 'Sin teléfono'}
+                        ${Utils.esc(c.cliente?.telefono || 'Sin teléfono')}
                     </div>
-                    ${c.notas ? `<div class="cita-notas">"${c.notas}"</div>` : ''}
+                    ${c.notas ? `<div class="cita-notas">"${Utils.esc(c.notas)}"</div>` : ''}
                 </div>
                 <div class="cita-precio">
                     ${c.precioTotal > 0 ? '$' + Number(c.precioTotal).toLocaleString('es-CL') : '—'}
                 </div>
-                <span class="estado-badge estado-${c.estado}">${c.estado}</span>
+                <span class="estado-badge estado-${Utils.esc(c.estado)}">${Utils.esc(c.estado)}</span>
                 ${c.estado === 'CONFIRMADA' || c.estado === 'PENDIENTE' ? `
-                    <button class="btn-completar" onclick="completarCita(${c.id})">
+                    <button class="btn-completar btn-completar-cita" data-id="${Number(c.id)}">
                         ✓ Marcar Completada
                     </button>
                 ` : ''}
             </div>
         `).join('');
+
+        container.querySelectorAll('.btn-completar-cita').forEach(btn => {
+            btn.addEventListener('click', () => completarCita(Number(btn.dataset.id)));
+        });
 
     } catch (err) {
         container.innerHTML = `<div class="empty-state" style="color:#E74C3C;">${err.message}</div>`;

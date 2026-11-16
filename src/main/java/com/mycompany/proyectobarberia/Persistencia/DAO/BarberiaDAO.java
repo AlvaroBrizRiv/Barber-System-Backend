@@ -16,11 +16,13 @@ import java.util.List;
 public class BarberiaDAO {
 
     private static final String SQL_SELECT_TODAS =
-            "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, fecha_creacion " +
-            "FROM barberias WHERE activa = TRUE ORDER BY nombre";
+            "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, " +
+            "       pais_codigo, moneda_codigo, zona_horaria, fecha_creacion " +
+            "FROM barberias WHERE activa = 1 ORDER BY nombre";
 
     private static final String SQL_SELECT_POR_ID =
-            "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, fecha_creacion " +
+            "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, " +
+            "       pais_codigo, moneda_codigo, zona_horaria, fecha_creacion " +
             "FROM barberias WHERE id = ?";
 
     private static final String SQL_INSERT =
@@ -32,7 +34,7 @@ public class BarberiaDAO {
             "WHERE id=?";
 
     private static final String SQL_DESACTIVAR =
-            "UPDATE barberias SET activa=FALSE WHERE id=?";
+            "UPDATE barberias SET activa = 0 WHERE id=?";
 
     // ─────────────────────────────────────────────────────────────────
 
@@ -158,6 +160,9 @@ public class BarberiaDAO {
                 rs.getString("logo_url"),
                 rs.getString("descripcion"),
                 rs.getBoolean("activa"),
+                rs.getString("pais_codigo"),
+                rs.getString("moneda_codigo"),
+                rs.getString("zona_horaria"),
                 rs.getTimestamp("fecha_creacion") != null
                         ? rs.getTimestamp("fecha_creacion").toLocalDateTime()
                         : null

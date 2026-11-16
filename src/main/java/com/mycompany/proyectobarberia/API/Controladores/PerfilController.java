@@ -1,9 +1,13 @@
 package com.mycompany.proyectobarberia.API.Controladores;
-
 import com.mycompany.proyectobarberia.API.Seguridad.SecurityMiddleware;
 import com.mycompany.proyectobarberia.Logica.Cliente;
+import com.mycompany.proyectobarberia.Logica.Empleado;
+import com.mycompany.proyectobarberia.Logica.SuperAdmin;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.SuperAdminDAO;
+
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
@@ -25,13 +29,33 @@ import java.util.Map;
  */
 public class PerfilController {
 
+    private PerfilController() {
+        // Constructor privado para evitar instanciación
+    }
+
     private static final ClienteDAO clienteDAO = new ClienteDAO();
+    private static final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private static final SuperAdminDAO superAdminDAO = new SuperAdminDAO();
+
+    private static final String CAMPO_ID = "id";
+    private static final String CAMPO_NOMBRE = "nombre";
+    private static final String CAMPO_APELLIDO = "apellido";
+    private static final String CAMPO_EMAIL = "email";
+    private static final String CAMPO_TELEFONO = "telefono";
+    private static final String CAMPO_FOTO_URL = "fotoUrl";
+    private static final String CAMPO_IDIOMA = "idiomaPreferido";
+    private static final String CAMPO_PAIS_CODIGO = "paisCodigo";
+    private static final String CAMPO_PUNTOS_FIDELIDAD = "puntosFidelidad";
+    private static final String CAMPO_TIPO_DOCUMENTO = "tipoDocumento";
+    private static final String CAMPO_ROL = "rol";
+    private static final String CAMPO_BARBERIA_ID = "barberiaId";
 
     public static void registrarRutas() {
         ApiBuilder.get("/",  PerfilController::obtenerPerfil);
         ApiBuilder.put("/",  PerfilController::actualizarPerfil);
     }
 
+    
     /**
      * Devuelve el perfil del usuario autenticado (Cliente, Empleado o Admin).
      * 
@@ -40,7 +64,6 @@ public class PerfilController {
      * @throws NotFoundResponse si no se encuentra el perfil en la base de datos
      */
     private static void obtenerPerfil(Context ctx) throws SQLException {
-        SecurityMiddleware.validar(ctx);
         int userId = SecurityMiddleware.getUserId(ctx);
         Rol rol = SecurityMiddleware.getRol(ctx);
 
@@ -51,24 +74,39 @@ public class PerfilController {
             return;
         }
 
-        // Si es Empleado / Admin
-        com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO empDAO = new com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO();
-        com.mycompany.proyectobarberia.Logica.Empleado empleado = empDAO.buscarPorEmail("email");
-        if (empleado == null) throw new NotFoundResponse("Perfil no encontrado.");
+        if (rol == Rol.SUPERADMIN) {
+            SuperAdmin sa = superAdminDAO.buscarPorId(userId);
+            if (sa == null) throw new NotFoundResponse("Perfil no encontrado.");
+            Map<String, Object> perfil = new HashMap<>();
+            perfil.put(CAMPO_ID, sa.getId());
+            perfil.put(CAMPO_NOMBRE, sa.getNombre());
+            perfil.put(CAMPO_APELLIDO, sa.getApellido());
+            perfil.put(CAMPO_EMAIL, sa.getEmail());
+            perfil.put(CAMPO_TELEFONO, sa.getTelefono() != null ? sa.getTelefono() : "");
+            perfil.put(CAMPO_FOTO_URL, sa.getFotoUrl() != null ? sa.getFotoUrl() : "");
+            perfil.put(CAMPO_IDIOMA, sa.getIdiomaPreferido());
+            perfil.put(CAMPO_PAIS_CODIGO, sa.getPaisCodigo());
+            perfil.put(CAMPO_ROL, Rol.SUPERADMIN.name());
+            ctx.json(perfil);
+            return;
+        }
 
+        
+        Empleado emp = empleadoDAO.buscarPorId(userId);
+        if (emp == null) throw new NotFoundResponse("Perfil no encontrado.");
         Map<String, Object> perfil = new HashMap<>();
-        perfil.put("id",              empleado.getId());
-        perfil.put("nombre",          empleado.getNombre() != null ? empleado.getNombre() : "");
-        perfil.put("apellido",        empleado.getApellido() != null ? empleado.getApellido() : "");
-        perfil.put("email",           empleado.getEmail());
-        perfil.put("telefono",        empleado.getTelefono() != null ? empleado.getTelefono() : "");
-        perfil.put("fotoUrl",         empleado.getFotoUrl() != null ? empleado.getFotoUrl() : "");
-        perfil.put("idiomaPreferido", empleado.getIdiomaPreferido() != null ? empleado.getIdiomaPreferido() : "es");
-        perfil.put("paisCodigo",      empleado.getPaisCodigo());
-        perfil.put("rol",             empleado.getRol().name());
-        perfil.put("barberiaId",      empleado.getBarberiaId());
+        perfil.put(CAMPO_ID, emp.getId());
+        perfil.put(CAMPO_NOMBRE, emp.getNombre());
+        perfil.put(CAMPO_APELLIDO, emp.getApellido());
+        perfil.put(CAMPO_EMAIL, emp.getEmail());
+        perfil.put(CAMPO_TELEFONO, emp.getTelefono() != null ? emp.getTelefono() : "");
+        perfil.put(CAMPO_FOTO_URL, emp.getFotoUrl() != null ? emp.getFotoUrl() : "");
+        perfil.put(CAMPO_IDIOMA, emp.getIdiomaPreferido());
+        perfil.put(CAMPO_PAIS_CODIGO, emp.getPaisCodigo());
+        perfil.put(CAMPO_ROL, emp.getRol().name());
+        perfil.put(CAMPO_BARBERIA_ID, emp.getBarberiaId());
         ctx.json(perfil);
-    }
+        }
 
     /**
      * Actualiza campos seguros del perfil del usuario autenticado.
@@ -79,18 +117,16 @@ public class PerfilController {
      */
     @SuppressWarnings("unchecked")
     private static void actualizarPerfil(Context ctx) throws SQLException {
-        SecurityMiddleware.validar(ctx);
         int userId = SecurityMiddleware.getUserId(ctx);
-        Rol rol = SecurityMiddleware.getRol(ctx);
 
         Map<String, String> body = ctx.bodyAsClass(Map.class);
 
         Map<String, String> camposPermitidos = new HashMap<>();
-        if (body.containsKey("nombre"))           camposPermitidos.put("nombre", body.get("nombre"));
-        if (body.containsKey("apellido"))         camposPermitidos.put("apellido", body.get("apellido"));
-        if (body.containsKey("telefono"))         camposPermitidos.put("telefono", body.get("telefono"));
-        if (body.containsKey("fotoUrl"))          camposPermitidos.put("fotoUrl", body.get("fotoUrl"));
-        if (body.containsKey("idiomaPreferido"))  camposPermitidos.put("idiomaPreferido", body.get("idiomaPreferido"));
+        if (body.containsKey(CAMPO_NOMBRE))           camposPermitidos.put(CAMPO_NOMBRE, body.get(CAMPO_NOMBRE));
+        if (body.containsKey(CAMPO_APELLIDO))         camposPermitidos.put(CAMPO_APELLIDO, body.get(CAMPO_APELLIDO));
+        if (body.containsKey(CAMPO_TELEFONO))         camposPermitidos.put(CAMPO_TELEFONO, body.get(CAMPO_TELEFONO));
+        if (body.containsKey(CAMPO_FOTO_URL))          camposPermitidos.put(CAMPO_FOTO_URL, body.get(CAMPO_FOTO_URL));
+        if (body.containsKey(CAMPO_IDIOMA))  camposPermitidos.put(CAMPO_IDIOMA, body.get(CAMPO_IDIOMA));
 
         if (!camposPermitidos.isEmpty()) {
             clienteDAO.actualizarPerfil(userId, camposPermitidos);
@@ -108,17 +144,17 @@ public class PerfilController {
      */
     private static Map<String, Object> perfilPublico(Cliente c) {
         Map<String, Object> perfil = new HashMap<>();
-        perfil.put("id",              c.getId());
-        perfil.put("nombre",          c.getNombre() != null ? c.getNombre() : "");
-        perfil.put("apellido",        c.getApellido() != null ? c.getApellido() : "");
-        perfil.put("email",           c.getEmail());
-        perfil.put("telefono",        c.getTelefono() != null ? c.getTelefono() : "");
-        perfil.put("fotoUrl",         c.getFotoUrl() != null ? c.getFotoUrl() : "");
-        perfil.put("idiomaPreferido", c.getIdiomaPreferido() != null ? c.getIdiomaPreferido() : "es");
-        perfil.put("paisCodigo",      c.getPaisCodigo());
-        perfil.put("puntosFidelidad", c.getPuntosFidelidad());
-        perfil.put("tipoDocumento",   c.getTipoDocumento());
-        perfil.put("rol",             Rol.CLIENTE.name());
+        perfil.put(CAMPO_ID,              c.getId());
+        perfil.put(CAMPO_NOMBRE,          c.getNombre() != null ? c.getNombre() : "");
+        perfil.put(CAMPO_APELLIDO,        c.getApellido() != null ? c.getApellido() : "");
+        perfil.put(CAMPO_EMAIL,           c.getEmail());
+        perfil.put(CAMPO_TELEFONO,        c.getTelefono() != null ? c.getTelefono() : "");
+        perfil.put(CAMPO_FOTO_URL,         c.getFotoUrl() != null ? c.getFotoUrl() : "");
+        perfil.put(CAMPO_IDIOMA, c.getIdiomaPreferido() != null ? c.getIdiomaPreferido() : "es");
+        perfil.put(CAMPO_PAIS_CODIGO,      c.getPaisCodigo());
+        perfil.put(CAMPO_PUNTOS_FIDELIDAD, c.getPuntosFidelidad());
+        perfil.put(CAMPO_TIPO_DOCUMENTO,   c.getTipoDocumento());
+        perfil.put(CAMPO_ROL,             Rol.CLIENTE.name());
         return perfil;
     }
 }

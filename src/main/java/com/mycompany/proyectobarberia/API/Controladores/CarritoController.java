@@ -5,6 +5,7 @@ import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.CarritoDAO;
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
 
 import java.sql.SQLException;
@@ -25,14 +26,19 @@ import java.util.Map;
  */
 public class CarritoController {
 
+    private CarritoController() {
+        // Constructor privado para evitar instanciación
+    }
+
+    private static final String BARBERIA_ID_PARAM = "barberiaId";
     private static final CarritoDAO dao = new CarritoDAO();
 
     public static void registrarRutas() {
-        ApiBuilder.get("/{barberiaId}",                  CarritoController::obtener);
-        ApiBuilder.post("/{barberiaId}",                 CarritoController::agregar);
-        ApiBuilder.put("/{barberiaId}/{productoId}",     CarritoController::actualizarCantidad);
-        ApiBuilder.delete("/{barberiaId}/{productoId}",  CarritoController::eliminarItem);
-        ApiBuilder.post("/{barberiaId}/checkout",        CarritoController::checkout);
+        ApiBuilder.get("/{" + BARBERIA_ID_PARAM + "}",                  CarritoController::obtener);
+        ApiBuilder.post("/{" + BARBERIA_ID_PARAM + "}",                 CarritoController::agregar);
+        ApiBuilder.put("/{" + BARBERIA_ID_PARAM + "}/{productoId}",     CarritoController::actualizarCantidad);
+        ApiBuilder.delete("/{" + BARBERIA_ID_PARAM + "}/{productoId}",  CarritoController::eliminarItem);
+        ApiBuilder.post("/{" + BARBERIA_ID_PARAM + "}/checkout",        CarritoController::checkout);
     }
 
     /**
@@ -43,10 +49,10 @@ public class CarritoController {
      * @throws io.javalin.http.ForbiddenResponse si el usuario no es CLIENTE
      */
     private static void obtener(Context ctx) throws SQLException {
-        // Verifica que el rol sea CLIENTE y extrae el ID de usuario
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam(BARBERIA_ID_PARAM));
 
         List<Map<String, Object>> items = dao.obtenerCarrito(clienteId, barberiaId);
         double total = items.stream()
@@ -65,19 +71,23 @@ public class CarritoController {
      */
     @SuppressWarnings("unchecked")
     private static void agregar(Context ctx) throws SQLException {
-        // Verifica que el rol sea CLIENTE
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam(BARBERIA_ID_PARAM));
 
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        int productoId = ((Number) body.get("productoId")).intValue();
-        int cantidad   = body.containsKey("cantidad") ? ((Number) body.get("cantidad")).intValue() : 1;
-
+        int productoId = leerEntero(body, "productoId", true, 0);
+        int cantidad   = leerEntero(body, "cantidad", false, 1);
         if (productoId <= 0) throw new BadRequestResponse("productoId inválido.");
         if (cantidad   <= 0) throw new BadRequestResponse("La cantidad debe ser mayor a 0.");
+        
 
-        dao.agregarItem(clienteId, barberiaId, productoId, cantidad);
+        try {
+            dao.agregarItem(clienteId, barberiaId, productoId, cantidad);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestResponse(e.getMessage());
+        }
         ctx.status(201).json(Map.of("mensaje", "Producto agregado al carrito."));
     }
 
@@ -89,17 +99,18 @@ public class CarritoController {
      */
     @SuppressWarnings("unchecked")
     private static void actualizarCantidad(Context ctx) throws SQLException {
-        // Verifica que el rol sea CLIENTE
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam(BARBERIA_ID_PARAM));
         int productoId = Integer.parseInt(ctx.pathParam("productoId"));
 
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        int cantidad = ((Number) body.get("cantidad")).intValue();
+        int cantidad = leerEntero(body, "cantidad", true, 0);
 
         dao.actualizarCantidad(clienteId, barberiaId, productoId, cantidad);
         ctx.json(Map.of("mensaje", "Cantidad actualizada."));
+        
     }
 
     /**
@@ -109,30 +120,28 @@ public class CarritoController {
      * @throws SQLException si ocurre un error en la base de datos
      */
     private static void eliminarItem(Context ctx) throws SQLException {
-        // Verifica que el rol sea CLIENTE
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam(BARBERIA_ID_PARAM));
         int productoId = Integer.parseInt(ctx.pathParam("productoId"));
 
         dao.eliminarItem(clienteId, barberiaId, productoId);
-        ctx.json(Map.of("mensaje", "Producto eliminado del carrito."));
+        ctx.json(Map.of("mensaje", "Producto eliminado del carrito.")); 
     }
 
     /**
-     * Finaliza la compra: vacía el carrito.
-     * En una implementación real aquí se integraría la pasarela de pago
-     * (MercadoPago, Stripe, etc.) antes de vaciar.
+     * Finaliza la compra verificando stock y vaciando el carrito de forma atómica (SEC-04).
      * 
      * @param ctx Contexto HTTP de Javalin
      * @throws SQLException si ocurre un error en la base de datos
      * @throws BadRequestResponse si el carrito está vacío
      */
     private static void checkout(Context ctx) throws SQLException {
-        // Verifica que el rol sea CLIENTE
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId  = SecurityMiddleware.getUserId(ctx);
-        int barberiaId = Integer.parseInt(ctx.pathParam("barberiaId"));
+        int barberiaId = Integer.parseInt(ctx.pathParam(BARBERIA_ID_PARAM));
 
         // Obtener el resumen antes de vaciar (para mostrar en la confirmación)
         List<Map<String, Object>> items = dao.obtenerCarrito(clienteId, barberiaId);
@@ -142,15 +151,37 @@ public class CarritoController {
 
         double total = items.stream().mapToDouble(i -> (double) i.get("subtotal")).sum();
 
-        // TODO: Integrar pasarela de pago aquí (MercadoPago / Stripe)
+        // Checkout atómico con verificación de stock (SEC-04)
+        try {
+            dao.checkout(clienteId, barberiaId);
+        } catch (IllegalStateException e) {
+            throw new ConflictResponse(e.getMessage());
+        }
 
-        // Vaciar el carrito tras la compra exitosa
-        dao.vaciarCarrito(clienteId, barberiaId);
-
-        ctx.status(200).json(Map.of(
-                "mensaje",      "Compra realizada exitosamente. ¡Gracias!",
-                "totalCobrado", total,
-                "itemsComprados", items.size()
-        ));
+        ctx.status(200).json(Map.of("mensaje", "Compra realizada exitosamente.", "totalCobrado", total, "itemsComprados", items.size())); 
     }
-}
+    
+    private static int leerEntero(Map<String, Object> body, String clave, boolean obligatorio, int porDefecto) {
+
+        
+        Object v = body.get(clave);
+        if (v == null){
+            if (obligatorio) throw new BadRequestResponse("Falta el campo: " + clave);
+            return porDefecto;
+        }
+        if (!(v instanceof Number n)) {
+            throw new BadRequestResponse("El campo " + clave + " debe ser un número.");
+        }
+        return n.intValue();
+        
+        }
+       
+        
+       
+    }
+        
+    
+
+
+
+

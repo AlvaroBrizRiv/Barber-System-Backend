@@ -32,10 +32,10 @@ function cambiarSeccion(seccion) {
     }[seccion] || seccion;
 
     // Cargar datos según sección
-    if (seccion === 'empleados') cargarEmpleados();
-    if (seccion === 'servicios') cargarServicios();
-    if (seccion === 'agenda') cargarAgendaFull();
-    if (seccion === 'calificaciones') cargarCalificaciones();
+    if (seccion === 'empleados') void cargarEmpleados();
+    if (seccion === 'servicios') void cargarServicios();
+    if (seccion === 'agenda') void cargarAgendaFull();
+    if (seccion === 'calificaciones') void cargarCalificaciones();
 }
 
 // ─── Dashboard ────────────────────────────────────────────────
@@ -92,12 +92,20 @@ function renderAgendaPreview(citas) {
     `).join('');
 }
 
+let chartEstados = null;
+
 function renderChartEstados(citas) {
     const counts = { PENDIENTE: 0, CONFIRMADA: 0, COMPLETADA: 0, CANCELADA: 0 };
-    citas.forEach(c => counts[c.estado]++);
+    citas.forEach(c => {
+        if (counts[c.estado] !== undefined) counts[c.estado]++;
+    });
+
+    if (chartEstados) {
+        chartEstados.destroy();
+    }
 
     const ctx = document.getElementById('chartEstados').getContext('2d');
-    new Chart(ctx, {
+    chartEstados = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['Pendiente', 'Confirmada', 'Completada', 'Cancelada'],
@@ -108,6 +116,8 @@ function renderChartEstados(citas) {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             cutout: '70%',
             plugins: {
                 legend: { labels: { color: 'rgba(255,255,255,0.6)', font: { size: 11 } } }
@@ -155,8 +165,8 @@ async function cargarAgendaFull() {
 async function confirmarCita(citaId) {
     try {
         await Api.citas.cambiarEstado(citaId, 'CONFIRMADA');
-        cargarAgendaFull();
-        if (document.getElementById('sec-dashboard').style.display !== 'none') cargarDashboard();
+       await cargarAgendaFull();
+        if (document.getElementById('sec-dashboard').style.display !== 'none') await cargarDashboard();
     } catch (err) {
         alert('Error: ' + err.message);
     }
@@ -173,19 +183,22 @@ async function cargarEmpleados() {
         }
         tbody.innerHTML = empleados.map(e => `
             <tr>
-                <td><strong>${e.nombre} ${e.apellido}</strong></td>
-                <td style="color:var(--text-muted);">${e.rut}</td>
-                <td style="color:var(--text-muted);">${e.email}</td>
-                <td style="color:var(--text-muted);">${e.telefono || '—'}</td>
-                <td><span class="rol-badge rol-${e.rol}">${e.rol === 'BARBERO' ? 'Barbero' : 'Administrador'}</span></td>
+                <td><strong>${Utils.esc(e.nombre)} ${Utils.esc(e.apellido)}</strong></td>
+                <td style="color:var(--text-muted);">${Utils.esc(e.documentoIdentidad || '—')}</td>
+                <td style="color:var(--text-muted);">${Utils.esc(e.email)}</td>
+                <td style="color:var(--text-muted);">${Utils.esc(e.telefono || '—')}</td>
+                <td><span class="rol-badge rol-${Utils.esc(e.rol)}">${e.rol === 'BARBERO' ? 'Barbero' : 'Administrador'}</span></td>
                 <td>
-                    <button class="btn btn-danger-outline" style="padding:0.3rem 0.75rem; font-size:0.75rem;"
-                        onclick="desactivarEmpleado(${e.id})">
+                    <button class="btn btn-danger-outline btn-desactivar-emp" style="padding:0.3rem 0.75rem; font-size:0.75rem;"
+                        data-id="${Number(e.id)}">
                         Desactivar
                     </button>
                 </td>
             </tr>
         `).join('');
+        tbody.querySelectorAll('.btn-desactivar-emp').forEach(btn => {
+            btn.addEventListener('click', () => desactivarEmpleado(Number(btn.dataset.id)));
+        });
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); padding:2rem;">${err.message}</td></tr>`;
     }
@@ -195,7 +208,7 @@ async function desactivarEmpleado(id) {
     if (!confirm('¿Desactivar este empleado?')) return;
     try {
         await Api.empleados.desactivar(id);
-        cargarEmpleados();
+        await cargarEmpleados();
     } catch (err) {
         alert('Error: ' + err.message);
     }
@@ -233,7 +246,7 @@ async function desactivarServicio(id) {
     if (!confirm('¿Eliminar este servicio?')) return;
     try {
         await Api.servicios.desactivar(id);
-        cargarServicios();
+        await cargarServicios();
     } catch (err) {
         alert('Error: ' + err.message);
     }
@@ -293,7 +306,7 @@ async function crearEmpleado() {
         rol:      document.getElementById('empRol').value,
     };
 
-    if (!datos.rut || !datos.nombre || !datos.email || !datos.password) {
+    if (!datos.documentoIdentidad || !datos.nombre || !datos.email || !datos.password) {
         document.getElementById('empError').textContent = 'Completa los campos obligatorios.';
         return;
     }
@@ -301,7 +314,7 @@ async function crearEmpleado() {
     try {
         await Api.empleados.crear(datos);
         cerrarModal('modalEmpleado');
-        cargarEmpleados();
+        await cargarEmpleados();
     } catch (err) {
         document.getElementById('empError').textContent = err.message;
     }
@@ -311,8 +324,8 @@ async function crearServicio() {
     const datos = {
         nombre:          document.getElementById('srvNombre').value.trim(),
         descripcion:     document.getElementById('srvDescripcion').value.trim(),
-        precio:          parseFloat(document.getElementById('srvPrecio').value),
-        duracionMinutos: parseInt(document.getElementById('srvDuracion').value) || 30,
+        precio:          Number.parseFloat(document.getElementById('srvPrecio').value),
+        duracionMinutos: Number.parseInt(document.getElementById('srvDuracion').value) || 30,
     };
 
     if (!datos.nombre || !datos.precio) {
@@ -323,7 +336,7 @@ async function crearServicio() {
     try {
         await Api.servicios.crear(datos);
         cerrarModal('modalServicio');
-        cargarServicios();
+        await cargarServicios();
     } catch (err) {
         document.getElementById('srvError').textContent = err.message;
     }
@@ -337,4 +350,4 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // ─── Iniciar dashboard ────────────────────────────────────────
-cargarDashboard();
+await cargarDashboard();

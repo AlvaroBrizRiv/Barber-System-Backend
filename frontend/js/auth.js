@@ -264,12 +264,12 @@ const Auth = {
      * @param {string} rolRequerido - El rol que debe tener el usuario (ej: 'ADMIN_BARBERIA').
      * @returns {boolean} true si el usuario tiene el rol correcto, false si no.
      */
-    requerirRol(rolRequerido) {
+    requerirRol(...rolesPermitidos) {
         // Primero verificar que esté autenticado
         if (!this.requerirAuth()) return false;
 
-        // Luego verificar que tenga el rol correcto
-        if (this.getRol() !== rolRequerido) {
+        // Luego verificar que tenga uno de los roles permitidos
+        if (!rolesPermitidos.includes(this.getRol())) {
             alert('No tienes permisos para acceder a esta página.');
             // Redirigir a la página correcta para su rol actual
             this.redirigirSegunRol();

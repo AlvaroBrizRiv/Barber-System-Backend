@@ -7,13 +7,18 @@ import com.mycompany.proyectobarberia.Logica.Empleado;
 import com.mycompany.proyectobarberia.Logica.enums.EstadoCita;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.CitaDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO;
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.NotFoundResponse;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +34,17 @@ import java.util.Map;
 public class CitaController {
 
     private static final CitaDAO dao = new CitaDAO();
+    private static final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+
+    private static int leerEntero(Map<String, Object> body, String clave, boolean obligatorio, int porDefecto) {
+        Object v = body.get(clave);
+        if (v == null) {
+            if (obligatorio) throw new BadRequestResponse("Falta el campo: " + clave);
+            return porDefecto;
+        }
+        if (!(v instanceof Number n)) throw new BadRequestResponse("El campo " + clave + " debe ser un número.");
+        return n.intValue();
+    }
 
     public static void registrarRutas() {
         ApiBuilder.get("/barberia/{barberiaId}", CitaController::agendaBarberia);
@@ -102,8 +118,8 @@ public class CitaController {
      * @throws ForbiddenResponse si el usuario no tiene rol de CLIENTE
      */
     private static void misCitas(Context ctx) throws SQLException {
-        // Exige el rol CLIENTE y obtiene el ID del usuario actual
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Exige el rol CLIENTE de manera exacta y obtiene el ID del usuario actual
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId = SecurityMiddleware.getUserId(ctx);
         
         // Retorna las citas asociadas a este cliente
@@ -112,7 +128,7 @@ public class CitaController {
 
     /**
      * Agenda una nueva cita. Acción exclusiva para clientes autenticados.
-     * Body esperado: { "barberiaId": 1, "empleadoId": 2, "fecha": "2026-08-10", "hora": "10:30", "notas": "..." }
+     * Body esperado: { "barberiaId": 1, "empleadoId": 2, "fecha": "2026-08-10", "hora": "10:30", "servicios": [1, 2], "notas": "..." }
      * 
      * @param ctx Contexto HTTP de Javalin
      * @throws SQLException si ocurre un error en la base de datos
@@ -120,14 +136,14 @@ public class CitaController {
      */
     @SuppressWarnings("unchecked")
     private static void agendar(Context ctx) throws SQLException {
-        // Verifica que el usuario sea un CLIENTE
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Verifica que el usuario sea exactamente CLIENTE
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId = SecurityMiddleware.getUserId(ctx);
 
-        // Extrae los datos del cuerpo de la petición
+        // Extrae los datos del cuerpo de la petición con parseo seguro (SEC-09)
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        int barberiaId = ((Number) body.get("barberiaId")).intValue();
-        int empleadoId = ((Number) body.get("empleadoId")).intValue();
+        int barberiaId = leerEntero(body, "barberiaId", true, 0);
+        int empleadoId = leerEntero(body, "empleadoId", true, 0);
         String fechaStr = (String) body.get("fecha");
         String horaStr  = (String) body.get("hora");
         String notas    = (String) body.getOrDefault("notas", "");
@@ -137,6 +153,32 @@ public class CitaController {
             throw new BadRequestResponse("Fecha y hora son requeridos.");
         }
 
+        LocalDate fecha;
+        LocalTime hora;
+        try {
+            fecha = LocalDate.parse(fechaStr);
+            hora  = LocalTime.parse(horaStr);
+        } catch (Exception e) {
+            throw new BadRequestResponse("Formato de fecha u hora inválido. Use YYYY-MM-DD y HH:mm.");
+        }
+
+        // SEC-04: Validar que la cita sea futura
+        if (LocalDateTime.of(fecha, hora).isBefore(LocalDateTime.now())) {
+            throw new BadRequestResponse("La cita debe ser programada en una fecha y hora futura.");
+        }
+
+        // SEC-04: Validar que el barbero exista, esté activo y pertenezca a la barbería seleccionada
+        if (!empleadoDAO.esBarberoActivoDe(empleadoId, barberiaId)) {
+            throw new BadRequestResponse("El barbero seleccionado no es válido o no pertenece a esta barbería.");
+        }
+
+        // BUG-11: Validar que se haya seleccionado al menos un servicio
+        List<Number> idsRaw = (List<Number>) body.get("servicios");
+        if (idsRaw == null || idsRaw.isEmpty()) {
+            throw new BadRequestResponse("Selecciona al menos un servicio para la cita.");
+        }
+        List<Integer> servicioIds = idsRaw.stream().map(Number::intValue).toList();
+
         // Construir objetos mínimos para la FK (sin datos completos, solo IDs)
         Cliente cliente = new Cliente();
         cliente.setId(clienteId);
@@ -144,19 +186,28 @@ public class CitaController {
         empleado.setId(empleadoId);
 
         // Inicializa la nueva cita con la información proveída
-        Cita cita = new Cita(barberiaId, cliente, empleado,
-                LocalDate.parse(fechaStr),
-                java.time.LocalTime.parse(horaStr),
-                notas);
+        Cita cita = new Cita(barberiaId, cliente, empleado, fecha, hora, notas);
 
-        // Registra la cita y devuelve un mensaje de éxito
-        int id = dao.registrarCita(cita);
+        // Registra la cita y sus servicios calculando el total dentro de la transacción
+        int id;
+        try {
+            id = dao.registrarCita(cita, servicioIds);
+        } catch (SQLException e) {
+            // Manejo de violación de índice único anti-doble reserva (SEC-04)
+            if (e.getErrorCode() == 2601 || e.getErrorCode() == 2627) {
+                throw new ConflictResponse("El horario seleccionado ya no está disponible con este barbero.");
+            }
+            throw e;
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestResponse(e.getMessage());
+        }
+
         ctx.status(201).json(Map.of("id", id, "mensaje", "Cita agendada exitosamente."));
     }
 
     /**
      * Cambia el estado de una cita (CONFIRMADA, CANCELADA, COMPLETADA).
-     * Solo el admin o barbero de la barbería correspondiente puede hacerlo.
+     * Solo el admin de la barbería o el barbero asignado a la cita puede hacerlo.
      * Body esperado: { "estado": "CONFIRMADA" }
      * 
      * @param ctx Contexto HTTP de Javalin con el ID de la cita en la URL
@@ -165,10 +216,10 @@ public class CitaController {
      */
     @SuppressWarnings("unchecked")
     private static void cambiarEstado(Context ctx) throws SQLException {
-        // Obtiene el ID de la cita y la barbería del empleado autenticado
+        // Exige rol BARBERO o ADMIN_BARBERIA y obtiene el barberiaId estricto
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.BARBERO, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
         int citaId = Integer.parseInt(ctx.pathParam("id"));
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
-        SecurityMiddleware.requerirEmpleadoDeBarberia(ctx, barberiaId);
 
         // Extrae el nuevo estado
         Map<String, String> body = ctx.bodyAsClass(Map.class);
@@ -176,16 +227,18 @@ public class CitaController {
 
         EstadoCita nuevoEstado;
         try {
-            // Intenta convertir el string al enum de estado
             nuevoEstado = EstadoCita.valueOf(estadoStr);
         } catch (IllegalArgumentException e) {
             throw new BadRequestResponse("Estado inválido: " + estadoStr);
         }
 
-        // Ejecuta el cambio de estado; si retorna false, falla la operación
-        boolean actualizado = dao.cambiarEstado(citaId, barberiaId, nuevoEstado);
+        // SEC-03: Si el usuario es BARBERO, solo puede modificar citas que tenga asignadas
+        Integer soloEmpleadoId = Rol.BARBERO.equals(SecurityMiddleware.getRol(ctx)) ? SecurityMiddleware.getUserId(ctx) : null;
+
+        // Ejecuta el cambio de estado con restricción por tenant y por barbero si aplica
+        boolean actualizado = dao.cambiarEstado(citaId, barberiaId, nuevoEstado, soloEmpleadoId);
         if (!actualizado) {
-            throw new BadRequestResponse("No se pudo actualizar el estado. Verifica el ID y los permisos.");
+            throw new NotFoundResponse("No se pudo actualizar el estado. Cita no encontrada o sin permisos.");
         }
 
         ctx.json(Map.of("mensaje", "Estado de la cita actualizado a " + nuevoEstado.name()));

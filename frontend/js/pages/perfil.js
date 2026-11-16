@@ -102,23 +102,34 @@ async function cargarSuscripciones() {
         }
 
         cont.innerHTML = planes.map(s => {
-            const precio = s.tipo === 'MENSUAL'
-                ? `$${Number(s.precioMensual).toLocaleString('es-CL')} / mes`
-                : `$${Number(s.precioPorCita).toLocaleString('es-CL')} / cita`;
+            let precio = '';
+            if (s.tipo === 'MENSUAL') {
+                precio = `$${Number(s.precioMensual).toLocaleString('es-CL')} / mes`;
+            } else if (s.tipo === 'POR_CITA') {
+                precio = `$${Number(s.precioPorCita).toLocaleString('es-CL')} / cita`;
+            } else if (s.tipo === 'AMBAS') {
+                const pm = s.precioMensual != null ? `$${Number(s.precioMensual).toLocaleString('es-CL')} / mes` : '';
+                const pc = s.precioPorCita != null ? `$${Number(s.precioPorCita).toLocaleString('es-CL')} / cita` : '';
+                precio = [pm, pc].filter(Boolean).join(' + ');
+            }
 
             return `
                 <div class="sub-card ${s.activa ? 'activa-user' : ''}">
                     <div>
-                        <div class="sub-titulo">${s.nombre}</div>
+                        <div class="sub-titulo">${Utils.esc(s.nombre)}</div>
                         <div class="sub-precio">${precio}</div>
-                        <div class="sub-desc">${s.descripcion || 'Plan de beneficios y descuentos exclusivos.'}</div>
+                        <div class="sub-desc">${Utils.esc(s.descripcion || 'Plan de beneficios y descuentos exclusivos.')}</div>
                     </div>
-                    <button class="btn-sub-action" onclick="gestionarSuscripcion(${s.id}, '${s.nombre}')">
+                    <button class="btn-sub-action btn-gestionar-sub" data-id="${Number(s.id)}" data-nombre="${Utils.esc(s.nombre)}">
                         Gestionar Plan
                     </button>
                 </div>
             `;
         }).join('');
+
+        cont.querySelectorAll('.btn-gestionar-sub').forEach(btn => {
+            btn.addEventListener('click', () => gestionarSuscripcion(Number(btn.dataset.id), btn.dataset.nombre));
+        });
     } catch (e) {
         cont.innerHTML = '<p style="color:var(--text3); font-size:0.85rem;">Inicia sesión para ver y gestionar suscripciones.</p>';
     }

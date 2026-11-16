@@ -16,11 +16,11 @@ public class ProductoDAO {
 
     private static final String SQL_LISTAR_POR_BARBERIA =
             "SELECT id, barberia_id, nombre, descripcion, precio, stock, categoria, imagen_url, activo " +
-            "FROM productos WHERE barberia_id = ? AND activo = TRUE ORDER BY categoria, nombre";
+            "FROM productos WHERE barberia_id = ? AND activo = 1 ORDER BY categoria, nombre";
 
     private static final String SQL_LISTAR_POR_CATEGORIA =
             "SELECT id, barberia_id, nombre, descripcion, precio, stock, categoria, imagen_url, activo " +
-            "FROM productos WHERE barberia_id = ? AND categoria = ? AND activo = TRUE ORDER BY nombre";
+            "FROM productos WHERE barberia_id = ? AND categoria = ? AND activo = 1 ORDER BY nombre";
 
     private static final String SQL_INSERT =
             "INSERT INTO productos (barberia_id, nombre, descripcion, precio, stock, categoria, imagen_url) " +
@@ -34,7 +34,7 @@ public class ProductoDAO {
             "UPDATE productos SET stock = stock - 1 WHERE id = ? AND barberia_id = ? AND stock > 0";
 
     private static final String SQL_DESACTIVAR =
-            "UPDATE productos SET activo = FALSE WHERE id = ? AND barberia_id = ?";
+            "UPDATE productos SET activo = 0 WHERE id = ? AND barberia_id = ?";
 
     // ─────────────────────────────────────────────────────────────────
 

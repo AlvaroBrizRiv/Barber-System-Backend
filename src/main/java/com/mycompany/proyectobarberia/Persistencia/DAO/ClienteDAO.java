@@ -27,7 +27,7 @@ public class ClienteDAO {
             "       p.fecha_registro, p.activo, c.puntos_fidelidad " +
             "FROM personas p " +
             "INNER JOIN clientes c ON p.id = c.id " +
-            "WHERE p.email = ? AND p.activo = TRUE";
+            "WHERE p.email = ? AND p.activo = 1";
 
     private static final String SQL_BUSCAR_POR_ID =
             "SELECT p.id, p.documento_identidad, p.tipo_documento, p.nombre, p.apellido, " +
@@ -39,8 +39,9 @@ public class ClienteDAO {
             "WHERE p.id = ?";
 
     private static final String SQL_ACTUALIZAR_PERFIL =
-            "UPDATE personas SET nombre = ?, apellido = ?, telefono = ?, " +
-            "  foto_url = ?, idioma_preferido = ? WHERE id = ?";
+            "UPDATE personas SET nombre = COALESCE(?, nombre), apellido = COALESCE(?, apellido), " + 
+            "telefono = COALESCE(?, telefono), foto_url = COALESCE(?, foto_url)," + 
+            "idioma_preferido = COALESCE(?, idioma_preferido) WHERE id = ?";
 
     private static final String SQL_ACTUALIZAR_PUNTOS =
             "UPDATE clientes SET puntos_fidelidad = ? WHERE id = ?";
@@ -103,11 +104,11 @@ public class ClienteDAO {
     public boolean actualizarPerfil(int id, Map<String, String> campos) throws SQLException {
         try (Connection conn = Conexion.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(SQL_ACTUALIZAR_PERFIL)) {
-            ps.setString(1, campos.getOrDefault("nombre", ""));
-            ps.setString(2, campos.getOrDefault("apellido", ""));
-            ps.setString(3, campos.getOrDefault("telefono", ""));
-            ps.setString(4, campos.getOrDefault("fotoUrl", null));
-            ps.setString(5, campos.getOrDefault("idiomaPreferido", "es"));
+            ps.setString(1, campos.get("nombre"));
+            ps.setString(2, campos.get("apellido"));
+            ps.setString(3, campos.get("telefono"));
+            ps.setString(4, campos.get("fotoUrl"));
+            ps.setString(5, campos.get("idiomaPreferido"));
             ps.setInt(6, id);
             return ps.executeUpdate() > 0;
         }

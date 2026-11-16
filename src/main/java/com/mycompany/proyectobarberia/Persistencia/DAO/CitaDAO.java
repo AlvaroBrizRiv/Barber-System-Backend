@@ -3,6 +3,7 @@ package com.mycompany.proyectobarberia.Persistencia.DAO;
 import com.mycompany.proyectobarberia.Logica.Cita;
 import com.mycompany.proyectobarberia.Logica.Cliente;
 import com.mycompany.proyectobarberia.Logica.Empleado;
+import com.mycompany.proyectobarberia.Logica.Servicio;
 import com.mycompany.proyectobarberia.Logica.enums.EstadoCita;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.Conexion;
@@ -21,6 +22,14 @@ public class CitaDAO {
     private static final String SQL_INSERT =
             "INSERT INTO citas (barberia_id, cliente_id, empleado_id, fecha, hora, estado, notas) " +
             "VALUES (?, ?, ?, ?, ?, 'PENDIENTE', ?)";
+
+    private static final String SQL_INS_SERVICIO =
+            "INSERT INTO cita_servicios (cita_id, servicio_id) " +
+            "SELECT ?, id FROM servicios WHERE id = ? AND barberia_id = ? AND activo = 1";
+
+    private static final String SQL_PRECIO =
+            "UPDATE citas SET precio_total = (SELECT COALESCE(SUM(s.precio), 0) FROM cita_servicios cs " +
+            "JOIN servicios s ON s.id = cs.servicio_id WHERE cs.cita_id = ?) WHERE id = ?";
 
     private static final String SQL_BASE_SELECT =
             "SELECT c.id, c.barberia_id, c.fecha, c.hora, c.estado, c.precio_total, " +
@@ -52,37 +61,71 @@ public class CitaDAO {
             SQL_BASE_SELECT + "WHERE c.cliente_id = ? ORDER BY c.fecha DESC, c.hora DESC";
 
     private static final String SQL_CAMBIAR_ESTADO =
-            "UPDATE citas SET estado = ? WHERE id = ? AND barberia_id = ?";
+            "UPDATE citas SET estado = ? WHERE id = ? AND barberia_id = ? AND (? IS NULL OR empleado_id = ?)";
 
-    private static final String SQL_ACTUALIZAR_PRECIO =
-            "UPDATE citas SET precio_total = ? WHERE id = ? AND barberia_id = ?";
-
+    private static final String SQL_SERVICIOS_CITA =
+            "SELECT s.id, s.barberia_id, s.nombre, s.descripcion, s.precio, s.duracion_minutos, s.activo " +
+            "FROM cita_servicios cs INNER JOIN servicios s ON cs.servicio_id = s.id WHERE cs.cita_id = ?";
     // ─────────────────────────────────────────────────────────────────
 
     /**
-     * Registra una nueva cita en estado PENDIENTE en la base de datos.
+     * Registra una nueva cita en estado PENDIENTE en la base de datos junto con sus servicios,
+     * calculando y actualizando el precio_total atómicamente dentro de una transacción SQL.
      * 
      * @param cita Objeto Cita a registrar
+     * @param servicioIds Lista de IDs de servicios seleccionados
      * @return ID generado de la cita
      * @throws SQLException si ocurre un error de base de datos
      */
-    public int registrarCita(Cita cita) throws SQLException {
-        try (Connection conn = Conexion.obtenerConexion();
-             PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+    public int registrarCita(Cita cita, List<Integer> servicioIds) throws SQLException {
+        try (Connection conn = Conexion.obtenerConexion()) {
+            conn.setAutoCommit(false);
+            try {
+                int citaId;
+                try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, cita.getBarberiaId());
+                    ps.setInt(2, cita.getCliente().getId());
+                    ps.setInt(3, cita.getEmpleado().getId());
+                    ps.setDate(4, Date.valueOf(cita.getFecha()));
+                    ps.setTime(5, Time.valueOf(cita.getHora()));
+                    ps.setString(6, cita.getNotas());
+                    ps.executeUpdate();
 
-            ps.setInt(1, cita.getBarberiaId());
-            ps.setInt(2, cita.getCliente().getId());
-            ps.setInt(3, cita.getEmpleado().getId());
-            ps.setDate(4, Date.valueOf(cita.getFecha()));
-            ps.setTime(5, Time.valueOf(cita.getHora()));
-            ps.setString(6, cita.getNotas());
-            ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (!rs.next()) throw new SQLException("No se pudo obtener el ID generado para la cita.");
+                        citaId = rs.getInt(1);
+                    }
+                }
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) return rs.getInt(1);
+                if (servicioIds != null && !servicioIds.isEmpty()) {
+                    try (PreparedStatement ps = conn.prepareStatement(SQL_INS_SERVICIO)) {
+                        for (int sid : servicioIds) {
+                            ps.setInt(1, citaId);
+                            ps.setInt(2, sid);
+                            ps.setInt(3, cita.getBarberiaId());
+                            if (ps.executeUpdate() != 1) {
+                                throw new IllegalArgumentException("Servicio inválido o no activo en esta barbería: " + sid);
+                            }
+                        }
+                    }
+                    try (PreparedStatement ps = conn.prepareStatement(SQL_PRECIO)) {
+                        ps.setInt(1, citaId);
+                        ps.setInt(2, citaId);
+                        ps.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return citaId;
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                throw e;
             }
         }
-        throw new SQLException("No se pudo obtener el ID generado para la cita.");
+    }
+
+    public int registrarCita(Cita cita) throws SQLException {
+        return registrarCita(cita, List.of());
     }
 
     /**
@@ -103,6 +146,7 @@ public class CitaDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapearFila(rs));
             }
+            cargarServicios(conn, lista);
         }
         return lista;
     }
@@ -127,6 +171,7 @@ public class CitaDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapearFila(rs));
             }
+            cargarServicios(conn, lista);
         }
         return lista;
     }
@@ -147,28 +192,61 @@ public class CitaDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapearFila(rs));
             }
+            cargarServicios(conn, lista);
         }
         return lista;
     }
 
+    private void cargarServicios(Connection conn, List<Cita> citas) throws SQLException {
+        if (citas.isEmpty()) return;
+        try (PreparedStatement ps = conn.prepareStatement(SQL_SERVICIOS_CITA)) {
+            for (Cita c : citas) {
+                ps.setInt(1, c.getId());
+                List<Servicio> servicios = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        servicios.add(new Servicio(
+                                rs.getInt("id"),
+                                rs.getInt("barberia_id"),
+                                rs.getString("nombre"),
+                                rs.getString("descripcion"),
+                                rs.getDouble("precio"),
+                                rs.getInt("duracion_minutos"),
+                                rs.getBoolean("activo")
+                        ));
+                    }
+                }
+                c.setServicios(servicios);
+            }
+        }
+    }
+
     /**
      * Cambia el estado actual de una cita (ej. PENDIENTE -> COMPLETADA).
+     * Si soloEmpleadoId no es null, restringe el cambio únicamente si el barbero asignado coincide.
      * 
      * @param citaId ID de la cita
      * @param barberiaId ID de la barbería (para seguridad multi-tenant)
      * @param nuevoEstado El estado a asignar
+     * @param soloEmpleadoId ID del barbero si la petición proviene de un barbero (null para admin)
      * @return true si la actualización tuvo éxito, false si no se encontró
      * @throws SQLException si ocurre un error de base de datos
      */
-    public boolean cambiarEstado(int citaId, int barberiaId, EstadoCita nuevoEstado) throws SQLException {
+    public boolean cambiarEstado(int citaId, int barberiaId, EstadoCita nuevoEstado, Integer soloEmpleadoId) throws SQLException {
         try (Connection conn = Conexion.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(SQL_CAMBIAR_ESTADO)) {
 
             ps.setString(1, nuevoEstado.name());
             ps.setInt(2, citaId);
             ps.setInt(3, barberiaId);
+            ps.setObject(4, soloEmpleadoId, Types.INTEGER);
+            ps.setObject(5, soloEmpleadoId, Types.INTEGER);
             return ps.executeUpdate() > 0;
         }
+    }
+
+    public boolean cambiarEstado(int citaId, int barberiaId, EstadoCita nuevoEstado) throws SQLException {
+        return cambiarEstado(citaId, barberiaId, nuevoEstado, null);
     }
 
     // ─── Mapeo de ResultSet → Objeto ─────────────────────────────────
@@ -176,6 +254,7 @@ public class CitaDAO {
     /**
      * Mapea una fila del ResultSet a un objeto Cita,
      * inicializando también los objetos Cliente y Empleado anidados.
+     * Oculta PII sensible (documentos, emails no requeridos) para proteger la privacidad.
      * 
      * @param rs El ResultSet posicionado
      * @return Objeto Cita construido
@@ -184,7 +263,7 @@ public class CitaDAO {
     private Cita mapearFila(ResultSet rs) throws SQLException {
         Cliente cliente = new Cliente(
                 rs.getInt("cli_id"),
-                rs.getString("cli_doc"),
+                null, // SEC-01: No exponer documentoIdentidad
                 rs.getString("cli_tipo_doc"),
                 rs.getString("cli_nombre"),
                 rs.getString("cli_apellido"),
@@ -203,11 +282,11 @@ public class CitaDAO {
 
         Empleado empleado = new Empleado(
                 rs.getInt("emp_id"),
-                rs.getString("emp_doc"),
+                null, // SEC-01: No exponer documentoIdentidad
                 rs.getString("emp_tipo_doc"),
                 rs.getString("emp_nombre"),
                 rs.getString("emp_apellido"),
-                rs.getString("emp_email"),
+                null, // SEC-01: No exponer email privado del empleado en consultas de citas
                 rs.getString("emp_tel"),
                 null, // No se expone el hash
                 rs.getString("emp_foto"),

@@ -19,12 +19,18 @@ public class Barberia {
     private String logoUrl;
     private String descripcion;
     private boolean activa;
+    private String paisCodigo;
+    private String monedaCodigo;
+    private String zonaHoraria;
     private LocalDateTime fechaCreacion;
 
     // ─── Constructores ────────────────────────────────────────────────
 
     public Barberia() {
         this.activa = true;
+        this.paisCodigo = "CL";
+        this.monedaCodigo = "CLP";
+        this.zonaHoraria = "America/Santiago";
         this.fechaCreacion = LocalDateTime.now();
     }
 
@@ -49,20 +55,18 @@ public class Barberia {
 
     /**
      * Constructor completo para carga desde base de datos.
-     * 
-     * @param id Identificador único
-     * @param nombre Nombre de la barbería
-     * @param direccion Ubicación física
-     * @param telefono Teléfono de contacto
-     * @param email Correo
-     * @param logoUrl URL al logo de la barbería
-     * @param descripcion Detalles adicionales
-     * @param activa Estado actual
-     * @param fechaCreacion Fecha de creación en el sistema
      */
     public Barberia(int id, String nombre, String direccion, String telefono,
                     String email, String logoUrl, String descripcion,
                     boolean activa, LocalDateTime fechaCreacion) {
+        this(id, nombre, direccion, telefono, email, logoUrl, descripcion,
+             activa, "CL", "CLP", "America/Santiago", fechaCreacion);
+    }
+
+    public Barberia(int id, String nombre, String direccion, String telefono,
+                    String email, String logoUrl, String descripcion,
+                    boolean activa, String paisCodigo, String monedaCodigo,
+                    String zonaHoraria, LocalDateTime fechaCreacion) {
         this.id = id;
         this.nombre = nombre;
         this.direccion = direccion;
@@ -71,6 +75,9 @@ public class Barberia {
         this.logoUrl = logoUrl;
         this.descripcion = descripcion;
         this.activa = activa;
+        this.paisCodigo = paisCodigo != null ? paisCodigo.trim() : "CL";
+        this.monedaCodigo = monedaCodigo != null ? monedaCodigo.trim() : "CLP";
+        this.zonaHoraria = zonaHoraria != null ? zonaHoraria : "America/Santiago";
         this.fechaCreacion = fechaCreacion;
     }
 
@@ -99,6 +106,15 @@ public class Barberia {
 
     public boolean isActiva() { return activa; }
     public void setActiva(boolean activa) { this.activa = activa; }
+
+    public String getPaisCodigo() { return paisCodigo; }
+    public void setPaisCodigo(String paisCodigo) { this.paisCodigo = paisCodigo; }
+
+    public String getMonedaCodigo() { return monedaCodigo; }
+    public void setMonedaCodigo(String monedaCodigo) { this.monedaCodigo = monedaCodigo; }
+
+    public String getZonaHoraria() { return zonaHoraria; }
+    public void setZonaHoraria(String zonaHoraria) { this.zonaHoraria = zonaHoraria; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }

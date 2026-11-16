@@ -50,8 +50,8 @@ public class SuscripcionController {
      * @throws SQLException si ocurre un error de BD
      */
     private static void crear(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         Suscripcion suscripcion = ctx.bodyAsClass(Suscripcion.class);
         suscripcion.setBarberiaId(barberiaId);
@@ -68,8 +68,8 @@ public class SuscripcionController {
      * @throws NotFoundResponse si el plan no existe o no corresponde a esta barbería
      */
     private static void actualizar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
         int suscripcionId = Integer.parseInt(ctx.pathParam("id"));
 
         Suscripcion suscripcion = ctx.bodyAsClass(Suscripcion.class);
@@ -88,9 +88,9 @@ public class SuscripcionController {
      * @throws NotFoundResponse si el plan no fue encontrado
      */
     private static void toggle(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
         int suscripcionId = Integer.parseInt(ctx.pathParam("id"));
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         if (!dao.toggleActiva(suscripcionId, barberiaId))
             throw new NotFoundResponse("Plan no encontrado.");

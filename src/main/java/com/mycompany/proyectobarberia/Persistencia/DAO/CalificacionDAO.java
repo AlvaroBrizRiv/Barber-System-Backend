@@ -28,13 +28,31 @@ public class CalificacionDAO {
             "FROM calificaciones WHERE barberia_id = ? ORDER BY fecha DESC";
 
     private static final String SQL_PROMEDIO_BARBERIA =
-            "SELECT AVG(estrellas_barberia) AS promedio FROM calificaciones WHERE barberia_id = ?";
+            "SELECT AVG(CAST(estrellas_barberia AS FLOAT)) AS promedio FROM calificaciones WHERE barberia_id = ?";
 
     private static final String SQL_PROMEDIO_BARBERO =
-            "SELECT AVG(estrellas_barbero) AS promedio FROM calificaciones WHERE empleado_id = ? AND barberia_id = ?";
+            "SELECT AVG(CAST(estrellas_barbero AS FLOAT)) AS promedio FROM calificaciones WHERE empleado_id = ? AND barberia_id = ?";
 
     private static final String SQL_YA_CALIFICADA =
             "SELECT COUNT(*) FROM calificaciones WHERE cita_id = ?";
+
+    private static final String SQL_CITA_CALIFICABLE =
+            "SELECT barberia_id, empleado_id FROM citas WHERE id = ? AND cliente_id = ? AND estado = 'COMPLETADA'";
+
+    /**
+     * Valida que la cita pertenezca al cliente autenticado y tenga estado COMPLETADA.
+     * Retorna [barberiaId, empleadoId] o null si no califica.
+     */
+    public int[] datosCitaCalificable(int citaId, int clienteId) throws SQLException {
+        try (Connection c = Conexion.obtenerConexion();
+             PreparedStatement ps = c.prepareStatement(SQL_CITA_CALIFICABLE)) {
+            ps.setInt(1, citaId);
+            ps.setInt(2, clienteId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? new int[]{rs.getInt("barberia_id"), rs.getInt("empleado_id")} : null;
+            }
+        }
+    }
 
     // ─────────────────────────────────────────────────────────────────
 

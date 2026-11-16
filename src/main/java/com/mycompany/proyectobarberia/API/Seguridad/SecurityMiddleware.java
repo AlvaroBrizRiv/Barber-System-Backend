@@ -2,11 +2,15 @@ package com.mycompany.proyectobarberia.API.Seguridad;
 
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import io.javalin.http.Context;
+import io.javalin.http.HandlerType;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.ForbiddenResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -26,18 +30,24 @@ import java.util.Set;
  */
 public class SecurityMiddleware {
 
-    // Endpoints que NO requieren autenticación
-    private static final Set<String> RUTAS_PUBLICAS = Set.of(
-            "/api",
-            "/api/",
+    private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
+
+    // Endpoints que NO requieren autenticación para cualquier método (POST, etc.)
+    private static final Set<String> PUBLICAS_ANY = Set.of(
             "/api/auth/login",
             "/api/auth/registro",
             "/api/auth/sso/google",
-            "/api/auth/mfa/verify",
+            "/api/auth/mfa/verify"
+    );
+
+    // Endpoints públicos exclusivamente para GET
+    private static final Set<String> PUBLICAS_GET = Set.of(
+            "/api",
+            "/api/",
             "/api/barberias"
     );
 
-    // Prefijos de endpoints públicos (para rutas como /api/barberias/{id})
+    // Prefijos de endpoints públicos exclusivamente para GET
     private static final Set<String> PREFIJOS_PUBLICOS = Set.of(
             "/api/barberias/",
             "/api/servicios/barberia/",
@@ -48,6 +58,17 @@ public class SecurityMiddleware {
             "/api/productos/barberia/",
             "/api/suscripciones/barberia/"
     );
+
+    /**
+     * Determina si la ruta y método HTTP solicitados corresponden a un recurso público.
+     * Los prefijos y rutas de consulta son públicos EXCLUSIVAMENTE para peticiones GET.
+     */
+    private static boolean esPublica(Context ctx) {
+        String ruta = ctx.path();
+        if (PUBLICAS_ANY.contains(ruta)) return true;
+        if (ctx.method() != HandlerType.GET) return false;
+        return PUBLICAS_GET.contains(ruta) || PREFIJOS_PUBLICOS.stream().anyMatch(ruta::startsWith);
+    }
 
     // ─── Validación del JWT en cada request ──────────────────────────
 
@@ -60,15 +81,14 @@ public class SecurityMiddleware {
      */
     public static void validar(Context ctx) {
         // OPTIONS siempre pasa (pre-flight CORS)
-        if ("OPTIONS".equalsIgnoreCase(ctx.method().name())) return;
+        if (ctx.method() == HandlerType.OPTIONS) {
+            return;
+        }
 
-        String ruta = ctx.path();
-
-        // Rutas completamente públicas
-        if (RUTAS_PUBLICAS.contains(ruta)) return;
-
-        // Prefijos públicos (ej: /api/barberias/5)
-        if (PREFIJOS_PUBLICOS.stream().anyMatch(ruta::startsWith)) return;
+        // Rutas y prefijos públicos
+        if (esPublica(ctx)) {
+            return;
+        }
 
         // Todas las demás rutas requieren JWT válido
         String authHeader = ctx.header("Authorization");
@@ -86,8 +106,7 @@ public class SecurityMiddleware {
             ctx.attribute("barberiaId", JwtUtils.getBarberiaId(claims));
 
         } catch (JwtException e) {
-            System.err.println("[JWT ERROR] Fallo al validar token: " + e.getMessage());
-            e.printStackTrace();
+            LOG.warn("Token inválido desde {}: {}", ctx.ip(), e.getMessage());
             throw new UnauthorizedResponse("Token inválido o expirado. Inicia sesión nuevamente.");
         }
     }
@@ -124,6 +143,29 @@ public class SecurityMiddleware {
      */
     public static Integer getBarberiaId(Context ctx) {
         return ctx.attribute("barberiaId");
+    }
+
+    /**
+     * Valida que el rol del usuario coincida exactamente con alguno de los permitidos.
+     * Evita escalamiento de privilegios por ordinal y garantiza asignación de rol estricto.
+     */
+    public static void requerirRolExacto(Context ctx, Rol... permitidos) {
+        Rol r = getRol(ctx);
+        if (r == null || !Arrays.asList(permitidos).contains(r)) {
+            throw new ForbiddenResponse("Acceso denegado.");
+        }
+    }
+
+    /**
+     * Obtiene el barberiaId obligatorio del JWT.
+     * Lanza ForbiddenResponse si el usuario no pertenece a ninguna barbería (ej. SUPERADMIN o CLIENTE).
+     */
+    public static int requerirBarberiaId(Context ctx) {
+        Integer id = getBarberiaId(ctx);
+        if (id == null) {
+            throw new ForbiddenResponse("Operación solo para personal de una barbería.");
+        }
+        return id;
     }
 
     /**

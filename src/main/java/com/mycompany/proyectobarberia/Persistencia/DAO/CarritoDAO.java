@@ -16,10 +16,13 @@ import java.util.Map;
  */
 public class CarritoDAO {
 
-    private static final String SQL_AGREGAR =
+    private static final String SQL_SUMAR_CANTIDAD =
+            "UPDATE carritos_items SET cantidad = cantidad + ? " +
+            "WHERE cliente_id = ? AND barberia_id = ? AND producto_id = ?";
+
+    private static final String SQL_INSERTAR_ITEM =
             "INSERT INTO carritos_items (cliente_id, barberia_id, producto_id, cantidad) " +
-            "VALUES (?, ?, ?, ?) " +
-            "ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)";
+            "SELECT ?, ?, id, ? FROM productos WHERE id = ? AND barberia_id = ? AND activo = 1";
 
     private static final String SQL_ACTUALIZAR_CANTIDAD =
             "UPDATE carritos_items SET cantidad = ? " +
@@ -36,14 +39,14 @@ public class CarritoDAO {
             "       p.nombre, p.precio, p.imagen_url, p.stock, p.activo " +
             "FROM carritos_items ci " +
             "INNER JOIN productos p ON ci.producto_id = p.id " +
-            "WHERE ci.cliente_id = ? AND ci.barberia_id = ? AND p.activo = TRUE " +
+            "WHERE ci.cliente_id = ? AND ci.barberia_id = ? AND p.activo = 1 " +
             "ORDER BY ci.fecha_agregado";
 
     // ─── Escritura ────────────────────────────────────────────────────
 
     /**
      * Agrega un ítem al carrito. Si el producto ya existe para este cliente,
-     * suma la cantidad a la ya existente mediante "ON DUPLICATE KEY UPDATE".
+     * suma la cantidad a la ya existente.
      * 
      * @param clienteId ID del cliente dueño del carrito
      * @param barberiaId ID de la barbería
@@ -53,13 +56,26 @@ public class CarritoDAO {
      */
     public void agregarItem(int clienteId, int barberiaId, int productoId, int cantidad)
             throws SQLException {
-        try (Connection conn = Conexion.obtenerConexion();
-             PreparedStatement ps = conn.prepareStatement(SQL_AGREGAR)) {
-            ps.setInt(1, clienteId);
-            ps.setInt(2, barberiaId);
-            ps.setInt(3, productoId);
-            ps.setInt(4, cantidad);
-            ps.executeUpdate();
+        try (Connection conn = Conexion.obtenerConexion()) {
+            try (PreparedStatement psUpdate = conn.prepareStatement(SQL_SUMAR_CANTIDAD)) {
+                psUpdate.setInt(1, cantidad);
+                psUpdate.setInt(2, clienteId);
+                psUpdate.setInt(3, barberiaId);
+                psUpdate.setInt(4, productoId);
+                if (psUpdate.executeUpdate() > 0) {
+                    return;
+                }
+            }
+            try (PreparedStatement psInsert = conn.prepareStatement(SQL_INSERTAR_ITEM)) {
+                psInsert.setInt(1, clienteId);
+                psInsert.setInt(2, barberiaId);
+                psInsert.setInt(3, cantidad);
+                psInsert.setInt(4, productoId);
+                psInsert.setInt(5, barberiaId);
+                if (psInsert.executeUpdate() == 0) {
+                    throw new IllegalArgumentException("Producto no disponible o no pertenece a esta barbería.");
+                }
+            }
         }
     }
 
@@ -121,6 +137,54 @@ public class CarritoDAO {
             ps.setInt(1, clienteId);
             ps.setInt(2, barberiaId);
             ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Realiza el checkout del carrito atómicamente verificando que haya stock suficiente
+     * para cada ítem, descontando el inventario y vaciando el carrito (SEC-04).
+     */
+    public void checkout(int clienteId, int barberiaId) throws SQLException {
+        try (Connection c = Conexion.obtenerConexion()) {
+            c.setAutoCommit(false);
+            try {
+                int esperados, ok;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT COUNT(*) FROM carritos_items WHERE cliente_id = ? AND barberia_id = ?")) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        esperados = rs.getInt(1);
+                    }
+                }
+
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE p SET p.stock = p.stock - ci.cantidad FROM productos p " +
+                        "INNER JOIN carritos_items ci ON ci.producto_id = p.id " +
+                        "WHERE ci.cliente_id = ? AND ci.barberia_id = ? AND p.barberia_id = ? " +
+                        "AND p.activo = 1 AND p.stock >= ci.cantidad")) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    ps.setInt(3, barberiaId);
+                    ok = ps.executeUpdate();
+                }
+
+                if (esperados == 0 || ok != esperados) {
+                    throw new IllegalStateException("Stock insuficiente o carrito vacío.");
+                }
+
+                try (PreparedStatement ps = c.prepareStatement(SQL_VACIAR_CARRITO)) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    ps.executeUpdate();
+                }
+
+                c.commit();
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
         }
     }
 
