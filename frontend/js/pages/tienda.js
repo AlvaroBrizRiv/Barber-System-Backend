@@ -1,5 +1,5 @@
 const urlParams = new URLSearchParams(window.location.search);
-let BARBERIA_ID = parseInt(urlParams.get('barberiaId')) || 1;
+let BARBERIA_ID = Number.parseInt(urlParams.get('barberiaId')) || 1;
 let todosLosProductos = [];
 let carritoData = [];
 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function cargarBarberiaInfo() {
     try {
         const b = await Api.get(`/barberias/${BARBERIA_ID}`);
-        if (b && b.nombre) {
+        if (b?.nombre) {
             document.getElementById('txtBarberiaNombre').textContent = b.nombre;
         }
     } catch (e) {
@@ -27,7 +27,7 @@ async function cargarProductos() {
         const res = await Api.get(`/productos/barberia/${BARBERIA_ID}`);
         todosLosProductos = (res || []).filter(p => p.activo);
         renderizarProductos(todosLosProductos);
-    } catch (err) {
+    } catch {
         document.getElementById('gridProductos').innerHTML = `<div class="empty-cart-state">Error al cargar productos de la barbería.</div>`;
     }
 }
@@ -92,12 +92,13 @@ async function refrescarCarrito() {
         return;
     }
     try {
-        carritoData = await Api.get(`/carrito/${BARBERIA_ID}`);
-        const totalItems = carritoData.reduce((acc, item) => acc + item.cantidad, 0);
+        const respuesta = await Api.get(`/carrito/${BARBERIA_ID}`);
+        carritoData = respuesta.items || [];
+        const totalItems = carritoData.reduce((acc, i) => acc + i.cantidad, 0);
         document.getElementById('cartCountBadge').textContent = totalItems;
         renderizarDrawerItems();
     } catch (err) {
-        console.warn("Error al cargar carrito persistente", err);
+        console.warn("Error al cargar carrito", err);
     }
 }
 
@@ -123,9 +124,9 @@ async function cambiarCantidad(productoId, delta, cantidadActual) {
     const nuevaCantidad = cantidadActual + delta;
     try {
         if (nuevaCantidad <= 0) {
-            await Api.request(`/carrito/${BARBERIA_ID}/item/${productoId}`, { method: 'DELETE' });
+            await Api.request(`/carrito/${BARBERIA_ID}/${productoId}`, { method: 'DELETE' });
         } else {
-            await Api.put(`/carrito/${BARBERIA_ID}/item/${productoId}`, {
+            await Api.put(`/carrito/${BARBERIA_ID}/${productoId}`, {
                 cantidad: nuevaCantidad
             });
         }
@@ -137,7 +138,7 @@ async function cambiarCantidad(productoId, delta, cantidadActual) {
 
 async function eliminarDelCarrito(productoId) {
     try {
-        await Api.request(`/carrito/${BARBERIA_ID}/item/${productoId}`, { method: 'DELETE' });
+        await Api.carrito.eliminar(BARBERIA_ID, productoId);
         await refrescarCarrito();
     } catch (err) {
         alert(err.message || 'Error al eliminar producto');
@@ -194,8 +195,9 @@ function abrirCarrito() {
         window.location.href = 'login.html';
         return;
     }
-    refrescarCarrito();
+   void refrescarCarrito();
     document.getElementById('cartOverlay').classList.add('active');
+    
 }
 
 function cerrarCarrito(e) {

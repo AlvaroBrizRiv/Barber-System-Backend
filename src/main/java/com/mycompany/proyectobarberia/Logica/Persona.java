@@ -1,6 +1,7 @@
 package com.mycompany.proyectobarberia.Logica;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Clase base abstracta para todos los usuarios del sistema.
@@ -28,7 +29,7 @@ public abstract class Persona {
     private String apellido;
     private String email;
     private String telefono;
-    private String passwordHash;        // BCrypt hash — NUNCA texto plano, excluir de respuestas JSON
+    private transient String passwordHash; // BCrypt hash — transient para que Gson no lo serialice a JSON
     private String fotoUrl;             // URL externa de foto de perfil
     private String idiomaPreferido;     // es | pt-BR
     private String paisCodigo;          // ISO 3166-1 alpha-2
@@ -39,9 +40,9 @@ public abstract class Persona {
 
     // ─── Constructores ────────────────────────────────────────────────
 
-    public Persona() {
+    protected Persona() {
         this.activo = true;
-        this.fechaRegistro = LocalDateTime.now();
+        this.fechaRegistro = LocalDateTime.now(ZoneId.systemDefault());
         this.tipoDocumento = "RUT";
         this.idiomaPreferido = "es";
         this.paisCodigo = "CL";
@@ -50,7 +51,8 @@ public abstract class Persona {
     }
 
     /** Constructor completo para carga desde base de datos. */
-    public Persona(int id, String documentoIdentidad, String tipoDocumento,
+    @SuppressWarnings ("squid:S00107")
+    protected Persona(int id, String documentoIdentidad, String tipoDocumento,
                    String nombre, String apellido, String email, String telefono,
                    String passwordHash, String fotoUrl, String idiomaPreferido,
                    String paisCodigo, String authProvider, boolean mfaHabilitado,

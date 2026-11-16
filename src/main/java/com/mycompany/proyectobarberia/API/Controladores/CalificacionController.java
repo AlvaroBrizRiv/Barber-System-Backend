@@ -6,6 +6,7 @@ import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.CalificacionDAO;
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.Context;
 
 import java.sql.SQLException;
@@ -75,8 +76,19 @@ public class CalificacionController {
         ctx.json(Map.of("barberoId", empleadoId, "promedio", promedio));
     }
 
+    private static int leerEntero(Map<String, Object> body, String clave, boolean obligatorio, int porDefecto) {
+        Object v = body.get(clave);
+        if (v == null) {
+            if (obligatorio) throw new BadRequestResponse("Falta el campo: " + clave);
+            return porDefecto;
+        }
+        if (!(v instanceof Number n)) throw new BadRequestResponse("El campo " + clave + " debe ser un número.");
+        return n.intValue();
+    }
+
     /**
      * Registra una calificación dejada por un cliente sobre una cita COMPLETADA.
+     * Valida que la cita pertenezca al cliente y extrae barberiaId/empleadoId desde la BD (SEC-03).
      * 
      * @param ctx Contexto HTTP de Javalin con los detalles de la calificación en el body
      * @throws SQLException si ocurre un error de base de datos
@@ -84,16 +96,23 @@ public class CalificacionController {
      */
     @SuppressWarnings("unchecked")
     private static void calificar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.CLIENTE);
+        // Valida que el rol sea exactamente CLIENTE (BUG-06)
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.CLIENTE);
         int clienteId = SecurityMiddleware.getUserId(ctx);
 
         Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        int citaId        = ((Number) body.get("citaId")).intValue();
-        int barberiaId    = ((Number) body.get("barberiaId")).intValue();
-        int empleadoId    = ((Number) body.get("empleadoId")).intValue();
-        int estBarberia   = ((Number) body.get("estrellasBarberia")).intValue();
-        int estBarbero    = ((Number) body.get("estrellasBarbero")).intValue();
+        int citaId        = leerEntero(body, "citaId", true, 0);
+        int estBarberia   = leerEntero(body, "estrellasBarberia", true, 0);
+        int estBarbero    = leerEntero(body, "estrellasBarbero", true, 0);
         String comentario = (String) body.getOrDefault("comentario", "");
+
+        // SEC-03: Validar propiedad y estado COMPLETADA de la cita en BD (previene IDOR)
+        int[] datosCita = dao.datosCitaCalificable(citaId, clienteId);
+        if (datosCita == null) {
+            throw new ForbiddenResponse("Solo puedes calificar tus citas completadas.");
+        }
+        int barberiaId = datosCita[0];
+        int empleadoId = datosCita[1];
 
         // Verificar que no haya sido calificada antes
         if (dao.yaFueCalificada(citaId)) {

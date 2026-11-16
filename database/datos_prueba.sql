@@ -9,7 +9,7 @@
 --   - Calificaciones y promedio de estrellas
 --
 -- Contraseñas (BCrypt generadas con cost=12):
---   Admin123!   → admin@elcaballero.cl
+--   admin@elcaballero.cl   → admin@elcaballero.cl
 --   Barbero123! → juan@elcaballero.cl / miguel@elcaballero.cl
 --   Cliente123! → cliente@test.cl / cliente2@test.cl
 -- =====================================================================

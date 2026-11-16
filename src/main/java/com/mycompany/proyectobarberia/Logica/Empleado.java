@@ -13,13 +13,13 @@ public class Empleado extends Persona {
 
     private int barberiaId;
     private Rol rol;
-    private boolean activo;
 
     // ─── Constructores ────────────────────────────────────────────────
 
     public Empleado() {
         super();
-        this.activo = true;
+        this.barberiaId = 0;
+        this.rol = Rol.BARBERO;
     }
 
     /**
@@ -36,6 +36,7 @@ public class Empleado extends Persona {
      * @param barberiaId ID de la barbería a la que pertenece
      * @param rol Rol asignado (ej. BARBERO, ADMIN_BARBERIA)
      */
+    @SuppressWarnings("java:S107")
     public Empleado(String documentoIdentidad, String tipoDocumento, String nombre,
                     String apellido, String email, String telefono, String passwordHash,
                     String paisCodigo, int barberiaId, Rol rol) {
@@ -48,8 +49,8 @@ public class Empleado extends Persona {
         setTelefono(telefono);
         setPasswordHash(passwordHash);
         setPaisCodigo(paisCodigo);
-        this.barberiaId = barberiaId;
-        this.rol = rol;
+        setBarberiaId(barberiaId);
+        setRol(rol);
     }
 
     /**
@@ -74,6 +75,7 @@ public class Empleado extends Persona {
      * @param rol Rol del empleado
      * @param activo Estado activo del empleado
      */
+    @SuppressWarnings("java:S107")
     public Empleado(int id, String documentoIdentidad, String tipoDocumento,
                     String nombre, String apellido, String email, String telefono,
                     String passwordHash, String fotoUrl, String idiomaPreferido,
@@ -82,10 +84,9 @@ public class Empleado extends Persona {
                     int barberiaId, Rol rol, boolean activo) {
         super(id, documentoIdentidad, tipoDocumento, nombre, apellido, email, telefono,
               passwordHash, fotoUrl, idiomaPreferido, paisCodigo, authProvider,
-              mfaHabilitado, fechaRegistro, personaActiva);
+              mfaHabilitado, fechaRegistro, personaActiva && activo);
         this.barberiaId = barberiaId;
         this.rol = rol;
-        this.activo = activo;
     }
 
     // ─── Getters y Setters ────────────────────────────────────────────
@@ -96,8 +97,6 @@ public class Empleado extends Persona {
     public Rol getRol() { return rol; }
     public void setRol(Rol rol) { this.rol = rol; }
 
-//    public boolean isActivo() { return activo; }
-//    public void setActivo(boolean activo) { this.activo = activo; }
 
     /**
      * Verifica si este empleado es administrador de su barbería.

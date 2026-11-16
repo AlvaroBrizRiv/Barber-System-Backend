@@ -1,9 +1,13 @@
 package com.mycompany.proyectobarberia.API.Controladores;
-
 import com.mycompany.proyectobarberia.API.Seguridad.SecurityMiddleware;
 import com.mycompany.proyectobarberia.Logica.Cliente;
+import com.mycompany.proyectobarberia.Logica.Empleado;
+import com.mycompany.proyectobarberia.Logica.SuperAdmin;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.SuperAdminDAO;
+
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
@@ -30,6 +34,8 @@ public class PerfilController {
     }
 
     private static final ClienteDAO clienteDAO = new ClienteDAO();
+    private static final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private static final SuperAdminDAO superAdminDAO = new SuperAdminDAO();
 
     private static final String CAMPO_ID = "id";
     private static final String CAMPO_NOMBRE = "nombre";
@@ -49,6 +55,7 @@ public class PerfilController {
         ApiBuilder.put("/",  PerfilController::actualizarPerfil);
     }
 
+    
     /**
      * Devuelve el perfil del usuario autenticado (Cliente, Empleado o Admin).
      * 
@@ -57,7 +64,6 @@ public class PerfilController {
      * @throws NotFoundResponse si no se encuentra el perfil en la base de datos
      */
     private static void obtenerPerfil(Context ctx) throws SQLException {
-        SecurityMiddleware.validar(ctx);
         int userId = SecurityMiddleware.getUserId(ctx);
         Rol rol = SecurityMiddleware.getRol(ctx);
 
@@ -68,24 +74,39 @@ public class PerfilController {
             return;
         }
 
-        // Si es Empleado / Admin
-        com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO empDAO = new com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO();
-        com.mycompany.proyectobarberia.Logica.Empleado empleado = empDAO.buscarPorEmail("CAMPO_EMAIL");
-        if (empleado == null) throw new NotFoundResponse("Perfil no encontrado.");
+        if (rol == Rol.SUPERADMIN) {
+            SuperAdmin sa = superAdminDAO.buscarPorId(userId);
+            if (sa == null) throw new NotFoundResponse("Perfil no encontrado.");
+            Map<String, Object> perfil = new HashMap<>();
+            perfil.put(CAMPO_ID, sa.getId());
+            perfil.put(CAMPO_NOMBRE, sa.getNombre());
+            perfil.put(CAMPO_APELLIDO, sa.getApellido());
+            perfil.put(CAMPO_EMAIL, sa.getEmail());
+            perfil.put(CAMPO_TELEFONO, sa.getTelefono() != null ? sa.getTelefono() : "");
+            perfil.put(CAMPO_FOTO_URL, sa.getFotoUrl() != null ? sa.getFotoUrl() : "");
+            perfil.put(CAMPO_IDIOMA, sa.getIdiomaPreferido());
+            perfil.put(CAMPO_PAIS_CODIGO, sa.getPaisCodigo());
+            perfil.put(CAMPO_ROL, Rol.SUPERADMIN.name());
+            ctx.json(perfil);
+            return;
+        }
 
+        
+        Empleado emp = empleadoDAO.buscarPorId(userId);
+        if (emp == null) throw new NotFoundResponse("Perfil no encontrado.");
         Map<String, Object> perfil = new HashMap<>();
-        perfil.put(CAMPO_ID,              empleado.getId());
-        perfil.put(CAMPO_NOMBRE,          empleado.getNombre() != null ? empleado.getNombre() : "");
-        perfil.put(CAMPO_APELLIDO,        empleado.getApellido() != null ? empleado.getApellido() : "");
-        perfil.put(CAMPO_EMAIL,           empleado.getEmail());
-        perfil.put(CAMPO_TELEFONO,        empleado.getTelefono() != null ? empleado.getTelefono() : "");
-        perfil.put(CAMPO_FOTO_URL,         empleado.getFotoUrl() != null ? empleado.getFotoUrl() : "");
-        perfil.put(CAMPO_IDIOMA, empleado.getIdiomaPreferido() != null ? empleado.getIdiomaPreferido() : "es");
-        perfil.put(CAMPO_PAIS_CODIGO,      empleado.getPaisCodigo());
-        perfil.put(CAMPO_ROL,             empleado.getRol().name());
-        perfil.put(CAMPO_BARBERIA_ID,      empleado.getBarberiaId());
+        perfil.put(CAMPO_ID, emp.getId());
+        perfil.put(CAMPO_NOMBRE, emp.getNombre());
+        perfil.put(CAMPO_APELLIDO, emp.getApellido());
+        perfil.put(CAMPO_EMAIL, emp.getEmail());
+        perfil.put(CAMPO_TELEFONO, emp.getTelefono() != null ? emp.getTelefono() : "");
+        perfil.put(CAMPO_FOTO_URL, emp.getFotoUrl() != null ? emp.getFotoUrl() : "");
+        perfil.put(CAMPO_IDIOMA, emp.getIdiomaPreferido());
+        perfil.put(CAMPO_PAIS_CODIGO, emp.getPaisCodigo());
+        perfil.put(CAMPO_ROL, emp.getRol().name());
+        perfil.put(CAMPO_BARBERIA_ID, emp.getBarberiaId());
         ctx.json(perfil);
-    }
+        }
 
     /**
      * Actualiza campos seguros del perfil del usuario autenticado.
@@ -96,7 +117,6 @@ public class PerfilController {
      */
     @SuppressWarnings("unchecked")
     private static void actualizarPerfil(Context ctx) throws SQLException {
-        SecurityMiddleware.validar(ctx);
         int userId = SecurityMiddleware.getUserId(ctx);
 
         Map<String, String> body = ctx.bodyAsClass(Map.class);

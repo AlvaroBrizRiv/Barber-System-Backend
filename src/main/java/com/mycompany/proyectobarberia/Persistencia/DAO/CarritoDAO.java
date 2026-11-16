@@ -22,7 +22,7 @@ public class CarritoDAO {
 
     private static final String SQL_INSERTAR_ITEM =
             "INSERT INTO carritos_items (cliente_id, barberia_id, producto_id, cantidad) " +
-            "VALUES (?, ?, ?, ?)";
+            "SELECT ?, ?, id, ? FROM productos WHERE id = ? AND barberia_id = ? AND activo = 1";
 
     private static final String SQL_ACTUALIZAR_CANTIDAD =
             "UPDATE carritos_items SET cantidad = ? " +
@@ -69,9 +69,12 @@ public class CarritoDAO {
             try (PreparedStatement psInsert = conn.prepareStatement(SQL_INSERTAR_ITEM)) {
                 psInsert.setInt(1, clienteId);
                 psInsert.setInt(2, barberiaId);
-                psInsert.setInt(3, productoId);
-                psInsert.setInt(4, cantidad);
-                psInsert.executeUpdate();
+                psInsert.setInt(3, cantidad);
+                psInsert.setInt(4, productoId);
+                psInsert.setInt(5, barberiaId);
+                if (psInsert.executeUpdate() == 0) {
+                    throw new IllegalArgumentException("Producto no disponible o no pertenece a esta barbería.");
+                }
             }
         }
     }
@@ -134,6 +137,54 @@ public class CarritoDAO {
             ps.setInt(1, clienteId);
             ps.setInt(2, barberiaId);
             ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Realiza el checkout del carrito atómicamente verificando que haya stock suficiente
+     * para cada ítem, descontando el inventario y vaciando el carrito (SEC-04).
+     */
+    public void checkout(int clienteId, int barberiaId) throws SQLException {
+        try (Connection c = Conexion.obtenerConexion()) {
+            c.setAutoCommit(false);
+            try {
+                int esperados, ok;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "SELECT COUNT(*) FROM carritos_items WHERE cliente_id = ? AND barberia_id = ?")) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        esperados = rs.getInt(1);
+                    }
+                }
+
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE p SET p.stock = p.stock - ci.cantidad FROM productos p " +
+                        "INNER JOIN carritos_items ci ON ci.producto_id = p.id " +
+                        "WHERE ci.cliente_id = ? AND ci.barberia_id = ? AND p.barberia_id = ? " +
+                        "AND p.activo = 1 AND p.stock >= ci.cantidad")) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    ps.setInt(3, barberiaId);
+                    ok = ps.executeUpdate();
+                }
+
+                if (esperados == 0 || ok != esperados) {
+                    throw new IllegalStateException("Stock insuficiente o carrito vacío.");
+                }
+
+                try (PreparedStatement ps = c.prepareStatement(SQL_VACIAR_CARRITO)) {
+                    ps.setInt(1, clienteId);
+                    ps.setInt(2, barberiaId);
+                    ps.executeUpdate();
+                }
+
+                c.commit();
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
         }
     }
 

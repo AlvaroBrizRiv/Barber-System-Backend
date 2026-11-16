@@ -53,8 +53,8 @@ public class ServicioController {
      * @throws BadRequestResponse si faltan campos obligatorios
      */
     private static void crear(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         Servicio servicio = ctx.bodyAsClass(Servicio.class);
         servicio.setBarberiaId(barberiaId); // Siempre del JWT, no del body
@@ -75,8 +75,8 @@ public class ServicioController {
      * @throws NotFoundResponse si el servicio no existe o no corresponde a esta barbería
      */
     private static void actualizar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
         int servicioId = Integer.parseInt(ctx.pathParam("id"));
 
         Servicio servicio = ctx.bodyAsClass(Servicio.class);
@@ -95,9 +95,9 @@ public class ServicioController {
      * @throws NotFoundResponse si el servicio no existe o faltan permisos
      */
     private static void desactivar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
         int servicioId = Integer.parseInt(ctx.pathParam("id"));
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         if (!dao.desactivar(servicioId, barberiaId))
             throw new NotFoundResponse("Servicio no encontrado.");

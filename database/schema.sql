@@ -22,7 +22,7 @@ BEGIN
         WITH PASSWORD = N'Barberia1234!',
              DEFAULT_DATABASE = [barberia_db],
              CHECK_EXPIRATION = OFF,
-             CHECK_POLICY = OFF;
+             CHECK_POLICY = ON;
 END
 ELSE
 BEGIN
@@ -30,7 +30,7 @@ BEGIN
         WITH PASSWORD = N'Barberia1234!',
              DEFAULT_DATABASE = [barberia_db],
              CHECK_EXPIRATION = OFF,
-             CHECK_POLICY = OFF;
+             CHECK_POLICY = ON;
     ALTER LOGIN [barberia_user] ENABLE;
 END
 GO
@@ -42,7 +42,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'barberia_use
 BEGIN
     CREATE USER [barberia_user] FOR LOGIN [barberia_user];
 END
-ALTER ROLE [db_owner] ADD MEMBER [barberia_user];
+ALTER ROLE [db_datareader] ADD MEMBER [barberia_user];
+ALTER ROLE [db_datawriter] ADD MEMBER [barberia_user];
 GO
 
 -- ─── LIMPIEZA PREVIA PARA RE-EJECUCIÓN SEGURA ───────────────────────
@@ -189,6 +190,8 @@ CREATE TABLE citas (
 CREATE INDEX idx_citas_barberia_fecha ON citas(barberia_id, fecha);
 CREATE INDEX idx_citas_empleado_fecha ON citas(empleado_id, fecha);
 CREATE INDEX idx_citas_cliente        ON citas(cliente_id);
+-- SEC-04: Índice único anti doble reserva en el mismo horario para un barbero (excluye canceladas)
+CREATE UNIQUE INDEX ux_citas_barbero_slot ON citas(empleado_id, fecha, hora) WHERE estado <> 'CANCELADA';
 GO
 
 -- =====================================================================

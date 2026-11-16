@@ -4,36 +4,55 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.mycompany.proyectobarberia.API.Seguridad.JwtUtils;
 import com.mycompany.proyectobarberia.Logica.Cliente;
 import com.mycompany.proyectobarberia.Logica.Empleado;
+import com.mycompany.proyectobarberia.Logica.SuperAdmin;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
 import com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO;
+import com.mycompany.proyectobarberia.Persistencia.DAO.SuperAdminDAO;
 import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.ConflictResponse;
 import io.javalin.http.Context;
 import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.util.NaiveRateLimit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Controlador REST para autenticación de usuarios.
  *
  * Endpoints:
- *   POST /api/auth/login         → Login unificado (cliente, barbero, admin).
+ *   POST /api/auth/login         → Login unificado (cliente, barbero, admin, superadmin).
  *   POST /api/auth/registro      → Auto-registro de clientes.
  *   GET  /api/auth/sso/google    → STUB SSO Google (próximamente).
  *   POST /api/auth/mfa/verify    → STUB verificación MFA (próximamente).
  *
- * Seguridad PII:
+ * Seguridad PII y OWASP:
  *   - BCrypt cost=12 para hashing de contraseñas.
  *   - passwordHash NUNCA se incluye en las respuestas JSON.
  *   - Mismo mensaje de error para email no encontrado y contraseña incorrecta
  *     (evita enumeración de usuarios).
+ *   - Mitigación de timing attack mediante verificación de hash falso.
+ *   - Rate limiting por IP/ruta con NaiveRateLimit.
  */
 public class AuthController {
 
-    private static final ClienteDAO  clienteDAO  = new ClienteDAO();
-    private static final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private static final Logger LOG = LoggerFactory.getLogger(AuthController.class);
+
+    private AuthController(){
+        //Constructor privado
+    }
+    
+    private static final ClienteDAO    clienteDAO    = new ClienteDAO();
+    private static final EmpleadoDAO   empleadoDAO   = new EmpleadoDAO();
+    private static final SuperAdminDAO superAdminDAO = new SuperAdminDAO();
+
+    // Hash ficticio precalculado para igualar el tiempo de respuesta ante usuarios inexistentes (timing attack)
+    private static final String HASH_FALSO = BCrypt.withDefaults().hashToString(12, "x".toCharArray());
 
     public static void registrarRutas() {
         ApiBuilder.post("/login",       AuthController::login);
@@ -43,11 +62,20 @@ public class AuthController {
         ApiBuilder.post("/mfa/verify",  AuthController::mfaVerifyStub);
     }
 
+    /**
+     * Valida la longitud y complejidad básica de una contraseña.
+     */
+    public static void validarPassword(String p) {
+        if (p == null || p.length() < 8 || p.length() > 72) {
+            throw new BadRequestResponse("La contraseña debe tener entre 8 y 72 caracteres.");
+        }
+    }
+
     // ─── POST /api/auth/login ─────────────────────────────────────────
 
     /**
      * Maneja el proceso de inicio de sesión unificado.
-     * Busca primero en empleados y luego en clientes.
+     * Busca en empleados, clientes y superadministradores.
      * 
      * @param ctx Contexto HTTP de Javalin con el payload de inicio de sesión
      * @throws SQLException si ocurre un error en la base de datos
@@ -56,6 +84,9 @@ public class AuthController {
      */
     @SuppressWarnings("unchecked")
     private static void login(Context ctx) throws SQLException {
+        // SEC-07: Rate limiting (máximo 10 intentos por cada 10 minutos por IP)
+        NaiveRateLimit.requestPerTimeUnit(ctx, 10, TimeUnit.MINUTES);
+
         // Parsea el cuerpo de la petición como un mapa para extraer credenciales
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String email    = body.get("email");
@@ -65,7 +96,7 @@ public class AuthController {
             throw new BadRequestResponse("Email y contraseña son requeridos.");
         }
 
-        // Orden: empleados (admin/barbero) primero, luego clientes
+        // 1. Empleados (admin/barbero)
         Empleado empleado = empleadoDAO.buscarPorEmail(email);
         if (empleado != null) {
             verificarPassword(password, empleado.getPasswordHash());
@@ -90,6 +121,7 @@ public class AuthController {
             return;
         }
 
+        // 2. Clientes
         Cliente cliente = clienteDAO.buscarPorEmail(email);
         if (cliente != null) {
             verificarPassword(password, cliente.getPasswordHash());
@@ -113,6 +145,32 @@ public class AuthController {
             return;
         }
 
+        // 3. SuperAdministradores (BUG-06)
+        SuperAdmin sa = superAdminDAO.buscarPorEmail(email);
+        if (sa != null) {
+            verificarPassword(password, sa.getPasswordHash());
+            String token = JwtUtils.generarToken(sa.getId(), Rol.SUPERADMIN, null);
+
+            Map<String, Object> usuarioMap = new java.util.HashMap<>();
+            usuarioMap.put("id", sa.getId());
+            usuarioMap.put("nombre", sa.getNombre() != null ? sa.getNombre() : "");
+            usuarioMap.put("apellido", sa.getApellido() != null ? sa.getApellido() : "");
+            usuarioMap.put("email", sa.getEmail());
+            usuarioMap.put("idiomaPreferido", sa.getIdiomaPreferido() != null ? sa.getIdiomaPreferido() : "es");
+
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("token", token);
+            resp.put("rol", Rol.SUPERADMIN.name());
+            resp.put("usuario", usuarioMap);
+
+            ctx.json(resp);
+            return;
+        }
+
+        // SEC-07: Mitigación de timing attack calculando verificación con hash falso
+        BCrypt.verifyer().verify(password.toCharArray(), HASH_FALSO);
+
+        LOG.warn("Intento de login fallido para {}", email);
         // Mismo mensaje: no revelar si el email existe (previene user enumeration)
         throw new UnauthorizedResponse("Credenciales incorrectas.");
     }
@@ -128,6 +186,9 @@ public class AuthController {
      */
     @SuppressWarnings("unchecked")
     private static void registroCliente(Context ctx) throws SQLException {
+        // SEC-07: Rate limiting (máximo 10 registros por cada 10 minutos por IP)
+        NaiveRateLimit.requestPerTimeUnit(ctx, 10, TimeUnit.MINUTES);
+
         // Deserializa el cuerpo JSON de la petición
         Map<String, String> body = ctx.bodyAsClass(Map.class);
 
@@ -146,15 +207,22 @@ public class AuthController {
                 "Campos requeridos: documentoIdentidad, nombre, apellido, email, password.");
         }
 
-        if (password.length() < 8) {
-            throw new BadRequestResponse("La contraseña debe tener al menos 8 caracteres.");
-        }
+        validarPassword(password);
 
         String passwordHash = BCrypt.withDefaults().hashToString(12, password.toCharArray());
 
         Cliente nuevo = new Cliente(documento, tipoDoc, nombre, apellido,
                                     email, telefono, passwordHash, paisCodigo);
-        int idGenerado = clienteDAO.registrarCliente(nuevo);
+        int idGenerado;
+        try {
+            idGenerado = clienteDAO.registrarCliente(nuevo);
+        } catch (SQLException e) {
+            // Manejo de violación de constraint UNIQUE (email o documento duplicado en SQL Server)
+            if (e.getErrorCode() == 2627 || e.getErrorCode() == 2601) {
+                throw new ConflictResponse("Email o documento de identidad ya registrado.");
+            }
+            throw e;
+        }
 
         ctx.status(201).json(Map.of(
                 "mensaje", "Cliente registrado exitosamente.",

@@ -246,6 +246,7 @@ async function confirmarCita() {
             empleadoId: datos.barberoId,
             fecha: datos.fecha,
             hora: datos.hora + ':00',
+            servicios: datos.servicios,
             notas: datos.notas || ''
         });
 

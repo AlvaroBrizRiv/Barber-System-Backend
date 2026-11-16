@@ -35,9 +35,10 @@ const I18n = (() => {
     // ─── Cargar archivo de traducciones ───────────────────────────────
 
     async function cargar(lang) {
-        // Calcular la ruta relativa al archivo de locales
-        const profundidad = window.location.pathname.split('/').filter(Boolean).length;
-        const base = profundidad <= 2 ? '..' : '../..';
+        // BUG-12: Determinar la ruta base exacta mediante Auth.getBasePath() para evitar errores 404
+        const base = typeof Auth !== 'undefined' && typeof Auth.getBasePath === 'function'
+            ? Auth.getBasePath()
+            : (window.location.pathname.split('/').filter(Boolean).length <= 2 ? '..' : '../..');
         
         try {
             const resp = await fetch(`${base}/locales/${lang}.json`);
@@ -46,8 +47,12 @@ const I18n = (() => {
         } catch {
             // Fallback a español si el archivo no existe
             if (lang !== 'es') {
-                const resp = await fetch(`${base}/locales/es.json`);
-                return resp.json();
+                try {
+                    const resp = await fetch(`${base}/locales/es.json`);
+                    if (resp.ok) return await resp.json();
+                } catch {
+                    return {};
+                }
             }
             return {};
         }

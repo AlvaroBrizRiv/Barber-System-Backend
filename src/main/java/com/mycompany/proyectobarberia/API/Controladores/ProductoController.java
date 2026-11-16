@@ -73,8 +73,8 @@ public class ProductoController {
      * @throws BadRequestResponse si el nombre o el precio son inválidos
      */
     private static void crear(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         Producto producto = ctx.bodyAsClass(Producto.class);
         producto.setBarberiaId(barberiaId);
@@ -95,8 +95,8 @@ public class ProductoController {
      * @throws NotFoundResponse si el producto a actualizar no existe o no pertenece a la barbería
      */
     private static void actualizar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
         int productoId = Integer.parseInt(ctx.pathParam("id"));
 
         Producto producto = ctx.bodyAsClass(Producto.class);
@@ -115,9 +115,9 @@ public class ProductoController {
      * @throws NotFoundResponse si no se encuentra el producto
      */
     private static void desactivar(Context ctx) throws SQLException {
-        SecurityMiddleware.requerirRol(ctx, Rol.ADMIN_BARBERIA);
+        SecurityMiddleware.requerirRolExacto(ctx, Rol.ADMIN_BARBERIA);
         int productoId = Integer.parseInt(ctx.pathParam("id"));
-        Integer barberiaId = SecurityMiddleware.getBarberiaId(ctx);
+        int barberiaId = SecurityMiddleware.requerirBarberiaId(ctx);
 
         if (!dao.desactivar(productoId, barberiaId))
             throw new NotFoundResponse("Producto no encontrado.");

@@ -11,8 +11,11 @@ import com.mycompany.proyectobarberia.Persistencia.Conexion;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
 import io.javalin.apibuilder.ApiBuilder;
+import io.javalin.http.HttpResponseException;
 import io.javalin.json.JavalinGson;
 import io.javalin.plugin.bundled.CorsPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -34,11 +37,21 @@ import java.util.Map;
  */
 public class App {
 
+    private App()
+    {
+        //Constructor privado para evitar instanciación.
+    }
+
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
+
     /** Inicia el servidor Javalin con todas las configuraciones. */
     public static void iniciar() {
         Dotenv env = Conexion.cargarDotenv();
         int puerto     = Integer.parseInt(env.get("SERVER_PORT", "7070"));
-        String corsOrigin = env.get("CORS_ORIGIN", "*");
+        String corsOrigin = env.get("CORS_ORIGIN");
+        if (corsOrigin == null || "*".equals(corsOrigin.trim())) {
+            throw new IllegalStateException("Define CORS_ORIGIN con el origen exacto del frontend (.env)");
+        }
 
         // ─── Gson con soporte para Java Time API ─────────────────────
         Gson gson = new GsonBuilder()
@@ -54,16 +67,20 @@ public class App {
             // FIX ENCODING: forzar UTF-8 en todas las respuestas JSON
             config.http.defaultContentType = "application/json; charset=utf-8";
 
+            // Límite de tamaño de request (1 MB)
+            config.http.maxRequestSize = 1_000_000L;
+
             // JSON mapper: Javalin 6 — JavalinGson(gson, lenient)
             config.jsonMapper(new JavalinGson(gson, true));
 
-            // CORS — permite que el frontend llame a la API sin bloqueo
+            // CORS estricto — permite orígenes específicos
             config.registerPlugin(new CorsPlugin(corsConfig ->
                 corsConfig.addRule(rule -> {
-                    if ("*".equals(corsOrigin)) {
-                        rule.anyHost();
-                    } else {
-                        rule.allowHost(corsOrigin);
+                    for (String origin : corsOrigin.split(",")) {
+                        String o = origin.trim();
+                        if (!o.isEmpty()) {
+                            rule.allowHost(o);
+                        }
                     }
                 })
             ));
@@ -102,20 +119,32 @@ public class App {
                     ctx.method(), ctx.path(), ctx.status().getCode(), ms));
         });
 
+        // ─── Cabeceras de seguridad HTTP ──────────────────────────────
+        app.before(ctx -> {
+            ctx.header("X-Content-Type-Options", "nosniff");
+            ctx.header("X-Frame-Options", "DENY");
+            ctx.header("Referrer-Policy", "no-referrer");
+            ctx.header("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com");
+        });
+
         // ─── Middleware de seguridad JWT (before-handler global) ──────
         app.before(SecurityMiddleware::validar);
 
         // ─── Manejo global de excepciones ─────────────────────────────
         app.exception(java.sql.SQLException.class, (e, ctx) -> {
-            System.err.println("[SQL ERROR] " + e.getMessage());
+            LOG.error("[SQL ERROR] {}", e.getMessage(), e);
             ctx.status(500).json(Map.of("error", "Error interno del servidor."));
         });
 
         app.exception(NumberFormatException.class, (e, ctx) ->
             ctx.status(400).json(Map.of("error", "Parámetro inválido en la URL.")));
 
+        // BUG-07: Respetar excepciones HTTP propias de Javalin (400, 401, 403, 404, 409, etc.)
+        app.exception(HttpResponseException.class, (e, ctx) ->
+            ctx.status(e.getStatus()).json(Map.of("error", e.getMessage())));
+
         app.exception(Exception.class, (e, ctx) -> {
-            System.err.println("[ERROR] " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            LOG.error("[ERROR] {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
             ctx.status(500).json(Map.of("error", "Error interno del servidor."));
         });
 

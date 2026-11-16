@@ -57,20 +57,28 @@ function renderizarCitas(tipo) {
 
         let accionesHtml = '';
         if (cita.estado === 'COMPLETADA') {
-            accionesHtml = `<button class="btn-calificar" onclick="abrirModalCalificacion(${cita.id}, ${cita.barberiaId}, ${barberoId})">Calificar Atención</button>`;
+            accionesHtml = `<button class="btn-calificar btn-abrir-cal" data-id="${Number(cita.id)}" data-barberia="${Number(cita.barberiaId)}" data-empleado="${Number(barberoId)}">Calificar Atención</button>`;
         }
 
         div.innerHTML = `
             <div class="cita-info">
-                <h3>${fechaTexto}</h3>
-                <p>Barbero: <span class="barbero">${barberoNombre}</span></p>
-                <p style="font-size:0.8rem; color:var(--text-muted);">${cita.notas ? 'Detalle: ' + cita.notas : ''}</p>
+                <h3>${Utils.esc(fechaTexto)}</h3>
+                <p>Barbero: <span class="barbero">${Utils.esc(barberoNombre)}</span></p>
+                <p style="font-size:0.8rem; color:var(--text-muted);">${cita.notas ? 'Detalle: ' + Utils.esc(cita.notas) : ''}</p>
             </div>
             <div class="cita-status">
-                <span class="badge estado-${cita.estado}">${cita.estado}</span>
+                <span class="badge estado-${Utils.esc(cita.estado)}">${Utils.esc(cita.estado)}</span>
                 ${accionesHtml}
             </div>
         `;
+        const btnCal = div.querySelector('.btn-abrir-cal');
+        if (btnCal) {
+            btnCal.addEventListener('click', () => abrirModalCalificacion(
+                Number(btnCal.dataset.id),
+                Number(btnCal.dataset.barberia),
+                Number(btnCal.dataset.empleado)
+            ));
+        }
         contenedor.appendChild(div);
     });
 }

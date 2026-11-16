@@ -35,17 +35,16 @@ public class JwtUtils {
     static {
         Dotenv env = Conexion.cargarDotenv();
 
-        String secret = env.get("JWT_SECRET",
-                "cambiar_esta_clave_en_produccion_minimo_32_caracteres");
+        String secret = env.get("JWT_SECRET");
 
-        // Clave mínima de 32 bytes para HMAC-SHA256
-        if (secret.length() < 32) {
+        // Fail-closed: JWT_SECRET obligatorio de al menos 32 bytes para HMAC-SHA256
+        if (secret == null || secret.length() < 32) {
             throw new ExceptionInInitializerError(
-                    "JWT_SECRET debe tener al menos 32 caracteres. Revisa el archivo .env");
+                    "JWT_SECRET ausente o menor a 32 caracteres. Revisa el archivo .env");
         }
 
         SECRET_KEY = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        EXPIRATION_MS = Long.parseLong(env.get("JWT_EXPIRATION_MS", "86400000")); // 24h
+        EXPIRATION_MS = Long.parseLong(env.get("JWT_EXPIRATION_MS", "86400000")); // por defecto 24h si no se especifica
     }
 
     // ─── Generación ───────────────────────────────────────────────────
@@ -61,6 +60,7 @@ public class JwtUtils {
     public static String generarToken(int userId, Rol rol, Integer barberiaId) {
         // Construye y firma el token con los claims necesarios
         return Jwts.builder()
+                .issuer("barber-system")
                 .subject(String.valueOf(userId))
                 .claim("rol", rol.name())
                 .claim("barberiaId", barberiaId)
@@ -81,6 +81,7 @@ public class JwtUtils {
      */
     public static Claims validarToken(String token) {
         return Jwts.parser()
+                .requireIssuer("barber-system")
                 .verifyWith(SECRET_KEY)
                 .build()
                 .parseSignedClaims(token)

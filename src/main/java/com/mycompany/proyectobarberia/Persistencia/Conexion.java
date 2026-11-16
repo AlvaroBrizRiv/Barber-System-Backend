@@ -35,22 +35,32 @@ public class Conexion {
     private static HikariDataSource dataSource;
     private static ServerSocket localDbBridgeServer;
 
-    // ─── Bloque estático de configuración ────────────────────────────
+    // ─── Inicialización perezosa (evita deadlock <clinit> con LocalDB-TDS-Bridge) ───
 
-    static {
+    private static String requerido(Dotenv env, String clave) {
+        String valor = env.get(clave);
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalStateException("Falta variable de entorno requerida: " + clave + " (.env)");
+        }
+        return valor.trim();
+    }
+
+    private static synchronized HikariDataSource inicializarDataSource() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            return dataSource;
+        }
         try {
             Dotenv env = cargarDotenv();
 
             HikariConfig config = new HikariConfig();
 
-            // Conexión desde variables de entorno (.env)
-            String rawUrl = env.get("DB_URL",
-                    "jdbc:sqlserver://(localdb)\\MSSQLLocalDB;databaseName=barberia_db;encrypt=false;trustServerCertificate=true");
+            // Conexión fail-closed desde variables de entorno obligatorias (.env)
+            String rawUrl = requerido(env, "DB_URL");
             String jdbcUrl = resolverJdbcUrl(rawUrl);
 
             config.setJdbcUrl(jdbcUrl);
-            config.setUsername(env.get("DB_USER", "barberia_user"));
-            config.setPassword(env.get("DB_PASSWORD", "Barberia1234!"));
+            config.setUsername(requerido(env, "DB_USER"));
+            config.setPassword(requerido(env, "DB_PASSWORD"));
 
             // Pool settings — tuneados para una aplicación web de baja-media concurrencia
             String poolSizeStr = env.get("DB_POOL_SIZE", "10");
@@ -66,10 +76,11 @@ public class Conexion {
             config.setConnectionTestQuery("SELECT 1");
 
             dataSource = new HikariDataSource(config);
+            return dataSource;
 
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(
-                    "Error al inicializar el pool de conexiones: " + e.getMessage());
+            throw new IllegalStateException(
+                    "Error al inicializar el pool de conexiones: " + e.getMessage(), e);
         }
     }
 
@@ -219,7 +230,7 @@ public class Conexion {
      * @throws SQLException si no hay conexiones disponibles en el pool.
      */
     public static Connection obtenerConexion() throws SQLException {
-        return dataSource.getConnection();
+        return inicializarDataSource().getConnection();
     }
 
     /**
@@ -227,7 +238,7 @@ public class Conexion {
      * @return El HikariDataSource configurado.
      */
     public static DataSource getDataSource() {
-        return dataSource;
+        return inicializarDataSource();
     }
 
     /**

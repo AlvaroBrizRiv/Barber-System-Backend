@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─── Lógica de Suscripciones ──────────────────────────────────
 async function cargarSuscripciones() {
     try {
-        const subs = await Api.suscripciones.obtenerPorBarberia(barberiaId);
+        const subs = await Api.suscripciones.listar(barberiaId);
         const tbody = document.querySelector('#tablaSuscripciones tbody');
         tbody.innerHTML = '';
 
@@ -28,25 +28,29 @@ async function cargarSuscripciones() {
             const tr = document.createElement('tr');
             
             const btnToggle = s.activa 
-                ? `<button class="btn-danger-outline" onclick="toggleEstado(${s.id})">Desactivar</button>`
-                : `<button class="btn-success-outline" onclick="toggleEstado(${s.id})">Activar</button>`;
+                ? `<button class="btn-danger-outline btn-toggle-sub" data-id="${Number(s.id)}">Desactivar</button>`
+                : `<button class="btn-success-outline btn-toggle-sub" data-id="${Number(s.id)}">Activar</button>`;
 
-            const precioMensual = s.precioMensual != null ? `$${s.precioMensual.toLocaleString()}` : '-';
-            const precioCita    = s.precioPorCita != null ? `$${s.precioPorCita.toLocaleString()}` : '-';
+            const precioMensual = s.precioMensual != null ? `$${Number(s.precioMensual).toLocaleString('es-CL')}` : '-';
+            const precioCita    = s.precioPorCita != null ? `$${Number(s.precioPorCita).toLocaleString('es-CL')}` : '-';
 
             const estadoBadge = s.activa 
                 ? `<span class="badge badge-success">Activa</span>` 
                 : `<span class="badge badge-danger">Inactiva</span>`;
 
             tr.innerHTML = `
-                <td><strong>${s.nombre}</strong></td>
-                <td><span class="badge badge-info">${s.tipo}</span></td>
+                <td><strong>${Utils.esc(s.nombre)}</strong></td>
+                <td><span class="badge badge-info">${Utils.esc(s.tipo)}</span></td>
                 <td>${precioMensual}</td>
                 <td>${precioCita}</td>
                 <td>${estadoBadge}</td>
                 <td>${btnToggle}</td>
             `;
             tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('.btn-toggle-sub').forEach(btn => {
+            btn.addEventListener('click', () => toggleEstado(Number(btn.dataset.id)));
         });
     } catch (err) {
         console.error("Error al cargar suscripciones:", err);
@@ -55,7 +59,7 @@ async function cargarSuscripciones() {
 
 async function toggleEstado(id) {
     try {
-        await Api.suscripciones.toggleEstado(id);
+        await Api.suscripciones.toggle(id);
         cargarSuscripciones();
     } catch (err) {
         alert("Error: " + err.message);

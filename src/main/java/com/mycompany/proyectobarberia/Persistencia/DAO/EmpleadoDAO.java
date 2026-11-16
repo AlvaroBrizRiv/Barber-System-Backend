@@ -33,7 +33,8 @@ public class EmpleadoDAO {
             "INNER JOIN empleados e ON p.id = e.id ";
 
     private static final String SQL_BUSCAR_POR_EMAIL =
-            SQL_BASE_SELECT + "WHERE p.email = ? AND p.activo = 1";
+            SQL_BASE_SELECT + "INNER JOIN barberias b ON b.id = e.barberia_id " +
+            "WHERE p.email = ? AND p.activo = 1 AND e.activo = 1 AND b.activa = 1";
 
     private static final String SQL_LISTAR_POR_BARBERIA =
             SQL_BASE_SELECT + "WHERE e.barberia_id = ? AND e.activo = 1 ORDER BY p.nombre";
@@ -43,6 +44,8 @@ public class EmpleadoDAO {
 
     private static final String SQL_DESACTIVAR =
             "UPDATE empleados SET activo = 0 WHERE id = ? AND barberia_id = ?";
+    private static final String SQL_BUSCAR_POR_ID = 
+            SQL_BASE_SELECT + "WHERE p.id = ? AND p.activo = 1 AND e.activo =1";
 
     // ─── Escritura ────────────────────────────────────────────────────
 
@@ -129,6 +132,14 @@ public class EmpleadoDAO {
         return null;
     }
 
+    public Empleado buscarPorId(int id) throws SQLException {
+        try (Connection c = Conexion.obtenerConexion(); PreparedStatement ps = c.prepareStatement(SQL_BUSCAR_POR_ID)){ps.setInt(1,  id);
+            try (ResultSet rs = ps.executeQuery()){ if (rs.next()) return mapearFila(rs);}
+        }
+    return null;
+    }
+    
+
     /**
      * Lista todos los empleados activos de una barbería.
      * 
@@ -149,6 +160,20 @@ public class EmpleadoDAO {
      */
     public List<Empleado> listarBarberosPorBarberia(int barberiaId) throws SQLException {
         return listarConQuery(SQL_LISTAR_BARBEROS, barberiaId);
+    }
+
+    /**
+     * Valida si un empleado existe, tiene rol BARBERO, pertenece a la barbería y está activo.
+     */
+    public boolean esBarberoActivoDe(int empleadoId, int barberiaId) throws SQLException {
+        String sql = "SELECT 1 FROM empleados WHERE id = ? AND barberia_id = ? AND rol = 'BARBERO' AND activo = 1";
+        try (Connection c = Conexion.obtenerConexion(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, empleadoId);
+            ps.setInt(2, barberiaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     private List<Empleado> listarConQuery(String sql, int barberiaId) throws SQLException {
