@@ -100,3 +100,74 @@
 /* Utilidades para estados vacíos / loaders */
 .empty { text-align:center; color:var(--text3); padding:2rem; font-size:0.9rem; }
 .loader { text-align:center; color:var(--text3); padding:3rem; }
+
+/* ═══ Secciones añadidas: navegación, productos y suscripciones ═══ */
+[hidden] { display: none !important; }
+
+.secciones-nav {
+    display: flex; gap: 0.5rem; overflow-x: auto; margin-bottom: 2.5rem;
+    padding-bottom: 0.25rem; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.secciones-nav::-webkit-scrollbar { display: none; }
+.secciones-nav a {
+    flex: 0 0 auto; padding: 0.5rem 1rem; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--text2); text-decoration: none;
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s;
+}
+.secciones-nav a:hover, .secciones-nav a:focus-visible { border-color: var(--gold); color: var(--gold); }
+section[id^="sec"] { scroll-margin-top: 90px; }
+
+.section-header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.link-ver-todo { color: var(--gold); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+
+/* Barbero seleccionable */
+.barbero-card { display: block; text-decoration: none; color: inherit; }
+.barbero-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.barbero-cta { margin-top: 0.8rem; font-size: 0.75rem; color: var(--gold); font-weight: 700; }
+
+/* Servicio con acceso directo a reservar */
+.servicio-reservar { display: inline-block; margin-top: 1rem; color: var(--gold); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+
+/* Productos (mobile first: 1 → 2 → 4 columnas) */
+.productos-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 3.5rem; }
+.producto-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s;
+}
+.producto-card:hover { border-color: var(--border-gold); transform: translateY(-3px); }
+.producto-img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #1b1b1b; }
+.producto-body { padding: 1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+.producto-categoria { font-size: 0.7rem; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+.producto-nombre { font-weight: 600; color: #fff; }
+.producto-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 0.6rem; }
+.producto-stock { font-size: 0.75rem; color: var(--text3); }
+.producto-stock.agotado { color: var(--error); }
+
+/* Suscripciones */
+.subs-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 3.5rem; }
+.sub-card {
+    background: linear-gradient(160deg, rgba(212,175,55,0.08), var(--card) 45%);
+    border: 1px solid var(--border-gold); border-radius: 14px; padding: 1.6rem;
+}
+.sub-tipo { font-size: 0.7rem; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
+.sub-nombre { font-family: 'Cinzel', serif; font-size: 1.25rem; margin: 0.4rem 0 0.8rem; color: #fff; }
+.sub-precio { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.4rem; font-weight: 700; }
+.sub-precio small { font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--text2); font-weight: 400; }
+.sub-desc { color: var(--text2); font-size: 0.85rem; line-height: 1.6; margin-top: 0.8rem; }
+
+@media (min-width: 600px) {
+    .productos-grid, .subs-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+    .productos-grid { grid-template-columns: repeat(4, 1fr); }
+    .subs-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* Pantallas muy pequeñas (320px) */
+@media (max-width: 480px) {
+    .hero { padding: 3rem 1rem; min-height: 340px; }
+    .hero-titulo { font-size: 1.9rem; }
+    .main { padding: 2.5rem 1rem; }
+    .hero-actions a { flex: 1 1 100%; justify-content: center; }
+    .barbero-card { width: calc(50% - 0.75rem); }
+    .barberos-grid { gap: 1rem; }
+}

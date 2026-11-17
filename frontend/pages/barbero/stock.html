@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock de Productos — Barber System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/pages/barbero/panel.css">
+</head>
+<body>
+    <div id="navbar-root"></div>
+
+    <main class="container">
+        <nav class="barbero-tabs" aria-label="Panel del barbero">
+            <a href="mi-agenda.html">Mi Agenda</a>
+            <a href="mis-ganancias.html">Mis Ganancias</a>
+            <a href="stock.html" aria-current="page">Stock de Productos</a>
+        </nav>
+
+        <h1 class="titulo">Stock de Productos</h1>
+        <p class="subtitulo">Consulta de inventario de tu barbería. <span class="solo-lectura">(Solo lectura: los cambios los realiza el administrador.)</span></p>
+
+        <div class="filtros">
+            <label class="sr-only" for="filtroTexto">Buscar producto</label>
+            <input type="search" class="input" id="filtroTexto" placeholder="Buscar producto..." maxlength="60">
+        </div>
+
+        <section class="panel" aria-labelledby="tituloStock">
+            <div class="panel-header">
+                <h2 id="tituloStock">Inventario</h2>
+                <span class="solo-lectura" id="resumenStock"></span>
+            </div>
+            <div class="tabla-scroll">
+                <table>
+                    <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th></tr></thead>
+                    <tbody id="tablaStock"><tr><td colspan="4" class="vacio">Cargando...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/i18n.js"></script>
+    <script src="../../js/navbar.js"></script>
+    <script src="../../js/pages/barbero/stock.js"></script>
+</body>
+</html>

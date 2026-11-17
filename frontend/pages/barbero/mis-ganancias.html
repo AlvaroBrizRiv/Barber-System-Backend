@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Ganancias — Barber System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/pages/barbero/panel.css">
+</head>
+<body>
+    <div id="navbar-root"></div>
+
+    <main class="container">
+        <nav class="barbero-tabs" aria-label="Panel del barbero">
+            <a href="mi-agenda.html">Mi Agenda</a>
+            <a href="mis-ganancias.html" aria-current="page">Mis Ganancias</a>
+            <a href="stock.html">Stock de Productos</a>
+        </nav>
+
+        <h1 class="titulo">Mis Ganancias</h1>
+        <p class="subtitulo">Solo se consideran tus citas completadas.</p>
+
+        <div class="filtros">
+            <div class="periodo-tabs" role="tablist" aria-label="Periodo">
+                <button type="button" class="periodo-tab active" data-periodo="DIA" role="tab" aria-selected="true">Día</button>
+                <button type="button" class="periodo-tab" data-periodo="SEMANA" role="tab" aria-selected="false">Semana</button>
+                <button type="button" class="periodo-tab" data-periodo="MES" role="tab" aria-selected="false">Mes</button>
+            </div>
+            <label class="sr-only" for="fechaRef">Fecha de referencia</label>
+            <input type="date" class="input" id="fechaRef">
+        </div>
+        <p class="rango" id="rango" aria-live="polite"></p>
+
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-label">Ganancias</div><div class="kpi-valor" id="kpiTotal">—</div></div>
+            <div class="kpi"><div class="kpi-label">Citas completadas</div><div class="kpi-valor" id="kpiCitas">—</div></div>
+            <div class="kpi"><div class="kpi-label">Ticket promedio</div><div class="kpi-valor" id="kpiPromedio">—</div></div>
+        </div>
+
+        <section class="panel" id="panelSerie" aria-labelledby="tituloSerie">
+            <div class="panel-header"><h2 id="tituloSerie">Detalle por día</h2></div>
+            <div class="barras" id="barras"></div>
+        </section>
+        <p class="vacio" id="mensaje" hidden></p>
+    </main>
+
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/i18n.js"></script>
+    <script src="../../js/navbar.js"></script>
+    <script src="../../js/pages/barbero/mis-ganancias.js"></script>
+</body>
+</html>

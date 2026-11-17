@@ -9,14 +9,14 @@ document.getElementById('userInitials').textContent =
     usuario?.nombre?.charAt(0)?.toUpperCase() || 'A';
 document.getElementById('userName').textContent = usuario?.nombre || 'Admin';
 
-const hoy = new Date().toISOString().split('T')[0];
+const hoy = Utils.fechaISO();
 document.getElementById('fechaAgenda').value = hoy;
 document.getElementById('fechaAgendaFull').value = hoy;
 document.getElementById('fechaHoy').textContent =
     new Date().toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
 
 // ─── Navegación entre secciones ───────────────────────────────
-const secciones = ['dashboard','agenda','empleados','servicios','productos','suscripciones','calificaciones'];
+const secciones = ['dashboard','agenda','empleados','servicios','productos','suscripciones','calificaciones','ganancias'];
 
 function cambiarSeccion(seccion) {
     secciones.forEach(s => {
@@ -28,14 +28,17 @@ function cambiarSeccion(seccion) {
     document.getElementById('pageTitle').textContent = {
         dashboard: 'Dashboard', agenda: 'Agenda del Día', empleados: 'Empleados',
         servicios: 'Servicios', productos: 'Productos', suscripciones: 'Suscripciones',
-        calificaciones: 'Calificaciones'
+        calificaciones: 'Calificaciones', ganancias: 'Ganancias'
     }[seccion] || seccion;
+    cerrarMenuMovil();
 
     // Cargar datos según sección
     if (seccion === 'empleados') void cargarEmpleados();
     if (seccion === 'servicios') void cargarServicios();
     if (seccion === 'agenda') void cargarAgendaFull();
     if (seccion === 'calificaciones') void cargarCalificaciones();
+    if (seccion === 'ganancias') void iniciarGanancias();
+    if (seccion === 'suscripciones') void cargarToggleSuscripciones();
 }
 
 // ─── Dashboard ────────────────────────────────────────────────
@@ -351,3 +354,168 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // ─── Iniciar dashboard ────────────────────────────────────────
 await cargarDashboard();
+
+
+// ─── Menú lateral en móvil ────────────────────────────────────
+(() => {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('btnMenu');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar || !btn || !backdrop) return;
+    btn.addEventListener('click', () => {
+        const abierto = sidebar.classList.toggle('open');
+        backdrop.hidden = !abierto;
+        btn.setAttribute('aria-expanded', String(abierto));
+    });
+    backdrop.addEventListener('click', cerrarMenuMovil);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenuMovil(); });
+})();
+
+function cerrarMenuMovil() {
+    document.getElementById('sidebar')?.classList.remove('open');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (backdrop) backdrop.hidden = true;
+    document.getElementById('btnMenu')?.setAttribute('aria-expanded', 'false');
+}
+
+// ─── Ganancias ────────────────────────────────────────────────
+const ganEstado = { periodo: 'DIA', iniciado: false };
+let chartGanancias = null;
+
+async function iniciarGanancias() {
+    if (!ganEstado.iniciado) {
+        ganEstado.iniciado = true;
+        const fecha = document.getElementById('ganFecha');
+        fecha.value = hoy;
+        fecha.addEventListener('change', () => void cargarGanancias());
+        document.getElementById('ganBarbero').addEventListener('change', () => void cargarGanancias());
+        document.querySelectorAll('.periodo-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                ganEstado.periodo = tab.dataset.periodo;
+                document.querySelectorAll('.periodo-tab').forEach(t => {
+                    t.classList.toggle('active', t === tab);
+                    t.setAttribute('aria-selected', String(t === tab));
+                });
+                void cargarGanancias();
+            });
+        });
+        try {
+            const barberos = await Api.empleados.listarBarberos(barberiaId);
+            const select = document.getElementById('ganBarbero');
+            barberos.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = String(Number(b.id));
+                opt.textContent = `${b.nombre} ${b.apellido}`;
+                select.appendChild(opt);
+            });
+        } catch { /* el filtro queda solo con "Todos" */ }
+    }
+    await cargarGanancias();
+}
+
+async function cargarGanancias() {
+    const tbody = document.getElementById('tablaGanancias');
+    const fecha = document.getElementById('ganFecha').value || hoy;
+    const barberoId = document.getElementById('ganBarbero').value;
+    try {
+        const r = await Api.ganancias.barberia(barberiaId, ganEstado.periodo, fecha, barberoId);
+        renderResumenGanancias(r);
+        renderTablaGanancias(r);
+        renderChartGanancias(r);
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
+    }
+}
+
+function textoRango(r) {
+    const f = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+    return r.desde === r.hasta ? f(r.desde) : `${f(r.desde)} — ${f(r.hasta)}`;
+}
+
+function renderResumenGanancias(r) {
+    const total = Number(r.total) || 0;
+    const citas = Number(r.totalCitas) || 0;
+    document.getElementById('ganRango').textContent = `Periodo: ${textoRango(r)}`;
+    document.getElementById('ganTotal').textContent = Utils.dinero(total);
+    document.getElementById('ganCitas').textContent = String(citas);
+    document.getElementById('ganPromedio').textContent = citas ? Utils.dinero(total / citas) : '—';
+}
+
+function renderTablaGanancias(r) {
+    const tbody = document.getElementById('tablaGanancias');
+    const filas = r.porBarbero || [];
+    if (!filas.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:2rem;">Sin barberos para mostrar</td></tr>';
+        return;
+    }
+    const total = Number(r.total) || 0;
+    tbody.innerHTML = filas.map(g => {
+        const t = Number(g.total) || 0;
+        const pct = total > 0 ? Math.round((t / total) * 100) : 0;
+        return `
+            <tr>
+                <td><strong>${Utils.esc(g.nombre)} ${Utils.esc(g.apellido)}</strong></td>
+                <td>${Number(g.citas) || 0}</td>
+                <td style="color:var(--gold); font-weight:700;">${Utils.dinero(t)}</td>
+                <td>
+                    <div class="barra-pct" title="${pct}%"><span style="width:${pct}%"></span></div>
+                    <small style="color:var(--text-muted);">${pct}%</small>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function renderChartGanancias(r) {
+    if (typeof Chart === 'undefined') return; // CDN bloqueado: la tabla sigue siendo útil
+    const serie = r.serie || [];
+    const etiquetas = serie.map(d => new Date(d.fecha + 'T00:00:00')
+        .toLocaleDateString('es-CL', serie.length > 7 ? { day: 'numeric' } : { weekday: 'short', day: 'numeric' }));
+    if (chartGanancias) chartGanancias.destroy();
+    chartGanancias = new Chart(document.getElementById('chartGanancias').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [{ label: 'Ganancias', data: serie.map(d => Number(d.total) || 0), backgroundColor: '#D4AF37', borderRadius: 4, maxBarThickness: 36 }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (c) => Utils.dinero(c.parsed.y) } }
+            },
+            scales: {
+                x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { display: false } },
+                y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.5)', callback: (v) => Utils.dinero(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+
+// ─── Toggle de la sección pública de suscripciones ────────────
+async function cargarToggleSuscripciones() {
+    const toggle = document.getElementById('toggleSubs');
+    const estado = document.getElementById('toggleSubsEstado');
+    try {
+        const b = await Api.barberias.obtener(barberiaId);
+        toggle.checked = b.suscripcionesHabilitadas === true;
+        estado.textContent = toggle.checked ? 'Visible para los clientes.' : 'Oculta para los clientes.';
+    } catch (err) {
+        estado.textContent = err.message;
+    }
+    if (!toggle.dataset.listo) {
+        toggle.dataset.listo = '1';
+        toggle.addEventListener('change', async () => {
+            toggle.disabled = true;
+            try {
+                await Api.barberias.configurarSuscripciones(barberiaId, toggle.checked);
+                estado.textContent = toggle.checked ? 'Visible para los clientes.' : 'Oculta para los clientes.';
+            } catch (err) {
+                toggle.checked = !toggle.checked;
+                estado.textContent = err.message;
+            } finally {
+                toggle.disabled = false;
+            }
+        });
+    }
+}

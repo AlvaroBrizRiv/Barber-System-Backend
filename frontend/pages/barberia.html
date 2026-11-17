@@ -16,17 +16,47 @@
     <div class="loader">Cargando barbería…</div>
 </div>
 
-<main class="main" id="contenidoMain" style="display:none">
-    <h2 class="section-titulo" id="tituloServicios">Nuestros Servicios</h2>
-    <div class="servicios-grid" id="gridServicios"></div>
+<main class="main" id="contenidoMain" hidden>
+    <!-- Navegación interna entre secciones (scroll horizontal en móvil) -->
+    <nav class="secciones-nav" aria-label="Secciones de la barbería" id="seccionesNav">
+        <a href="#secBarberos">Barberos</a>
+        <a href="#secServicios">Servicios</a>
+        <a href="#secProductos">Productos</a>
+        <a href="#secSuscripciones" id="navSuscripciones" hidden>Suscripciones</a>
+        <a href="#secOpiniones">Opiniones</a>
+    </nav>
 
-    <h2 class="section-titulo" id="tituloBarberos">Nuestro Equipo de Barberos</h2>
-    <div class="barberos-grid" id="gridBarberos"></div>
+    <section id="secBarberos" aria-labelledby="tituloBarberos">
+        <h2 class="section-titulo" id="tituloBarberos">Elige tu Barbero</h2>
+        <div class="barberos-grid" id="gridBarberos"></div>
+    </section>
 
-    <h2 class="section-titulo">Opiniones & Calificaciones</h2>
-    <div class="calificaciones-list" id="listaCalificaciones"></div>
+    <section id="secServicios" aria-labelledby="tituloServicios">
+        <h2 class="section-titulo" id="tituloServicios">Nuestros Servicios</h2>
+        <div class="servicios-grid" id="gridServicios"></div>
+    </section>
+
+    <section id="secProductos" aria-labelledby="tituloProductos">
+        <div class="section-header">
+            <h2 class="section-titulo" id="tituloProductos">Productos para el Cabello</h2>
+            <a class="link-ver-todo" id="linkTienda" href="#">Ver tienda completa →</a>
+        </div>
+        <div class="productos-grid" id="gridProductos"></div>
+    </section>
+
+    <!-- Solo visible si la barbería habilitó las suscripciones y tiene planes activos -->
+    <section id="secSuscripciones" aria-labelledby="tituloSuscripciones" hidden>
+        <h2 class="section-titulo" id="tituloSuscripciones">Planes de Suscripción</h2>
+        <div class="subs-grid" id="gridSuscripciones"></div>
+    </section>
+
+    <section id="secOpiniones" aria-labelledby="tituloOpiniones">
+        <h2 class="section-titulo" id="tituloOpiniones">Opiniones &amp; Calificaciones</h2>
+        <div class="calificaciones-list" id="listaCalificaciones"></div>
+    </section>
 </main>
 
+<script src="../js/utils.js"></script>
 <script src="../js/api.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/i18n.js"></script>

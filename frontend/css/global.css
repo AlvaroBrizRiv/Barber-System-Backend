@@ -13,6 +13,10 @@
     --text3: rgba(255, 255, 255, 0.3);
     --success: #2ECC71;
     --error: #E74C3C;
+    /* Alias usados por los paneles (antes no estaban definidos) */
+    --danger: var(--error);
+    --text-muted: rgba(255, 255, 255, 0.45);
+    --text-secondary: var(--text2);
     --gold-gradient: linear-gradient(135deg, var(--gold), var(--gold-dark));
 }
 
@@ -179,3 +183,6 @@ body {
         font-size: 1.3rem;
     }
 }
+
+/* Texto solo para lectores de pantalla (accesibilidad) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
