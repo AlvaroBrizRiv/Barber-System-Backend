@@ -76,7 +76,7 @@ public class PerfilController {
      * @throws SQLException si ocurre un error en base de datos
      */
     @SuppressWarnings("unchecked")
-    private static void eliminarCuenta(Context ctx) throws SQLException {
+    static void eliminarCuenta(Context ctx) throws SQLException {
         NaiveRateLimit.requestPerTimeUnit(ctx, 5, TimeUnit.MINUTES);
         if (SecurityMiddleware.getRol(ctx) != Rol.CLIENTE) {
             throw new ForbiddenResponse("Solo los clientes pueden eliminar su cuenta. El personal debe solicitarlo al administrador.");

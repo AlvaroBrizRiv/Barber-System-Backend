@@ -143,7 +143,7 @@ public class BarberiaController {
      * @throws SQLException si ocurre un error en la base de datos
      */
     @SuppressWarnings("unchecked")
-    private static void configurarSuscripciones(Context ctx) throws SQLException {
+    static void configurarSuscripciones(Context ctx) throws SQLException {
         int id = Integer.parseInt(ctx.pathParam("id"));
         SecurityMiddleware.requerirAdminDeBarberia(ctx, id);
 
