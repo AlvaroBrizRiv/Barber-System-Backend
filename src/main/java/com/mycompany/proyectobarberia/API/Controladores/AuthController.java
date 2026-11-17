@@ -4,6 +4,7 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.mycompany.proyectobarberia.API.Seguridad.JwtUtils;
 import com.mycompany.proyectobarberia.Logica.Cliente;
 import com.mycompany.proyectobarberia.Logica.Empleado;
+import com.mycompany.proyectobarberia.Logica.Persona;
 import com.mycompany.proyectobarberia.Logica.SuperAdmin;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -96,74 +98,26 @@ public class AuthController {
             throw new BadRequestResponse("Email y contraseña son requeridos.");
         }
 
-        // 1. Empleados (admin/barbero)
+        // Orden de búsqueda: empleados → clientes → superadministradores.
         Empleado empleado = empleadoDAO.buscarPorEmail(email);
         if (empleado != null) {
-            verificarPassword(password, empleado.getPasswordHash());
-            String token = JwtUtils.generarToken(
-                    empleado.getId(), empleado.getRol(), empleado.getBarberiaId());
-
-            Map<String, Object> usuarioMap = new java.util.HashMap<>();
-            usuarioMap.put("id", empleado.getId());
-            usuarioMap.put("nombre", empleado.getNombre() != null ? empleado.getNombre() : "");
-            usuarioMap.put("apellido", empleado.getApellido() != null ? empleado.getApellido() : "");
-            usuarioMap.put("email", empleado.getEmail());
-            usuarioMap.put("fotoUrl", empleado.getFotoUrl() != null ? empleado.getFotoUrl() : "");
-            usuarioMap.put("idiomaPreferido", empleado.getIdiomaPreferido() != null ? empleado.getIdiomaPreferido() : "es");
-            usuarioMap.put("barberiaId", empleado.getBarberiaId());
-
-            Map<String, Object> resp = new java.util.HashMap<>();
-            resp.put("token", token);
-            resp.put("rol", empleado.getRol().name());
-            resp.put("usuario", usuarioMap);
-
-            ctx.json(resp);
+            Map<String, Object> usuario = datosUsuario(empleado);
+            usuario.put("barberiaId", empleado.getBarberiaId());
+            responderLogin(ctx, password, empleado, empleado.getRol(), empleado.getBarberiaId(), usuario);
             return;
         }
 
-        // 2. Clientes
         Cliente cliente = clienteDAO.buscarPorEmail(email);
         if (cliente != null) {
-            verificarPassword(password, cliente.getPasswordHash());
-            String token = JwtUtils.generarToken(cliente.getId(), Rol.CLIENTE, null);
-
-            Map<String, Object> usuarioMap = new java.util.HashMap<>();
-            usuarioMap.put("id", cliente.getId());
-            usuarioMap.put("nombre", cliente.getNombre() != null ? cliente.getNombre() : "");
-            usuarioMap.put("apellido", cliente.getApellido() != null ? cliente.getApellido() : "");
-            usuarioMap.put("email", cliente.getEmail());
-            usuarioMap.put("fotoUrl", cliente.getFotoUrl() != null ? cliente.getFotoUrl() : "");
-            usuarioMap.put("idiomaPreferido", cliente.getIdiomaPreferido() != null ? cliente.getIdiomaPreferido() : "es");
-            usuarioMap.put("puntosFidelidad", cliente.getPuntosFidelidad());
-
-            Map<String, Object> resp = new java.util.HashMap<>();
-            resp.put("token", token);
-            resp.put("rol", Rol.CLIENTE.name());
-            resp.put("usuario", usuarioMap);
-
-            ctx.json(resp);
+            Map<String, Object> usuario = datosUsuario(cliente);
+            usuario.put("puntosFidelidad", cliente.getPuntosFidelidad());
+            responderLogin(ctx, password, cliente, Rol.CLIENTE, null, usuario);
             return;
         }
 
-        // 3. SuperAdministradores (BUG-06)
         SuperAdmin sa = superAdminDAO.buscarPorEmail(email);
         if (sa != null) {
-            verificarPassword(password, sa.getPasswordHash());
-            String token = JwtUtils.generarToken(sa.getId(), Rol.SUPERADMIN, null);
-
-            Map<String, Object> usuarioMap = new java.util.HashMap<>();
-            usuarioMap.put("id", sa.getId());
-            usuarioMap.put("nombre", sa.getNombre() != null ? sa.getNombre() : "");
-            usuarioMap.put("apellido", sa.getApellido() != null ? sa.getApellido() : "");
-            usuarioMap.put("email", sa.getEmail());
-            usuarioMap.put("idiomaPreferido", sa.getIdiomaPreferido() != null ? sa.getIdiomaPreferido() : "es");
-
-            Map<String, Object> resp = new java.util.HashMap<>();
-            resp.put("token", token);
-            resp.put("rol", Rol.SUPERADMIN.name());
-            resp.put("usuario", usuarioMap);
-
-            ctx.json(resp);
+            responderLogin(ctx, password, sa, Rol.SUPERADMIN, null, datosUsuario(sa));
             return;
         }
 
@@ -251,6 +205,45 @@ public class AuthController {
     }
 
     // ─── Utilidades ───────────────────────────────────────────────────
+
+    /**
+     * Verifica la contraseña y responde con el token y los datos públicos del usuario.
+     * Centraliza la lógica que antes se repetía para cada tipo de usuario.
+     *
+     * @param ctx        Contexto HTTP.
+     * @param password   Contraseña en texto claro recibida.
+     * @param persona    Usuario encontrado.
+     * @param rol        Rol que irá en el JWT.
+     * @param barberiaId Barbería del usuario (null para CLIENTE y SUPERADMIN).
+     * @param usuario    Datos públicos a devolver (sin hash ni documento).
+     */
+    private static void responderLogin(Context ctx, String password, Persona persona, Rol rol,
+                                       Integer barberiaId, Map<String, Object> usuario) {
+        verificarPassword(password, persona.getPasswordHash());
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("token", JwtUtils.generarToken(persona.getId(), rol, barberiaId));
+        resp.put("rol", rol.name());
+        resp.put("usuario", usuario);
+        ctx.json(resp);
+    }
+
+    /**
+     * Datos públicos comunes a cualquier usuario. Nunca incluye passwordHash
+     * ni documento de identidad (PII).
+     *
+     * @param p Persona autenticada.
+     * @return Mapa mutable para que el llamador agregue campos propios del rol.
+     */
+    static Map<String, Object> datosUsuario(Persona p) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", p.getId());
+        m.put("nombre", p.getNombre() != null ? p.getNombre() : "");
+        m.put("apellido", p.getApellido() != null ? p.getApellido() : "");
+        m.put("email", p.getEmail());
+        m.put("fotoUrl", p.getFotoUrl() != null ? p.getFotoUrl() : "");
+        m.put("idiomaPreferido", p.getIdiomaPreferido() != null ? p.getIdiomaPreferido() : "es");
+        return m;
+    }
 
     /**
      * Verifica la validez de una contraseña comparándola con su hash.
