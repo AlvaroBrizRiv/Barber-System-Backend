@@ -109,6 +109,7 @@ public class App {
                     ApiBuilder.path("/suscripciones",  SuscripcionController::registrarRutas);
                     ApiBuilder.path("/perfil",         PerfilController::registrarRutas);
                     ApiBuilder.path("/carrito",        CarritoController::registrarRutas);
+                    ApiBuilder.path("/ganancias",      GananciaController::registrarRutas);
                 })
             );
 
