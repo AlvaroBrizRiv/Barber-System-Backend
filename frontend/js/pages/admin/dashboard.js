@@ -359,7 +359,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // ─── Iniciar dashboard ────────────────────────────────────────
-await cargarDashboard();
+void cargarDashboard();
 
 
 // ─── Menú lateral en móvil ────────────────────────────────────

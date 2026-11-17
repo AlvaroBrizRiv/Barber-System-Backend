@@ -14,7 +14,6 @@ import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.util.NaiveRateLimit;
 
 import java.sql.SQLException;
@@ -92,7 +91,8 @@ public class PerfilController {
         Cliente cliente = clienteDAO.buscarPorId(userId);
         if (cliente == null) throw new NotFoundResponse("Perfil no encontrado.");
         if (!BCrypt.verifyer().verify(pwd.toCharArray(), cliente.getPasswordHash()).verified) {
-            throw new UnauthorizedResponse("Contraseña incorrecta.");
+            // 403 y no 401: el token es válido; un 401 haría que el frontend cierre la sesión
+            throw new ForbiddenResponse("Contraseña incorrecta.");
         }
 
         if (!clienteDAO.eliminarCuenta(userId, LocalDate.now())) {

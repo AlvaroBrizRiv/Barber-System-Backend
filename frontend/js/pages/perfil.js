@@ -32,7 +32,7 @@ async function eliminarCuenta(ev) {
         Api.clearToken();
         window.location.href = Auth.getBasePath() + '/index.html';
     } catch (err) {
-        // 401 aquí = contraseña incorrecta; Api.request ya redirige solo si el token expiró
+        // 403 = contraseña incorrecta (el backend no usa 401 aquí para no cerrar la sesión)
         mostrarMsg(err.message || 'No se pudo eliminar la cuenta.', 'err');
         btn.disabled = false;
         btn.textContent = 'Eliminar cuenta';
