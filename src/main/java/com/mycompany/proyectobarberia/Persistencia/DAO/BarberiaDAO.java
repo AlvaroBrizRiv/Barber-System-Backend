@@ -15,15 +15,24 @@ import java.util.List;
  */
 public class BarberiaDAO {
 
-    private static final String SQL_SELECT_TODAS =
+    private static final String COLUMNAS =
             "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, " +
-            "       pais_codigo, moneda_codigo, zona_horaria, fecha_creacion " +
-            "FROM barberias WHERE activa = 1 ORDER BY nombre";
+            "       pais_codigo, moneda_codigo, zona_horaria, suscripciones_habilitadas, fecha_creacion " +
+            "FROM barberias ";
+
+    private static final String SQL_SELECT_TODAS =
+            COLUMNAS + "WHERE activa = 1 ORDER BY nombre";
+
+    /** Búsqueda insensible a mayúsculas (LOWER + LIKE funciona igual en SQL Server y PostgreSQL). */
+    private static final String SQL_BUSCAR =
+            COLUMNAS + "WHERE activa = 1 AND (LOWER(nombre) LIKE ? ESCAPE '!' OR LOWER(direccion) LIKE ? ESCAPE '!') " +
+            "ORDER BY nombre";
 
     private static final String SQL_SELECT_POR_ID =
-            "SELECT id, nombre, direccion, telefono, email, logo_url, descripcion, activa, " +
-            "       pais_codigo, moneda_codigo, zona_horaria, fecha_creacion " +
-            "FROM barberias WHERE id = ?";
+            COLUMNAS + "WHERE id = ?";
+
+    private static final String SQL_SUSCRIPCIONES_HABILITADAS =
+            "UPDATE barberias SET suscripciones_habilitadas = ? WHERE id = ?";
 
     private static final String SQL_INSERT =
             "INSERT INTO barberias (nombre, direccion, telefono, email, logo_url, descripcion) " +
@@ -55,6 +64,63 @@ public class BarberiaDAO {
             }
         }
         return lista;
+    }
+
+    /**
+     * Busca barberías activas cuyo nombre o dirección contenga el texto.
+     * Si el texto está vacío equivale a {@link #listarActivas()}.
+     *
+     * @param texto Término de búsqueda ingresado por el usuario.
+     * @return Barberías activas que coinciden.
+     * @throws SQLException si ocurre un error en la consulta
+     */
+    public List<Barberia> buscarActivas(String texto) throws SQLException {
+        if (texto == null || texto.isBlank()) return listarActivas();
+        String patron = patronLike(texto);
+        List<Barberia> lista = new ArrayList<>();
+        try (Connection conn = Conexion.obtenerConexion();
+             PreparedStatement ps = conn.prepareStatement(SQL_BUSCAR)) {
+            ps.setString(1, patron);
+            ps.setString(2, patron);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapearFila(rs));
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Construye un patrón LIKE "%texto%" en minúsculas escapando los comodines
+     * (%, _, [) para que el usuario no pueda inyectar patrones.
+     *
+     * @param texto Texto libre del usuario.
+     * @return Patrón seguro para usar con ESCAPE '!'.
+     */
+    static String patronLike(String texto) {
+        String limpio = texto.trim().toLowerCase(java.util.Locale.ROOT)
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_")
+                .replace("[", "![");
+        return "%" + limpio + "%";
+    }
+
+    /**
+     * Activa o desactiva la sección de suscripciones de una barbería.
+     *
+     * @param id          ID de la barbería.
+     * @param habilitadas true para mostrar la sección en la página pública.
+     * @return true si la barbería existe y se actualizó.
+     * @throws SQLException si ocurre un error en la actualización
+     */
+    public boolean actualizarSuscripcionesHabilitadas(int id, boolean habilitadas) throws SQLException {
+        try (Connection conn = Conexion.obtenerConexion();
+             PreparedStatement ps = conn.prepareStatement(SQL_SUSCRIPCIONES_HABILITADAS)) {
+            // setInt 1/0 en vez de setBoolean: compatible con BIT (SQL Server) y SMALLINT (PostgreSQL)
+            ps.setInt(1, habilitadas ? 1 : 0);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     /**
@@ -151,7 +217,7 @@ public class BarberiaDAO {
      * @throws SQLException si ocurre un error al leer los campos
      */
     private Barberia mapearFila(ResultSet rs) throws SQLException {
-        return new Barberia(
+        Barberia b = new Barberia(
                 rs.getInt("id"),
                 rs.getString("nombre"),
                 rs.getString("direccion"),
@@ -167,5 +233,7 @@ public class BarberiaDAO {
                         ? rs.getTimestamp("fecha_creacion").toLocalDateTime()
                         : null
         );
+        b.setSuscripcionesHabilitadas(rs.getInt("suscripciones_habilitadas") == 1);
+        return b;
     }
 }

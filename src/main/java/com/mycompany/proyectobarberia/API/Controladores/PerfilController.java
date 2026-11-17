@@ -8,19 +8,27 @@ import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
 import com.mycompany.proyectobarberia.Persistencia.DAO.EmpleadoDAO;
 import com.mycompany.proyectobarberia.Persistencia.DAO.SuperAdminDAO;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import io.javalin.apibuilder.ApiBuilder;
+import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotFoundResponse;
+import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.util.NaiveRateLimit;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Controlador REST para gestión del perfil del usuario autenticado.
  *
  * GET /api/perfil  → Datos del perfil propio (sin passwordHash).
  * PUT /api/perfil  → Actualizar nombre, apellido, teléfono, foto, idioma.
+ * DELETE /api/perfil → Eliminar la propia cuenta (solo CLIENTE, requiere contraseña).
  *
  * Nota de seguridad PII:
  *   El passwordHash y documento_identidad nunca se devuelven en la respuesta.
@@ -53,6 +61,44 @@ public class PerfilController {
     public static void registrarRutas() {
         ApiBuilder.get("/",  PerfilController::obtenerPerfil);
         ApiBuilder.put("/",  PerfilController::actualizarPerfil);
+        ApiBuilder.delete("/", PerfilController::eliminarCuenta);
+    }
+
+    /**
+     * Elimina la cuenta del cliente autenticado. Body: { "password": "..." }
+     *
+     * Reglas:
+     *   - Solo CLIENTE: las cuentas de personal las da de baja el administrador.
+     *   - Se exige la contraseña actual para evitar borrados con un token robado.
+     *   - Rate limit para impedir fuerza bruta de la contraseña por este endpoint.
+     *
+     * @param ctx Contexto HTTP de Javalin
+     * @throws SQLException si ocurre un error en base de datos
+     */
+    @SuppressWarnings("unchecked")
+    private static void eliminarCuenta(Context ctx) throws SQLException {
+        NaiveRateLimit.requestPerTimeUnit(ctx, 5, TimeUnit.MINUTES);
+        if (SecurityMiddleware.getRol(ctx) != Rol.CLIENTE) {
+            throw new ForbiddenResponse("Solo los clientes pueden eliminar su cuenta. El personal debe solicitarlo al administrador.");
+        }
+        int userId = SecurityMiddleware.getUserId(ctx);
+
+        Map<String, Object> body = ctx.bodyAsClass(Map.class);
+        Object password = body == null ? null : body.get("password");
+        if (!(password instanceof String pwd) || pwd.isEmpty()) {
+            throw new BadRequestResponse("Debes confirmar con tu contraseña.");
+        }
+
+        Cliente cliente = clienteDAO.buscarPorId(userId);
+        if (cliente == null) throw new NotFoundResponse("Perfil no encontrado.");
+        if (!BCrypt.verifyer().verify(pwd.toCharArray(), cliente.getPasswordHash()).verified) {
+            throw new UnauthorizedResponse("Contraseña incorrecta.");
+        }
+
+        if (!clienteDAO.eliminarCuenta(userId, LocalDate.now())) {
+            throw new NotFoundResponse("Perfil no encontrado.");
+        }
+        ctx.json(Map.of("mensaje", "Cuenta eliminada correctamente."));
     }
 
     

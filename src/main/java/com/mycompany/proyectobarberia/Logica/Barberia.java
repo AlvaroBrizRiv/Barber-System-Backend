@@ -22,6 +22,8 @@ public class Barberia {
     private String paisCodigo;
     private String monedaCodigo;
     private String zonaHoraria;
+    /** Si es true, la página pública de la barbería muestra la sección de suscripciones. */
+    private boolean suscripcionesHabilitadas;
     private LocalDateTime fechaCreacion;
 
     // ─── Constructores ────────────────────────────────────────────────
@@ -115,6 +117,9 @@ public class Barberia {
 
     public String getZonaHoraria() { return zonaHoraria; }
     public void setZonaHoraria(String zonaHoraria) { this.zonaHoraria = zonaHoraria; }
+
+    public boolean isSuscripcionesHabilitadas() { return suscripcionesHabilitadas; }
+    public void setSuscripcionesHabilitadas(boolean suscripcionesHabilitadas) { this.suscripcionesHabilitadas = suscripcionesHabilitadas; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
