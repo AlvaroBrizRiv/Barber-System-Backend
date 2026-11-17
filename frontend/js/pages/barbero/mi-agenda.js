@@ -118,7 +118,7 @@ async function cargarAgenda() {
         });
 
     } catch (err) {
-        container.innerHTML = `<div class="empty-state" style="color:#E74C3C;">${err.message}</div>`;
+        container.innerHTML = `<div class="empty-state" style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
     }
 }
 

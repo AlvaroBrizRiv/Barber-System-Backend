@@ -74,6 +74,12 @@ async function cargarDashboard() {
     }
 }
 
+/** Estrellas acotadas a 0..5 (evita RangeError con datos corruptos). */
+function estrellas(n) {
+    const v = Math.min(5, Math.max(0, Number(n) || 0));
+    return '★'.repeat(v) + '☆'.repeat(5 - v);
+}
+
 function renderAgendaPreview(citas) {
     const container = document.getElementById('agenda-preview');
     if (!citas.length) {
@@ -82,14 +88,14 @@ function renderAgendaPreview(citas) {
     }
     container.innerHTML = citas.map(c => `
         <div class="agenda-item">
-            <div class="agenda-hora">${c.hora?.substring(0,5) || '--:--'}</div>
+            <div class="agenda-hora">${Utils.esc(c.hora?.substring(0,5) || '--:--')}</div>
             <div class="agenda-cliente">
-                <div class="nombre">${c.cliente?.nombre || ''} ${c.cliente?.apellido || ''}</div>
-                <div class="servicio">Barbero: ${c.empleado?.nombre || '—'}</div>
+                <div class="nombre">${Utils.esc(c.cliente?.nombre)} ${Utils.esc(c.cliente?.apellido)}</div>
+                <div class="servicio">Barbero: ${Utils.esc(c.empleado?.nombre || '—')}</div>
             </div>
-            <span class="estado-badge estado-${c.estado}">${c.estado}</span>
+            <span class="estado-badge estado-${Utils.esc(c.estado)}">${Utils.esc(c.estado)}</span>
             ${c.estado === 'PENDIENTE' ? `
-                <button class="btn-confirmar" onclick="confirmarCita(${c.id})">Confirmar</button>
+                <button class="btn-confirmar" onclick="confirmarCita(${Number(c.id)})">Confirmar</button>
             ` : ''}
         </div>
     `).join('');
@@ -148,20 +154,20 @@ async function cargarAgendaFull() {
         }
         container.innerHTML = citas.map(c => `
             <div class="agenda-item">
-                <div class="agenda-hora">${c.hora?.substring(0,5) || '--:--'}</div>
+                <div class="agenda-hora">${Utils.esc(c.hora?.substring(0,5) || '--:--')}</div>
                 <div class="agenda-cliente">
-                    <div class="nombre">${c.cliente?.nombre || ''} ${c.cliente?.apellido || ''}</div>
-                    <div class="servicio">${c.notas || 'Sin notas'}</div>
+                    <div class="nombre">${Utils.esc(c.cliente?.nombre)} ${Utils.esc(c.cliente?.apellido)}</div>
+                    <div class="servicio">${Utils.esc(c.notas || 'Sin notas')}</div>
                 </div>
-                <div class="agenda-barbero">${c.empleado?.nombre || '—'} ${c.empleado?.apellido || ''}</div>
-                <span class="estado-badge estado-${c.estado}">${c.estado}</span>
+                <div class="agenda-barbero">${Utils.esc(c.empleado?.nombre || '—')} ${Utils.esc(c.empleado?.apellido)}</div>
+                <span class="estado-badge estado-${Utils.esc(c.estado)}">${Utils.esc(c.estado)}</span>
                 ${c.estado === 'PENDIENTE' ? `
-                    <button class="btn-confirmar" onclick="confirmarCita(${c.id})">Confirmar</button>
+                    <button class="btn-confirmar" onclick="confirmarCita(${Number(c.id)})">Confirmar</button>
                 ` : ''}
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger);">${err.message}</div>`;
+        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger);">${Utils.esc(err.message)}</div>`;
     }
 }
 
@@ -203,7 +209,7 @@ async function cargarEmpleados() {
             btn.addEventListener('click', () => desactivarEmpleado(Number(btn.dataset.id)));
         });
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); padding:2rem;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
     }
 }
 
@@ -228,20 +234,20 @@ async function cargarServicios() {
         }
         tbody.innerHTML = servicios.map(s => `
             <tr>
-                <td><strong>${s.nombre}</strong></td>
-                <td style="color:var(--text-muted);">${s.descripcion || '—'}</td>
-                <td style="color:var(--gold);">$${s.precio?.toLocaleString('es-CL')}</td>
-                <td style="color:var(--text-muted);">${s.duracionMinutos} min</td>
+                <td><strong>${Utils.esc(s.nombre)}</strong></td>
+                <td style="color:var(--text-muted);">${Utils.esc(s.descripcion || '—')}</td>
+                <td style="color:var(--gold);">${Utils.dinero(s.precio)}</td>
+                <td style="color:var(--text-muted);">${Number(s.duracionMinutos) || 0} min</td>
                 <td>
                     <button class="btn btn-danger-outline" style="padding:0.3rem 0.75rem; font-size:0.75rem;"
-                        onclick="desactivarServicio(${s.id})">
+                        onclick="desactivarServicio(${Number(s.id)})">
                         Eliminar
                     </button>
                 </td>
             </tr>
         `).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); padding:2rem;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
     }
 }
 
@@ -268,18 +274,18 @@ async function cargarCalificaciones() {
             <div style="padding:1rem; border-bottom:1px solid var(--border);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <span style="color:var(--gold);">${'★'.repeat(c.estrellasBarberia)}${'☆'.repeat(5-c.estrellasBarberia)}</span>
+                        <span style="color:var(--gold);">${estrellas(c.estrellasBarberia)}</span>
                         <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">Barbería</span>
-                        <span style="color:var(--gold); margin-left:1rem;">${'★'.repeat(c.estrellasBarbero)}${'☆'.repeat(5-c.estrellasBarbero)}</span>
+                        <span style="color:var(--gold); margin-left:1rem;">${estrellas(c.estrellasBarbero)}</span>
                         <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">Barbero</span>
                     </div>
                     <span style="color:var(--text-muted); font-size:0.75rem;">${new Date(c.fecha).toLocaleDateString('es-CL')}</span>
                 </div>
-                ${c.comentario ? `<p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.5rem;">"${c.comentario}"</p>` : ''}
+                ${c.comentario ? `<p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.5rem;">"${Utils.esc(c.comentario)}"</p>` : ''}
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = `<div style="color:var(--danger); padding:2rem;">${err.message}</div>`;
+        container.innerHTML = `<div style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</div>`;
     }
 }
 

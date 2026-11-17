@@ -22,8 +22,14 @@
  * =====================================================================
  */
 
-// URL base de todos los endpoints del backend (configurable por entorno)
-const API_BASE = 'http://localhost:7070/api';
+// URL base de todos los endpoints del backend.
+// Para otro entorno, define antes de cargar api.js:
+//   <script>window.APP_CONFIG = { apiBase: 'https://api.midominio.cl/api' };</script>
+// (y agrega ese host a connect-src en la CSP de las páginas).
+const API_BASE = (window.APP_CONFIG && typeof window.APP_CONFIG.apiBase === 'string'
+    && /^https?:\/\//.test(window.APP_CONFIG.apiBase))
+    ? window.APP_CONFIG.apiBase.replace(/\/+$/, '')
+    : 'http://localhost:7070/api';
 
 /**
  * Objeto principal de la API.
