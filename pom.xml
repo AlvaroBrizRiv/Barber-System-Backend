@@ -22,6 +22,11 @@
         <hikari.version>5.1.0</hikari.version>
         <dotenv.version>3.0.2</dotenv.version>
         <mssql.version>12.8.1.jre11</mssql.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <!-- Pruebas -->
+        <junit.version>5.14.4</junit.version>
+        <mockito.version>5.24.0</mockito.version>
+        <surefire.version>3.6.1</surefire.version>
     </properties>
 
     <dependencies>
@@ -32,6 +37,13 @@
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <version>${mssql.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL / Supabase: se activa cambiando DB_URL en .env (jdbc:postgresql://...) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- API de SLF4J explícita para evitar versión 1.7 transitiva de HikariCP -->
@@ -112,10 +124,62 @@
             <artifactId>dotenv-java</artifactId>
             <version>${dotenv.version}</version>
         </dependency>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!--  PRUEBAS                                            -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Expone la ruta del JAR de Mockito como propiedad para cargarlo como agente -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Ejecución de pruebas (mvn test) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <!-- Mockito como agente: evita el aviso de carga dinámica en JDK 21+ -->
+                    <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <!-- Valores solo para pruebas: no dependen del .env local -->
+                    <environmentVariables>
+                        <JWT_SECRET>clave_de_pruebas_unitarias_con_mas_de_32_caracteres</JWT_SECRET>
+                        <JWT_EXPIRATION_MS>3600000</JWT_EXPIRATION_MS>
+                    </environmentVariables>
+                </configuration>
+            </plugin>
+
             <!-- Plugin para crear un JAR ejecutable con todas las dependencias -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

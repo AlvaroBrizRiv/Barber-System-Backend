@@ -15,11 +15,12 @@ import java.util.Map;
 /**
  * Controlador REST para barberías.
  *
- * GET    /api/barberias         → Lista pública de barberías activas.
+ * GET    /api/barberias?q=texto → Lista pública de barberías activas (búsqueda opcional).
  * GET    /api/barberias/{id}    → Detalle público de una barbería.
  * POST   /api/barberias         → Crear barbería (solo SUPERADMIN).
  * PUT    /api/barberias/{id}    → Actualizar MI barbería (ADMIN_BARBERIA o SUPERADMIN).
  * DELETE /api/barberias/{id}    → Desactivar barbería (solo SUPERADMIN).
+ * PATCH  /api/barberias/{id}/suscripciones → Mostrar/ocultar sección de suscripciones (ADMIN de esa barbería).
  */
 public class BarberiaController {
 
@@ -31,6 +32,7 @@ public class BarberiaController {
         ApiBuilder.post("/",       BarberiaController::crear);
         ApiBuilder.put("/{id}",    BarberiaController::actualizar);
         ApiBuilder.delete("/{id}", BarberiaController::desactivar);
+        ApiBuilder.patch("/{id}/suscripciones", BarberiaController::configurarSuscripciones);
     }
 
     /**
@@ -40,8 +42,11 @@ public class BarberiaController {
      * @throws SQLException si ocurre un error al consultar la base de datos
      */
     private static void listar(Context ctx) throws SQLException {
-        // Devuelve la lista de barberías activas en formato JSON
-        ctx.json(dao.listarActivas());
+        String q = ctx.queryParam("q");
+        if (q != null && q.length() > 100) {
+            throw new BadRequestResponse("La búsqueda no puede superar 100 caracteres.");
+        }
+        ctx.json(dao.buscarActivas(q));
     }
 
     /**
@@ -128,5 +133,28 @@ public class BarberiaController {
         // Ejecuta la desactivación y lanza excepción si falla
         if (!dao.desactivar(id)) throw new NotFoundResponse("Barbería no encontrada.");
         ctx.json(Map.of("mensaje", "Barbería desactivada."));
+    }
+
+    /**
+     * Activa o desactiva la sección de suscripciones de la barbería.
+     * Body: { "habilitadas": true }
+     *
+     * @param ctx Contexto HTTP de Javalin
+     * @throws SQLException si ocurre un error en la base de datos
+     */
+    @SuppressWarnings("unchecked")
+    static void configurarSuscripciones(Context ctx) throws SQLException {
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        SecurityMiddleware.requerirAdminDeBarberia(ctx, id);
+
+        Map<String, Object> body = ctx.bodyAsClass(Map.class);
+        Object valor = body == null ? null : body.get("habilitadas");
+        if (!(valor instanceof Boolean habilitadas)) {
+            throw new BadRequestResponse("El campo 'habilitadas' (true/false) es requerido.");
+        }
+        if (!dao.actualizarSuscripcionesHabilitadas(id, habilitadas)) {
+            throw new NotFoundResponse("Barbería no encontrada.");
+        }
+        ctx.json(Map.of("suscripcionesHabilitadas", habilitadas));
     }
 }

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Fecha mínima = hoy
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = Utils.fechaISO();
     document.getElementById('fechaCita').min = hoy;
     document.getElementById('fechaCita').value = hoy;
 
@@ -31,13 +31,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('barberiaId')) {
-        datos.barberiaId = parseInt(urlParams.get('barberiaId'));
+    const idUrl = (clave) => {
+        const n = Number.parseInt(urlParams.get(clave), 10);
+        return Number.isInteger(n) && n > 0 ? n : null;
+    };
+    datos.barberiaId = idUrl('barberiaId');
+    // Preselección desde la página de la barbería (se valida al cargar barberos/servicios)
+    if (datos.barberiaId) {
+        datos.barberoId = idUrl('barberoId');
+        const servicioId = idUrl('servicioId');
+        if (servicioId) datos.servicios = [servicioId];
     }
 
     await cargarBarberias();
 
-    if (datos.barberiaId) {
+    if (datos.barberiaId && datos.barberoId) {
+        await cargarBarberos();            // valida que el barbero exista en esta barbería
+        irPaso(datos.barberoId ? 3 : 2);
+    } else if (datos.barberiaId) {
         irPaso(2);
     }
 });
@@ -101,21 +112,22 @@ async function cargarBarberias() {
         const barberias = await Api.barberias.listar();
         grid.innerHTML = barberias.map(b => `
             <div class="selection-card ${datos.barberiaId === b.id ? 'selected' : ''}"
-                 onclick="seleccionarBarberia(${b.id}, '${b.nombre.replace(/'/g,"\\'")}', this)">
+                 role="button" tabindex="0" data-id="${Number(b.id)}" data-nombre="${Utils.esc(b.nombre)}">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
                 </div>
-                <div class="card-nombre">${b.nombre}</div>
-                <div class="card-sub">${b.direccion || 'Ubicación central'}</div>
+                <div class="card-nombre">${Utils.esc(b.nombre)}</div>
+                <div class="card-sub">${Utils.esc(b.direccion || 'Ubicación central')}</div>
             </div>
         `).join('');
+        activarTarjetas(grid, (el) => seleccionarBarberia(Number(el.dataset.id), el.dataset.nombre, el));
 
         if (datos.barberiaId) {
             const sel = barberias.find(b => b.id === datos.barberiaId);
             if (sel) barberiaSeleccionada = sel.nombre;
         }
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${err.message}</div>`;
+        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
     }
 }
 
@@ -137,18 +149,24 @@ async function cargarBarberos() {
             grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Esta barbería no tiene barberos disponibles en este momento.</div>';
             return;
         }
+        // Si venía un barbero preseleccionado que no pertenece a esta barbería, se descarta
+        const pre = barberos.find(b => b.id === datos.barberoId);
+        if (pre) barberoSeleccionado = `${pre.nombre} ${pre.apellido}`;
+        else datos.barberoId = null;
+
         grid.innerHTML = barberos.map(b => `
             <div class="selection-card ${datos.barberoId === b.id ? 'selected' : ''}"
-                 onclick="seleccionarBarbero(${b.id}, '${b.nombre} ${b.apellido}', this)">
+                 role="button" tabindex="0" data-id="${Number(b.id)}" data-nombre="${Utils.esc(`${b.nombre} ${b.apellido}`)}">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
                 </div>
-                <div class="card-nombre">${b.nombre} ${b.apellido}</div>
+                <div class="card-nombre">${Utils.esc(b.nombre)} ${Utils.esc(b.apellido)}</div>
                 <div class="card-sub">Barbero Profesional</div>
             </div>
         `).join('');
+        activarTarjetas(grid, (el) => seleccionarBarbero(Number(el.dataset.id), el.dataset.nombre, el));
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${err.message}</div>`;
+        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
     }
 }
 
@@ -168,25 +186,29 @@ async function cargarServicios() {
             grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Esta barbería no tiene servicios registrados aún.</div>';
             return;
         }
+        // Descarta servicios preseleccionados que no existan en esta barbería
+        datos.servicios = datos.servicios.filter(id => serviciosDisponibles.some(s => s.id === id));
         grid.innerHTML = serviciosDisponibles.map(s => `
             <div class="servicio-item ${datos.servicios.includes(s.id) ? 'selected' : ''}"
-                 onclick="toggleServicio(${s.id}, this)">
+                 role="checkbox" tabindex="0" aria-checked="${datos.servicios.includes(s.id)}" data-id="${Number(s.id)}">
                 <div class="servicio-checkbox">
                     <span style="font-size:0.75rem; ${datos.servicios.includes(s.id) ? '' : 'display:none'}">✓</span>
                 </div>
                 <div class="servicio-info">
-                    <div class="nombre">${s.nombre}</div>
-                    <div class="precio">$${Number(s.precio).toLocaleString('es-CL')}</div>
+                    <div class="nombre">${Utils.esc(s.nombre)}</div>
+                    <div class="precio">${Utils.dinero(s.precio)}</div>
                 </div>
             </div>
         `).join('');
+        activarTarjetas(grid, (el) => toggleServicio(Number(el.dataset.id), el));
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${err.message}</div>`;
+        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
     }
 }
 
 function toggleServicio(id, el) {
     el.classList.toggle('selected');
+    el.setAttribute('aria-checked', el.classList.contains('selected'));
     const checkmark = el.querySelector('.servicio-checkbox span');
     if (el.classList.contains('selected')) {
         datos.servicios.push(id);
@@ -200,7 +222,7 @@ function toggleServicio(id, el) {
 function renderResumen() {
     const serviciosNombres = datos.servicios.map(id => {
         const s = serviciosDisponibles.find(sv => sv.id === id);
-        return s ? `${s.nombre} ($${Number(s.precio).toLocaleString('es-CL')})` : '';
+        return s ? `${Utils.esc(s.nombre)} (${Utils.dinero(s.precio)})` : '';
     });
     const total = datos.servicios.reduce((sum, id) => {
         const s = serviciosDisponibles.find(sv => sv.id === id);
@@ -210,11 +232,11 @@ function renderResumen() {
     document.getElementById('resumen').innerHTML = `
         <div class="resumen-row">
             <span class="label">Barbería</span>
-            <span class="value">${barberiaSeleccionada || 'Barbería'}</span>
+            <span class="value">${Utils.esc(barberiaSeleccionada || 'Barbería')}</span>
         </div>
         <div class="resumen-row">
             <span class="label">Barbero Asignado</span>
-            <span class="value">${barberoSeleccionado || 'Barbero'}</span>
+            <span class="value">${Utils.esc(barberoSeleccionado || 'Barbero')}</span>
         </div>
         <div class="resumen-row">
             <span class="label">Servicios</span>
@@ -226,11 +248,11 @@ function renderResumen() {
         </div>
         <div class="resumen-row">
             <span class="label">Hora</span>
-            <span class="value">${datos.hora} hrs</span>
+            <span class="value">${Utils.esc(datos.hora)} hrs</span>
         </div>
         <div class="resumen-row resumen-total">
             <span class="label">Total Estimado</span>
-            <span class="value">$${total.toLocaleString('es-CL')}</span>
+            <span class="value">${Utils.dinero(total)}</span>
         </div>
     `;
 }
@@ -258,4 +280,17 @@ async function confirmarCita() {
         btn.disabled = false;
         btn.textContent = '✓ Confirmar Cita';
     }
+}
+
+/**
+ * Asocia clic y teclado (Enter/Espacio) a las tarjetas seleccionables de un grid,
+ * sin usar atributos onclick con datos interpolados (evita XSS).
+ */
+function activarTarjetas(grid, accion) {
+    grid.querySelectorAll('[data-id]').forEach(el => {
+        el.addEventListener('click', () => accion(el));
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); accion(el); }
+        });
+    });
 }

@@ -36,12 +36,28 @@ public class ClienteDAO {
             "       p.fecha_registro, p.activo, c.puntos_fidelidad " +
             "FROM personas p " +
             "INNER JOIN clientes c ON p.id = c.id " +
-            "WHERE p.id = ?";
+            "WHERE p.id = ? AND p.activo = 1";
 
     private static final String SQL_ACTUALIZAR_PERFIL =
             "UPDATE personas SET nombre = COALESCE(?, nombre), apellido = COALESCE(?, apellido), " + 
             "telefono = COALESCE(?, telefono), foto_url = COALESCE(?, foto_url)," + 
             "idioma_preferido = COALESCE(?, idioma_preferido) WHERE id = ?";
+
+    // ─── Eliminación de cuenta (anonimización) ────────────────────────
+    // Las citas y calificaciones se conservan para la contabilidad de la barbería,
+    // pero los datos personales se reemplazan para que no sean identificables y el
+    // email/documento queden libres para un registro futuro.
+    private static final String SQL_CANCELAR_CITAS_FUTURAS =
+            "UPDATE citas SET estado = 'CANCELADA' WHERE cliente_id = ? AND fecha >= ? " +
+            "AND estado IN ('PENDIENTE','CONFIRMADA')";
+    private static final String SQL_VACIAR_CARRITO =
+            "DELETE FROM carritos_items WHERE cliente_id = ?";
+    private static final String SQL_DESACTIVAR_SUSCRIPCIONES =
+            "UPDATE cliente_suscripciones SET activa = 0 WHERE cliente_id = ?";
+    private static final String SQL_ANONIMIZAR_PERSONA =
+            "UPDATE personas SET activo = 0, nombre = 'Usuario', apellido = 'Eliminado', " +
+            "email = ?, documento_identidad = ?, telefono = NULL, foto_url = NULL, password_hash = '!' " +
+            "WHERE id = ? AND activo = 1";
 
     private static final String SQL_ACTUALIZAR_PUNTOS =
             "UPDATE clientes SET puntos_fidelidad = ? WHERE id = ?";
@@ -88,6 +104,53 @@ public class ClienteDAO {
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
+            }
+        }
+    }
+
+    /**
+     * Elimina la cuenta de un cliente de forma atómica:
+     * cancela sus citas futuras, vacía su carrito, desactiva sus suscripciones
+     * y anonimiza sus datos personales (soft-delete con borrado de PII).
+     *
+     * @param id  ID del cliente.
+     * @param hoy Fecha actual (se pasa desde Java para no depender de funciones de fecha del motor).
+     * @return true si la cuenta existía y fue eliminada.
+     * @throws SQLException si falla alguna operación (se hace rollback completo).
+     */
+    public boolean eliminarCuenta(int id, java.time.LocalDate hoy) throws SQLException {
+        try (Connection conn = Conexion.obtenerConexion()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement psCitas = conn.prepareStatement(SQL_CANCELAR_CITAS_FUTURAS);
+                 PreparedStatement psCarrito = conn.prepareStatement(SQL_VACIAR_CARRITO);
+                 PreparedStatement psSubs = conn.prepareStatement(SQL_DESACTIVAR_SUSCRIPCIONES);
+                 PreparedStatement psPersona = conn.prepareStatement(SQL_ANONIMIZAR_PERSONA)) {
+
+                psPersona.setString(1, "eliminado+" + id + "@cuenta.invalid");
+                psPersona.setString(2, "DEL-" + id);
+                psPersona.setInt(3, id);
+                if (psPersona.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+
+                psCitas.setInt(1, id);
+                psCitas.setDate(2, java.sql.Date.valueOf(hoy));
+                psCitas.executeUpdate();
+
+                psCarrito.setInt(1, id);
+                psCarrito.executeUpdate();
+
+                psSubs.setInt(1, id);
+                psSubs.executeUpdate();
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
         }
     }

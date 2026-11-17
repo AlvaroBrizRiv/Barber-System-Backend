@@ -45,10 +45,10 @@ function renderizarProductos(productos) {
         const card = document.createElement('div');
         card.className = 'producto-card';
 
-        const imgUrl = p.imagenUrl || 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=400';
+        const imgUrl = Utils.urlSegura(p.imagenUrl) || 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=400';
         const enStock = p.stock > 0;
         const botonHtml = enStock 
-            ? `<button class="btn-comprar" onclick="agregarAlCarrito(${p.id})">
+            ? `<button class="btn-comprar" onclick="agregarAlCarrito(${Number(p.id)})">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 Añadir
                </button>` 
@@ -56,14 +56,14 @@ function renderizarProductos(productos) {
 
         card.innerHTML = `
             <div class="producto-img-container">
-                <img src="${imgUrl}" alt="${p.nombre}" class="producto-img" onerror="this.src='https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=400'">
-                <span class="producto-categoria-tag">${(p.categoria || '').replace('_', ' ')}</span>
+                <img src="${Utils.esc(imgUrl)}" alt="${Utils.esc(p.nombre)}" class="producto-img" onerror="this.src='https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=400'">
+                <span class="producto-categoria-tag">${Utils.esc((p.categoria || '').replaceAll('_', ' '))}</span>
             </div>
             <div class="producto-info">
-                <h3 class="producto-titulo">${p.nombre}</h3>
-                <p class="producto-desc">${p.descripcion || 'Insumo de barbería premium.'}</p>
+                <h3 class="producto-titulo">${Utils.esc(p.nombre)}</h3>
+                <p class="producto-desc">${Utils.esc(p.descripcion || 'Insumo de barbería premium.')}</p>
                 <div class="producto-footer">
-                    <span class="producto-precio">$${Number(p.precio).toLocaleString('es-CL')}</span>
+                    <span class="producto-precio">${Utils.dinero(p.precio)}</span>
                     ${botonHtml}
                 </div>
             </div>
@@ -165,21 +165,21 @@ function renderizarDrawerItems() {
     list.innerHTML = carritoData.map(item => {
         const subtotal = item.precio * item.cantidad;
         granTotal += subtotal;
-        const img = item.imagenUrl || 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=200';
+        const img = Utils.urlSegura(item.imagenUrl) || 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=200';
 
         return `
             <div class="cart-item-row">
-                <img src="${img}" class="cart-item-thumb" alt="${item.nombre}">
+                <img src="${Utils.esc(img)}" class="cart-item-thumb" alt="${Utils.esc(item.nombre)}">
                 <div class="cart-item-details">
-                    <div class="cart-item-name">${item.nombre}</div>
-                    <div class="cart-item-price">$${Number(item.precio).toLocaleString('es-CL')}</div>
+                    <div class="cart-item-name">${Utils.esc(item.nombre)}</div>
+                    <div class="cart-item-price">${Utils.dinero(item.precio)}</div>
                     <div class="cart-item-qty">
-                        <button class="btn-qty" onclick="cambiarCantidad(${item.productoId}, -1, ${item.cantidad})">-</button>
-                        <span class="qty-val">${item.cantidad}</span>
-                        <button class="btn-qty" onclick="cambiarCantidad(${item.productoId}, 1, ${item.cantidad})">+</button>
+                        <button class="btn-qty" onclick="cambiarCantidad(${Number(item.productoId)}, -1, ${Number(item.cantidad)})">-</button>
+                        <span class="qty-val">${Number(item.cantidad)}</span>
+                        <button class="btn-qty" onclick="cambiarCantidad(${Number(item.productoId)}, 1, ${Number(item.cantidad)})">+</button>
                     </div>
                 </div>
-                <button class="btn-delete-item" onclick="eliminarDelCarrito(${item.productoId})" title="Eliminar">
+                <button class="btn-delete-item" onclick="eliminarDelCarrito(${Number(item.productoId)})" title="Eliminar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
             </div>

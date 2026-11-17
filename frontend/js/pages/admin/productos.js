@@ -29,25 +29,25 @@ async function cargarProductos() {
             const tr = document.createElement('tr');
             
             const btnDesactivar = p.activo 
-                ? `<button class="btn-danger-outline" onclick="desactivarProducto(${p.id})">Desactivar</button>`
+                ? `<button class="btn-danger-outline" onclick="desactivarProducto(${Number(p.id)})">Desactivar</button>`
                 : `<span style="color:var(--text-muted);font-size:0.8rem;">Desactivado</span>`;
 
-            const precio = `$${p.precio.toLocaleString()}`;
+            const precio = Utils.dinero(p.precio);
             let stockBadge = '';
-            if (p.stock > 10) stockBadge = `<span class="badge badge-success">${p.stock}</span>`;
-            else if (p.stock > 0) stockBadge = `<span class="badge badge-warning">${p.stock}</span>`;
+            if (p.stock > 10) stockBadge = `<span class="badge badge-success">${Number(p.stock)}</span>`;
+            else if (p.stock > 0) stockBadge = `<span class="badge badge-warning">${Number(p.stock)}</span>`;
             else stockBadge = `<span class="badge badge-danger">Agotado</span>`;
 
             const estadoBadge = p.activo 
                 ? `<span class="badge badge-success">Activo</span>` 
                 : `<span class="badge badge-danger">Inactivo</span>`;
             
-            const imgUrl = p.imagenUrl || 'https://via.placeholder.com/40x40/222222/D4AF37?text=P';
+            const imgUrl = Utils.urlSegura(p.imagenUrl) || 'https://via.placeholder.com/40x40/222222/D4AF37?text=P';
 
             tr.innerHTML = `
-                <td><img src="${imgUrl}" alt="${p.nombre}" class="img-producto"></td>
-                <td><strong>${p.nombre}</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">${p.descripcion || ''}</span></td>
-                <td><span class="badge badge-info">${p.categoria}</span></td>
+                <td><img src="${Utils.esc(imgUrl)}" alt="${Utils.esc(p.nombre)}" class="img-producto"></td>
+                <td><strong>${Utils.esc(p.nombre)}</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">${Utils.esc(p.descripcion)}</span></td>
+                <td><span class="badge badge-info">${Utils.esc(p.categoria)}</span></td>
                 <td>${precio}</td>
                 <td>${stockBadge}</td>
                 <td>${estadoBadge}</td>

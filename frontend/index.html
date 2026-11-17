@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' http://localhost:7070 http://127.0.0.1:7070 https:; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="description" content="Sistema de Barbería — Agenda tu cita en la mejor barbería de tu ciudad. Corte de cabello, barba y productos de aseo masculino premium.">
     <title>Barber System — Plataforma Oficial</title>
 
@@ -12,7 +13,7 @@
         2. global.css → Variables, reset, botones, navbar compartidos
         3. index.css  → Estilos exclusivos de la página de inicio
     -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" integrity="sha384 - PLACEHOLDER" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" integrity="sha384-QjOWlMHXqmQPt5FI7WVI2jAt6qXrPsRUbeyiJGuoePVW/vShC7H6R6vGAJUJlI/I" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/index.css">
@@ -64,6 +65,14 @@
                 <p class="has-text-grey-light" style="max-width: 500px; margin: 0 auto;">Selecciona una barbería para acceder a su catálogo de servicios, barberos disponibles y tienda de productos exclusivos.</p>
             </div>
             
+            <form class="buscador-barberias" role="search" onsubmit="return false;">
+                <label for="buscarBarberia" class="sr-only">Buscar barbería por nombre o dirección</label>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="buscarBarberia" maxlength="100" autocomplete="off"
+                       placeholder="Busca por nombre o comuna (ej: Providencia)">
+            </form>
+            <p class="buscador-estado" id="buscadorEstado" aria-live="polite"></p>
+
             <div class="columns is-multiline is-centered" id="barberias-grid">
                 <div class="column has-text-centered has-text-grey">
                     <p>Cargando barberías disponibles...</p>

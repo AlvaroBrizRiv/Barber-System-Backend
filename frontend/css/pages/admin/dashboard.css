@@ -170,3 +170,44 @@ tbody tr:hover { background: var(--bg-card-hover); }
     .main { margin-left: 0; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ═══ Ganancias ═══ */
+.ganancias-filtros { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.periodo-tabs { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.periodo-tab {
+    background: transparent; color: var(--text-secondary); border: none; padding: 0.55rem 1.1rem;
+    font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.periodo-tab + .periodo-tab { border-left: 1px solid var(--border); }
+.periodo-tab.active { background: rgba(212,175,55,0.15); color: var(--gold); }
+.filtro { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.ganancias-rango { color: var(--text-muted); font-size: 0.8rem; margin: 0 0 1rem; }
+.tabla-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chart-wrap { position: relative; height: 260px; }
+.barra-pct { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; min-width: 80px; }
+.barra-pct span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-dark)); }
+
+/* Toggle de suscripciones */
+.switch-row { display: inline-flex; gap: 0.75rem; align-items: center; max-width: 520px; text-align: left; cursor: pointer; margin-bottom: 0.5rem; }
+.switch-row input { width: 18px; height: 18px; accent-color: var(--gold); flex-shrink: 0; }
+.switch-estado { color: var(--text-muted); font-size: 0.8rem; min-height: 1.2rem; margin-bottom: 1rem; }
+
+/* Menú móvil */
+.btn-menu { display: none; background: none; border: 1px solid var(--border); color: var(--text-secondary); border-radius: 8px; padding: 0.35rem; cursor: pointer; }
+.sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 90; }
+.sidebar-backdrop[hidden] { display: none; }
+
+@media (max-width: 768px) {
+    .btn-menu { display: inline-flex; }
+    .sidebar { z-index: 100; transition: transform 0.25s; }
+    .topbar { gap: 0.75rem; flex-wrap: wrap; }
+    .content { padding: 1rem; }
+}
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .topbar-right label, .fecha-hoy { display: none; }
+    .ganancias-filtros { flex-direction: column; align-items: stretch; }
+    .periodo-tabs { display: flex; }
+    .periodo-tab { flex: 1; }
+    .stat-value { font-size: 1.75rem; }
+}

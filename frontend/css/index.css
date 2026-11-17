@@ -175,6 +175,21 @@
    ===================================================================== */
 
 /* --- Tablets (menor a 1024px) --- */
+/* Buscador de barberías (mobile first) */
+.buscador-barberias {
+    display: flex; align-items: center; gap: 0.6rem;
+    width: 100%; max-width: 560px; margin: 0 auto 0.75rem;
+    background: #151515; border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 999px; padding: 0.7rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.buscador-barberias:focus-within { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212,175,55,0.15); }
+.buscador-barberias input {
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    color: #fff; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;
+}
+.buscador-estado { text-align: center; color: rgba(255,255,255,0.45); font-size: 0.8rem; min-height: 1.2rem; margin-bottom: 1.5rem; }
+
 @media (max-width: 1024px) {
     .section-barberias,
     .section-servicios {

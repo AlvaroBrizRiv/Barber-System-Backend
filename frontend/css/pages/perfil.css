@@ -109,3 +109,21 @@
     .perfil-header { flex-direction:column; text-align:center; }
     .perfil-badges { justify-content:center; }
 }
+
+/* Zona de peligro: eliminar cuenta */
+[hidden] { display: none !important; }
+.zona-peligro { border-color: rgba(231,76,60,0.35); }
+.peligro-titulo { color: var(--error); }
+.peligro-texto { color: var(--text2); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.2rem; }
+.peligro-form { display: flex; flex-direction: column; gap: 0.7rem; max-width: 420px; }
+.peligro-check { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.82rem; color: var(--text2); cursor: pointer; }
+.peligro-check input { margin-top: 0.2rem; accent-color: var(--error); }
+.btn-eliminar {
+    align-self: flex-start; background: transparent; color: var(--error);
+    border: 1px solid var(--error); border-radius: 8px; padding: 0.75rem 1.5rem;
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.85rem; cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-eliminar:hover:not(:disabled) { background: var(--error); color: #fff; }
+.btn-eliminar:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 480px) { .btn-eliminar { align-self: stretch; } }

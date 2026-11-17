@@ -9,14 +9,14 @@ document.getElementById('userInitials').textContent =
     usuario?.nombre?.charAt(0)?.toUpperCase() || 'A';
 document.getElementById('userName').textContent = usuario?.nombre || 'Admin';
 
-const hoy = new Date().toISOString().split('T')[0];
+const hoy = Utils.fechaISO();
 document.getElementById('fechaAgenda').value = hoy;
 document.getElementById('fechaAgendaFull').value = hoy;
 document.getElementById('fechaHoy').textContent =
     new Date().toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
 
 // ─── Navegación entre secciones ───────────────────────────────
-const secciones = ['dashboard','agenda','empleados','servicios','productos','suscripciones','calificaciones'];
+const secciones = ['dashboard','agenda','empleados','servicios','productos','suscripciones','calificaciones','ganancias'];
 
 function cambiarSeccion(seccion) {
     secciones.forEach(s => {
@@ -28,14 +28,17 @@ function cambiarSeccion(seccion) {
     document.getElementById('pageTitle').textContent = {
         dashboard: 'Dashboard', agenda: 'Agenda del Día', empleados: 'Empleados',
         servicios: 'Servicios', productos: 'Productos', suscripciones: 'Suscripciones',
-        calificaciones: 'Calificaciones'
+        calificaciones: 'Calificaciones', ganancias: 'Ganancias'
     }[seccion] || seccion;
+    cerrarMenuMovil();
 
     // Cargar datos según sección
     if (seccion === 'empleados') void cargarEmpleados();
     if (seccion === 'servicios') void cargarServicios();
     if (seccion === 'agenda') void cargarAgendaFull();
     if (seccion === 'calificaciones') void cargarCalificaciones();
+    if (seccion === 'ganancias') void iniciarGanancias();
+    if (seccion === 'suscripciones') void cargarToggleSuscripciones();
 }
 
 // ─── Dashboard ────────────────────────────────────────────────
@@ -71,6 +74,12 @@ async function cargarDashboard() {
     }
 }
 
+/** Estrellas acotadas a 0..5 (evita RangeError con datos corruptos). */
+function estrellas(n) {
+    const v = Math.min(5, Math.max(0, Number(n) || 0));
+    return '★'.repeat(v) + '☆'.repeat(5 - v);
+}
+
 function renderAgendaPreview(citas) {
     const container = document.getElementById('agenda-preview');
     if (!citas.length) {
@@ -79,14 +88,14 @@ function renderAgendaPreview(citas) {
     }
     container.innerHTML = citas.map(c => `
         <div class="agenda-item">
-            <div class="agenda-hora">${c.hora?.substring(0,5) || '--:--'}</div>
+            <div class="agenda-hora">${Utils.esc(c.hora?.substring(0,5) || '--:--')}</div>
             <div class="agenda-cliente">
-                <div class="nombre">${c.cliente?.nombre || ''} ${c.cliente?.apellido || ''}</div>
-                <div class="servicio">Barbero: ${c.empleado?.nombre || '—'}</div>
+                <div class="nombre">${Utils.esc(c.cliente?.nombre)} ${Utils.esc(c.cliente?.apellido)}</div>
+                <div class="servicio">Barbero: ${Utils.esc(c.empleado?.nombre || '—')}</div>
             </div>
-            <span class="estado-badge estado-${c.estado}">${c.estado}</span>
+            <span class="estado-badge estado-${Utils.esc(c.estado)}">${Utils.esc(c.estado)}</span>
             ${c.estado === 'PENDIENTE' ? `
-                <button class="btn-confirmar" onclick="confirmarCita(${c.id})">Confirmar</button>
+                <button class="btn-confirmar" onclick="confirmarCita(${Number(c.id)})">Confirmar</button>
             ` : ''}
         </div>
     `).join('');
@@ -145,20 +154,20 @@ async function cargarAgendaFull() {
         }
         container.innerHTML = citas.map(c => `
             <div class="agenda-item">
-                <div class="agenda-hora">${c.hora?.substring(0,5) || '--:--'}</div>
+                <div class="agenda-hora">${Utils.esc(c.hora?.substring(0,5) || '--:--')}</div>
                 <div class="agenda-cliente">
-                    <div class="nombre">${c.cliente?.nombre || ''} ${c.cliente?.apellido || ''}</div>
-                    <div class="servicio">${c.notas || 'Sin notas'}</div>
+                    <div class="nombre">${Utils.esc(c.cliente?.nombre)} ${Utils.esc(c.cliente?.apellido)}</div>
+                    <div class="servicio">${Utils.esc(c.notas || 'Sin notas')}</div>
                 </div>
-                <div class="agenda-barbero">${c.empleado?.nombre || '—'} ${c.empleado?.apellido || ''}</div>
-                <span class="estado-badge estado-${c.estado}">${c.estado}</span>
+                <div class="agenda-barbero">${Utils.esc(c.empleado?.nombre || '—')} ${Utils.esc(c.empleado?.apellido)}</div>
+                <span class="estado-badge estado-${Utils.esc(c.estado)}">${Utils.esc(c.estado)}</span>
                 ${c.estado === 'PENDIENTE' ? `
-                    <button class="btn-confirmar" onclick="confirmarCita(${c.id})">Confirmar</button>
+                    <button class="btn-confirmar" onclick="confirmarCita(${Number(c.id)})">Confirmar</button>
                 ` : ''}
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger);">${err.message}</div>`;
+        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger);">${Utils.esc(err.message)}</div>`;
     }
 }
 
@@ -200,7 +209,7 @@ async function cargarEmpleados() {
             btn.addEventListener('click', () => desactivarEmpleado(Number(btn.dataset.id)));
         });
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); padding:2rem;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
     }
 }
 
@@ -225,20 +234,20 @@ async function cargarServicios() {
         }
         tbody.innerHTML = servicios.map(s => `
             <tr>
-                <td><strong>${s.nombre}</strong></td>
-                <td style="color:var(--text-muted);">${s.descripcion || '—'}</td>
-                <td style="color:var(--gold);">$${s.precio?.toLocaleString('es-CL')}</td>
-                <td style="color:var(--text-muted);">${s.duracionMinutos} min</td>
+                <td><strong>${Utils.esc(s.nombre)}</strong></td>
+                <td style="color:var(--text-muted);">${Utils.esc(s.descripcion || '—')}</td>
+                <td style="color:var(--gold);">${Utils.dinero(s.precio)}</td>
+                <td style="color:var(--text-muted);">${Number(s.duracionMinutos) || 0} min</td>
                 <td>
                     <button class="btn btn-danger-outline" style="padding:0.3rem 0.75rem; font-size:0.75rem;"
-                        onclick="desactivarServicio(${s.id})">
+                        onclick="desactivarServicio(${Number(s.id)})">
                         Eliminar
                     </button>
                 </td>
             </tr>
         `).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); padding:2rem;">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
     }
 }
 
@@ -265,18 +274,18 @@ async function cargarCalificaciones() {
             <div style="padding:1rem; border-bottom:1px solid var(--border);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <span style="color:var(--gold);">${'★'.repeat(c.estrellasBarberia)}${'☆'.repeat(5-c.estrellasBarberia)}</span>
+                        <span style="color:var(--gold);">${estrellas(c.estrellasBarberia)}</span>
                         <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">Barbería</span>
-                        <span style="color:var(--gold); margin-left:1rem;">${'★'.repeat(c.estrellasBarbero)}${'☆'.repeat(5-c.estrellasBarbero)}</span>
+                        <span style="color:var(--gold); margin-left:1rem;">${estrellas(c.estrellasBarbero)}</span>
                         <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">Barbero</span>
                     </div>
                     <span style="color:var(--text-muted); font-size:0.75rem;">${new Date(c.fecha).toLocaleDateString('es-CL')}</span>
                 </div>
-                ${c.comentario ? `<p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.5rem;">"${c.comentario}"</p>` : ''}
+                ${c.comentario ? `<p style="color:var(--text-secondary); font-size:0.85rem; margin-top:0.5rem;">"${Utils.esc(c.comentario)}"</p>` : ''}
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = `<div style="color:var(--danger); padding:2rem;">${err.message}</div>`;
+        container.innerHTML = `<div style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</div>`;
     }
 }
 
@@ -350,4 +359,169 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // ─── Iniciar dashboard ────────────────────────────────────────
-await cargarDashboard();
+void cargarDashboard();
+
+
+// ─── Menú lateral en móvil ────────────────────────────────────
+(() => {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('btnMenu');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar || !btn || !backdrop) return;
+    btn.addEventListener('click', () => {
+        const abierto = sidebar.classList.toggle('open');
+        backdrop.hidden = !abierto;
+        btn.setAttribute('aria-expanded', String(abierto));
+    });
+    backdrop.addEventListener('click', cerrarMenuMovil);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenuMovil(); });
+})();
+
+function cerrarMenuMovil() {
+    document.getElementById('sidebar')?.classList.remove('open');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (backdrop) backdrop.hidden = true;
+    document.getElementById('btnMenu')?.setAttribute('aria-expanded', 'false');
+}
+
+// ─── Ganancias ────────────────────────────────────────────────
+const ganEstado = { periodo: 'DIA', iniciado: false };
+let chartGanancias = null;
+
+async function iniciarGanancias() {
+    if (!ganEstado.iniciado) {
+        ganEstado.iniciado = true;
+        const fecha = document.getElementById('ganFecha');
+        fecha.value = hoy;
+        fecha.addEventListener('change', () => void cargarGanancias());
+        document.getElementById('ganBarbero').addEventListener('change', () => void cargarGanancias());
+        document.querySelectorAll('.periodo-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                ganEstado.periodo = tab.dataset.periodo;
+                document.querySelectorAll('.periodo-tab').forEach(t => {
+                    t.classList.toggle('active', t === tab);
+                    t.setAttribute('aria-selected', String(t === tab));
+                });
+                void cargarGanancias();
+            });
+        });
+        try {
+            const barberos = await Api.empleados.listarBarberos(barberiaId);
+            const select = document.getElementById('ganBarbero');
+            barberos.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = String(Number(b.id));
+                opt.textContent = `${b.nombre} ${b.apellido}`;
+                select.appendChild(opt);
+            });
+        } catch { /* el filtro queda solo con "Todos" */ }
+    }
+    await cargarGanancias();
+}
+
+async function cargarGanancias() {
+    const tbody = document.getElementById('tablaGanancias');
+    const fecha = document.getElementById('ganFecha').value || hoy;
+    const barberoId = document.getElementById('ganBarbero').value;
+    try {
+        const r = await Api.ganancias.barberia(barberiaId, ganEstado.periodo, fecha, barberoId);
+        renderResumenGanancias(r);
+        renderTablaGanancias(r);
+        renderChartGanancias(r);
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--danger); padding:2rem;">${Utils.esc(err.message)}</td></tr>`;
+    }
+}
+
+function textoRango(r) {
+    const f = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+    return r.desde === r.hasta ? f(r.desde) : `${f(r.desde)} — ${f(r.hasta)}`;
+}
+
+function renderResumenGanancias(r) {
+    const total = Number(r.total) || 0;
+    const citas = Number(r.totalCitas) || 0;
+    document.getElementById('ganRango').textContent = `Periodo: ${textoRango(r)}`;
+    document.getElementById('ganTotal').textContent = Utils.dinero(total);
+    document.getElementById('ganCitas').textContent = String(citas);
+    document.getElementById('ganPromedio').textContent = citas ? Utils.dinero(total / citas) : '—';
+}
+
+function renderTablaGanancias(r) {
+    const tbody = document.getElementById('tablaGanancias');
+    const filas = r.porBarbero || [];
+    if (!filas.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:2rem;">Sin barberos para mostrar</td></tr>';
+        return;
+    }
+    const total = Number(r.total) || 0;
+    tbody.innerHTML = filas.map(g => {
+        const t = Number(g.total) || 0;
+        const pct = total > 0 ? Math.round((t / total) * 100) : 0;
+        return `
+            <tr>
+                <td><strong>${Utils.esc(g.nombre)} ${Utils.esc(g.apellido)}</strong></td>
+                <td>${Number(g.citas) || 0}</td>
+                <td style="color:var(--gold); font-weight:700;">${Utils.dinero(t)}</td>
+                <td>
+                    <div class="barra-pct" title="${pct}%"><span style="width:${pct}%"></span></div>
+                    <small style="color:var(--text-muted);">${pct}%</small>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function renderChartGanancias(r) {
+    if (typeof Chart === 'undefined') return; // CDN bloqueado: la tabla sigue siendo útil
+    const serie = r.serie || [];
+    const etiquetas = serie.map(d => new Date(d.fecha + 'T00:00:00')
+        .toLocaleDateString('es-CL', serie.length > 7 ? { day: 'numeric' } : { weekday: 'short', day: 'numeric' }));
+    if (chartGanancias) chartGanancias.destroy();
+    chartGanancias = new Chart(document.getElementById('chartGanancias').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [{ label: 'Ganancias', data: serie.map(d => Number(d.total) || 0), backgroundColor: '#D4AF37', borderRadius: 4, maxBarThickness: 36 }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (c) => Utils.dinero(c.parsed.y) } }
+            },
+            scales: {
+                x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { display: false } },
+                y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.5)', callback: (v) => Utils.dinero(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+
+// ─── Toggle de la sección pública de suscripciones ────────────
+async function cargarToggleSuscripciones() {
+    const toggle = document.getElementById('toggleSubs');
+    const estado = document.getElementById('toggleSubsEstado');
+    try {
+        const b = await Api.barberias.obtener(barberiaId);
+        toggle.checked = b.suscripcionesHabilitadas === true;
+        estado.textContent = toggle.checked ? 'Visible para los clientes.' : 'Oculta para los clientes.';
+    } catch (err) {
+        estado.textContent = err.message;
+    }
+    if (!toggle.dataset.listo) {
+        toggle.dataset.listo = '1';
+        toggle.addEventListener('change', async () => {
+            toggle.disabled = true;
+            try {
+                await Api.barberias.configurarSuscripciones(barberiaId, toggle.checked);
+                estado.textContent = toggle.checked ? 'Visible para los clientes.' : 'Oculta para los clientes.';
+            } catch (err) {
+                toggle.checked = !toggle.checked;
+                estado.textContent = err.message;
+            } finally {
+                toggle.disabled = false;
+            }
+        });
+    }
+}

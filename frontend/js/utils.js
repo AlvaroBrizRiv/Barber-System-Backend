@@ -27,5 +27,37 @@ const Utils = {
         } catch {
             return '';
         }
+    },
+
+    /**
+     * Formatea un monto en pesos chilenos sin decimales.
+     * @param {number|string} monto
+     * @returns {string} Ej: "$15.000"
+     */
+    dinero(monto) {
+        const n = Number(monto);
+        return '$' + (Number.isFinite(n) ? n : 0).toLocaleString('es-CL', { maximumFractionDigits: 0 });
+    },
+
+    /**
+     * Fecha local en formato YYYY-MM-DD (evita el desfase de toISOString con UTC).
+     * @param {Date} [d=new Date()]
+     * @returns {string}
+     */
+    fechaISO(d = new Date()) {
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${mm}-${dd}`;
+    },
+
+    /**
+     * Retrasa la ejecución de una función hasta que el usuario deja de escribir.
+     * @param {Function} fn
+     * @param {number} ms
+     * @returns {Function}
+     */
+    debounce(fn, ms = 300) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     }
 };

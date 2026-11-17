@@ -24,6 +24,19 @@ const Navbar = (() => {
         globe: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
     };
 
+    /** Escape local (navbar.js puede cargarse sin utils.js). */
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function urlSegura(url) {
+        if (!url) return '';
+        try {
+            const u = new URL(url, window.location.origin);
+            return ['http:', 'https:'].includes(u.protocol) ? u.href : '';
+        } catch { return ''; }
+    }
+
     function getBase() {
         return (typeof Auth !== 'undefined' && Auth.getBasePath)
             ? Auth.getBasePath()
@@ -135,6 +148,16 @@ const Navbar = (() => {
         @media (max-width: 768px) {
             .nav-links .nav-link:not(.always-show) { display: none; }
         }
+        @media (max-width: 480px) {
+            #nav-bs { padding: 0.75rem 1rem; }
+            .nav-logo span:last-child, .nav-nombre, .nav-chevron, .nav-links .nav-link { display: none; }
+            .nav-links { gap: 0.6rem; }
+            .lang-switcher { margin-left: 0; }
+            .lang-switcher > svg { display: none; }
+            .nav-avatar-btn { padding: 0.25rem; }
+            .btn-nav-login { padding: 0.5rem 0.9rem; }
+            .nav-dropdown { right: -0.5rem; min-width: min(240px, calc(100vw - 2rem)); }
+        }
     `;
 
     function inyectarCSS() {
@@ -151,9 +174,11 @@ const Navbar = (() => {
 
         const labels = {
             es: {
-                perfil: 'Mi Perfil & Suscripción',
+                perfil: 'Mi Perfil',
                 citas: 'Mis Citas Agendadas',
                 agenda: 'Mi Agenda de Trabajo',
+                ganancias: 'Mis Ganancias',
+                stock: 'Stock de Productos',
                 panelAdmin: 'Panel de Administrador',
                 salir: 'Cerrar Sesión',
                 login: 'Iniciar Sesión',
@@ -163,9 +188,11 @@ const Navbar = (() => {
                 rolSuper: 'Super Administrador'
             },
             'pt-BR': {
-                perfil: 'Meu Perfil & Assinatura',
+                perfil: 'Meu Perfil',
                 citas: 'Meus Agendamentos',
                 agenda: 'Minha Agenda de Trabalho',
+                ganancias: 'Meus Ganhos',
+                stock: 'Estoque de Produtos',
                 panelAdmin: 'Painel do Administrador',
                 salir: 'Sair',
                 login: 'Entrar',
@@ -185,11 +212,12 @@ const Navbar = (() => {
             `;
         }
 
-        const inicial = (usuario.nombre || 'U')[0].toUpperCase();
-        const avatarHtml = usuario.fotoUrl
-            ? `<img src="${usuario.fotoUrl}" alt="perfil" class="nav-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        const inicial = esc((usuario.nombre || 'U')[0].toUpperCase());
+        const foto = urlSegura(usuario.fotoUrl);
+        const avatarHtml = foto
+            ? `<img src="${esc(foto)}" alt="perfil" class="nav-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : '';
-        const inicialHtml = `<div class="nav-avatar-inicial" style="${usuario.fotoUrl ? 'display:none' : ''}">${inicial}</div>`;
+        const inicialHtml = `<div class="nav-avatar-inicial" style="${foto ? 'display:none' : ''}">${inicial}</div>`;
 
         let rolTexto = L.rolCliente;
         if (rol === 'BARBERO') rolTexto = L.rolBarbero;
@@ -200,7 +228,10 @@ const Navbar = (() => {
         if (rol === 'CLIENTE') {
             extraLinks = `<a href="${base}/pages/mis-citas.html" class="nav-dropdown-item">${Icons.calendar} ${L.citas}</a>`;
         } else if (rol === 'BARBERO') {
-            extraLinks = `<a href="${base}/pages/barbero/mi-agenda.html" class="nav-dropdown-item">${Icons.calendar} ${L.agenda}</a>`;
+            extraLinks = `
+                <a href="${base}/pages/barbero/mi-agenda.html" class="nav-dropdown-item">${Icons.calendar} ${L.agenda}</a>
+                <a href="${base}/pages/barbero/mis-ganancias.html" class="nav-dropdown-item">${Icons.creditCard} ${L.ganancias}</a>
+                <a href="${base}/pages/barbero/stock.html" class="nav-dropdown-item">${Icons.shoppingBag} ${L.stock}</a>`;
         } else if (rol === 'ADMIN_BARBERIA' || rol === 'SUPERADMIN') {
             extraLinks = `<a href="${base}/pages/admin/dashboard.html" class="nav-dropdown-item">${Icons.layoutDashboard} ${L.panelAdmin}</a>`;
         }
@@ -210,12 +241,12 @@ const Navbar = (() => {
                 <div class="nav-avatar-btn" onclick="Navbar.toggleDropdown()">
                     ${avatarHtml}
                     ${inicialHtml}
-                    <span class="nav-nombre">${usuario.nombre || 'Usuario'}</span>
+                    <span class="nav-nombre">${esc(usuario.nombre || 'Usuario')}</span>
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-dropdown" id="navDropdown">
                     <div class="nav-dropdown-header">
-                        <div class="nav-dropdown-user-name">${usuario.nombre || ''} ${usuario.apellido || ''}</div>
+                        <div class="nav-dropdown-user-name">${esc(usuario.nombre)} ${esc(usuario.apellido)}</div>
                         <div class="nav-dropdown-user-role">${rolTexto}</div>
                     </div>
                     <a href="${base}/pages/perfil.html" class="nav-dropdown-item">

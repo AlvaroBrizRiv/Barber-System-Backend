@@ -1,61 +1,85 @@
-# Barber System - Backend & Frontend
+# Barber System — Backend & Frontend
 
-Este repositorio contiene el sistema completo de gestión de barberías. Está construido con una arquitectura monolítica (servidor y cliente en el mismo proyecto para desarrollo) y separación estricta de responsabilidades.
+Plataforma multi-barbería: cada barbería tiene su página pública con barberos, servicios, tienda de productos y, si la barbería lo habilita, planes de suscripción. Los clientes buscan barberías, agendan citas, compran productos y gestionan (o eliminan) su cuenta. Cada barbería tiene un administrador y sus barberos, aislados por `barberiaId` en el JWT.
 
-## Tecnologías Utilizadas
+## Funcionalidades por rol
 
-### Backend (Java)
-- **Javalin 6:** Framework web ligero y rápido para la API REST.
-- **HikariCP:** Gestión eficiente del pool de conexiones a la base de datos.
-- **MySQL / JDBC:** Persistencia de datos.
-- **JJWT (JSON Web Tokens):** Autenticación sin estado (stateless) y segura basada en roles.
-- **BCrypt:** Hasheo seguro de contraseñas.
-- **Dotenv:** Gestión de credenciales mediante archivo `.env`.
+| Rol | Puede |
+|-----|-------|
+| **Cliente** | Registrarse, iniciar sesión, editar su perfil y **eliminar su cuenta**; buscar barberías; elegir barbero y servicios; agendar citas; comprar productos. |
+| **Barbero** | Ver **solo su propia agenda**, consultar el **stock** de productos (solo lectura) y ver **sus ganancias** diarias, semanales y mensuales. |
+| **Admin de barbería** | Gestionar barberos, agenda, servicios, productos y suscripciones; mostrar u ocultar la sección de suscripciones; ver **ganancias** de cada barbero o de todos (día/semana/mes). |
+| **Superadmin** | Crear y desactivar barberías. |
 
-### Frontend (Vanilla)
-- **HTML5 & CSS3:** Interfaces modernas, adaptables y modulares.
-- **JavaScript ES6:** Lógica asíncrona (`async/await`) estructurada en módulos por dominio.
-- **Arquitectura Limpia:** Eliminación total de código espagueti. Cada vista HTML tiene su propia hoja de estilos (`css/pages/`) y su propio controlador JavaScript (`js/pages/`).
+## Tecnologías
 
-## Estructura del Proyecto
+**Backend (Java 25):** Javalin 6, HikariCP, JDBC (SQL Server y PostgreSQL), JJWT, BCrypt, dotenv-java.
+**Frontend:** HTML5, CSS3 y JavaScript ES6 sin frameworks; un JS y un CSS por vista (`js/pages/`, `css/pages/`).
+**Pruebas:** JUnit 5 + Mockito (`src/test/java`).
+
+## Estructura
 
 ```text
-ProyectoBarberia/
-├── src/main/java/             # Código fuente del Backend (Java)
-│   ├── API/                   # Controladores REST, Middleware JWT y configuración Javalin
-│   ├── Logica/                # Modelos de Dominio y Enums
-│   └── Persistencia/          # DAOs y configuración HikariCP
-├── frontend/                  # Código fuente del Frontend
-│   ├── css/                   # global.css y módulos por vista
-│   ├── js/                    # api.js, auth.js y módulos por vista
-│   └── pages/                 # Vistas HTML organizadas por rol (admin, barbero, etc.)
-├── database/                  # Scripts SQL (schema.sql y datos_prueba.sql)
-└── pom.xml                    # Dependencias de Maven
+├── src/main/java/com/mycompany/proyectobarberia/
+│   ├── API/            # Controladores REST, DTOs, middleware JWT y App (Javalin)
+│   ├── Logica/         # Modelos de dominio y enums
+│   └── Persistencia/   # DAOs (SQL estándar) y pool HikariCP
+├── src/test/java/      # Pruebas unitarias
+├── frontend/           # Vistas por rol (pages/admin, pages/barbero, ...)
+└── database/
+    ├── schema.sql, datos_prueba.sql       # SQL Server (SSMS)
+    ├── migraciones/                       # Cambios incrementales para SSMS
+    └── postgres/                          # Esquema y datos para Supabase/PostgreSQL
 ```
 
-## Seguridad y Buenas Prácticas
+## Puesta en marcha (SQL Server / SSMS)
 
-- **Protección de Rutas:** El middleware `SecurityMiddleware.java` intercepta todas las solicitudes al backend y verifica las firmas de los tokens JWT antes de llegar a los controladores.
-- **Autorización a Nivel de Barbería:** Los administradores de barberías no pueden acceder ni modificar información de otras barberías. La asignación se valida estrictamente a nivel de base de datos y token.
-- **Archivos Sensibles Ignorados:** Las credenciales y llaves de acceso están protegidas. El archivo `.env` está en `.gitignore`.
-
-## Configuración y Despliegue Local
-
-1. Clona el repositorio:
+1. Ejecuta `database/schema.sql` en SSMS (crea `barberia_db`, el usuario y datos de prueba).
+   Si ya tenías la base creada, ejecuta en su lugar `database/migraciones/001_suscripciones_ganancias.sql`.
+2. Copia `.env.example` a `.env` y ajusta valores (`CORS_ORIGIN` debe ser el origen exacto del frontend).
+3. Compila y ejecuta:
    ```bash
-   git clone https://github.com/AlvaroBrizRiv/Barber-System-Backend.git
+   mvn clean package
    ```
-2. Importa la base de datos MySQL usando los scripts en la carpeta `database/`.
-3. Crea un archivo `.env` en la raíz del proyecto basándote en un archivo de configuración estándar:
-   ```env
-   DB_URL=jdbc:mysql://localhost:3306/barberia_db
-   DB_USER=root
-   DB_PASSWORD=tu_password
-   JWT_SECRET=tu_clave_secreta_de_al_menos_32_caracteres
+   ```bash
+   java -jar target/ProyectoBarberia-1.0-SNAPSHOT.jar
    ```
-4. Abre el proyecto en tu IDE (ej. Apache NetBeans) y compila con Maven (`Clean & Build`).
-5. Inicia la aplicación corriendo la clase principal `ProyectoBarberia.java`.
-6. (Opcional) Usa una extensión como Live Server en Visual Studio Code para levantar la carpeta `frontend/` en tu navegador.
+4. Sirve `frontend/` con Live Server (VS Code) en el origen configurado en `CORS_ORIGIN`.
+
+Usuarios de prueba: `admin@elcaballero.cl` / `Admin123!`, `juan@elcaballero.cl` / `Barbero123!`, `cliente@test.cl` / `Cliente123!`.
+
+## Migración a Supabase (PostgreSQL)
+
+El código Java no cambia: los DAO usan SQL estándar y el driver PostgreSQL ya está en `pom.xml`.
+
+1. En Supabase → SQL Editor, ejecuta `database/postgres/schema.sql` y luego `database/postgres/datos_prueba.sql`.
+2. En `.env`, reemplaza `DB_URL`, `DB_USER` y `DB_PASSWORD` por la cadena del *Session pooler* (ver `.env.example`).
+3. El esquema activa RLS sin políticas en todas las tablas: la API pública de Supabase (anon key) no expone datos y el backend se conecta como `postgres`.
+
+## Pruebas
+
+```bash
+mvn test
+```
+
+Si tu JDK local es anterior a 25 puedes ejecutar las pruebas con `mvn test -Dmaven.compiler.release=21` (el código no usa características exclusivas de Java 25).
+
+## API principal
+
+| Método | Ruta | Acceso |
+|--------|------|--------|
+| GET | `/api/barberias?q=texto` | Público (búsqueda opcional) |
+| PATCH | `/api/barberias/{id}/suscripciones` | Admin de esa barbería |
+| DELETE | `/api/perfil` | Cliente autenticado (requiere contraseña) |
+| GET | `/api/ganancias/barberia/{id}?periodo=DIA\|SEMANA\|MES&fecha=&barberoId=` | Admin de esa barbería |
+| GET | `/api/ganancias/mias?periodo=&fecha=` | Barbero (sus propias ganancias) |
+
+## Seguridad
+
+- `SecurityMiddleware` valida el JWT en cada ruta no pública; el `barberiaId` se toma siempre del token.
+- Contraseñas con BCrypt (cost 12), rate limiting en login, registro y eliminación de cuenta.
+- La eliminación de cuenta anonimiza los datos personales y conserva el historial contable de la barbería.
+- El frontend escapa todo dato dinámico (`Utils.esc`) y valida URLs (`Utils.urlSegura`).
 
 ## Licencia
 Propiedad Intelectual / Uso Restringido.

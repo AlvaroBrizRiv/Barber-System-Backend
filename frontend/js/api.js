@@ -22,8 +22,14 @@
  * =====================================================================
  */
 
-// URL base de todos los endpoints del backend (configurable por entorno)
-const API_BASE = 'http://localhost:7070/api';
+// URL base de todos los endpoints del backend.
+// Para otro entorno, define antes de cargar api.js:
+//   <script>window.APP_CONFIG = { apiBase: 'https://api.midominio.cl/api' };</script>
+// (y agrega ese host a connect-src en la CSP de las páginas).
+const API_BASE = (window.APP_CONFIG && typeof window.APP_CONFIG.apiBase === 'string'
+    && /^https?:\/\//.test(window.APP_CONFIG.apiBase))
+    ? window.APP_CONFIG.apiBase.replace(/\/+$/, '')
+    : 'http://localhost:7070/api';
 
 /**
  * Objeto principal de la API.
@@ -202,8 +208,11 @@ const Api = {
      * @param {string} endpoint - La ruta del recurso a eliminar.
      * @returns {Promise<object>} La respuesta del servidor.
      */
-    delete(endpoint) {
-        return this.request(endpoint, { method: 'DELETE' });
+    delete(endpoint, body) {
+        return this.request(endpoint, {
+            method: 'DELETE',
+            ...(body !== undefined && { body: JSON.stringify(body) })
+        });
     },
 
     // ─── SECCIÓN 4: Wrappers Semánticos por Recurso ──────────────────
@@ -232,6 +241,9 @@ const Api = {
      */
     barberias: {
         listar:    ()              => Api.get('/barberias'),              // Lista todas las barberías activas
+        buscar:    (texto)         => Api.get(`/barberias?q=${encodeURIComponent(texto || '')}`), // Búsqueda por nombre/dirección
+        // Solo ADMIN de la barbería: muestra/oculta la sección de suscripciones
+        configurarSuscripciones: (id, habilitadas) => Api.patch(`/barberias/${id}/suscripciones`, { habilitadas }),
         obtener:   (id)            => Api.get(`/barberias/${id}`),        // Detalle de una barbería
         crear:     (datos)         => Api.post('/barberias', datos),      // Solo SUPERADMIN
         actualizar: (id, datos)    => Api.put(`/barberias/${id}`, datos), // Solo ADMIN_BARBERIA o SUPERADMIN
@@ -317,6 +329,22 @@ const Api = {
     perfil: {
         obtener:    ()      => Api.get('/perfil'),       // Obtener datos del perfil propio
         actualizar: (datos) => Api.put('/perfil', datos), // Actualizar nombre, foto, teléfono, etc.
+        eliminar:   (password) => Api.delete('/perfil', { password }), // Solo CLIENTE: elimina la cuenta
+    },
+
+    /**
+     * Reportes de ganancias (citas completadas).
+     * periodo: 'DIA' | 'SEMANA' | 'MES'; fecha: 'YYYY-MM-DD' (referencia dentro del periodo).
+     */
+    ganancias: {
+        // Admin: toda la barbería o un barbero concreto
+        barberia: (barberiaId, periodo, fecha, barberoId) => {
+            const q = new URLSearchParams({ periodo, fecha });
+            if (barberoId) q.set('barberoId', barberoId);
+            return Api.get(`/ganancias/barberia/${barberiaId}?${q}`);
+        },
+        // Barbero: solo sus propias ganancias
+        mias: (periodo, fecha) => Api.get(`/ganancias/mias?${new URLSearchParams({ periodo, fecha })}`),
     },
 
     /**

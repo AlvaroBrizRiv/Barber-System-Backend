@@ -7,8 +7,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     Navbar.init();
     await I18n.init();
     await cargarPerfil();
-    await cargarSuscripciones();
+    document.getElementById('formEliminarCuenta')?.addEventListener('submit', eliminarCuenta);
 });
+
+/**
+ * Elimina la cuenta del cliente tras confirmar contraseña y casilla.
+ * Si el backend responde OK se cierra la sesión local y se vuelve al inicio.
+ */
+async function eliminarCuenta(ev) {
+    ev.preventDefault();
+    const pwd = document.getElementById('fPasswordEliminar').value;
+    const ok = document.getElementById('fConfirmarEliminar').checked;
+    if (!pwd || !ok) {
+        mostrarMsg('Ingresa tu contraseña y marca la confirmación.', 'err');
+        return;
+    }
+    if (!window.confirm('¿Seguro que quieres eliminar tu cuenta? Esta acción es permanente.')) return;
+
+    const btn = document.getElementById('btnEliminarCuenta');
+    btn.disabled = true;
+    btn.textContent = 'Eliminando...';
+    try {
+        await Api.perfil.eliminar(pwd);
+        Api.clearToken();
+        window.location.href = Auth.getBasePath() + '/index.html';
+    } catch (err) {
+        // 403 = contraseña incorrecta (el backend no usa 401 aquí para no cerrar la sesión)
+        mostrarMsg(err.message || 'No se pudo eliminar la cuenta.', 'err');
+        btn.disabled = false;
+        btn.textContent = 'Eliminar cuenta';
+    }
+}
 
 async function cargarPerfil() {
     try {
@@ -23,6 +52,7 @@ function poblarFormulario(p) {
     document.getElementById('perfilNombre').textContent = `${p.nombre || ''} ${p.apellido || ''}`.trim() || 'Usuario';
     document.getElementById('perfilEmail').textContent  = p.email || '';
     document.getElementById('perfilRol').textContent    = p.rol || 'CLIENTE';
+    document.getElementById('zonaPeligro').hidden = p.rol !== 'CLIENTE';
 
     if (p.puntosFidelidad !== undefined) {
         const ptEl = document.getElementById('perfilPuntos');
@@ -40,21 +70,25 @@ function poblarFormulario(p) {
     // Avatar
     const inicial = (p.nombre || 'U')[0].toUpperCase();
     const avatarCont = document.getElementById('avatarContainer');
-    if (p.fotoUrl) {
-        avatarCont.innerHTML = `<img src="${p.fotoUrl}" class="perfil-avatar" alt="foto" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'">`;
+    const fotoSegura = Utils.urlSegura(p.fotoUrl);
+    if (fotoSegura) {
+        avatarCont.innerHTML = `<img src="${Utils.esc(fotoSegura)}" class="perfil-avatar" alt="foto">`;
+        avatarCont.querySelector('img').addEventListener('error', (e) => {
+            e.target.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+        }, { once: true });
     } else {
-        avatarCont.innerHTML = `<div class="perfil-avatar-inicial">${inicial}</div>`;
+        avatarCont.innerHTML = `<div class="perfil-avatar-inicial">${Utils.esc(inicial)}</div>`;
     }
 
     // Preview live
     const fotoInput = document.getElementById('fFotoUrl');
     const preview = document.getElementById('fotoPreview');
     fotoInput.addEventListener('input', () => {
-        const url = fotoInput.value.trim();
+        const url = Utils.urlSegura(fotoInput.value.trim());
         if (url) { preview.src = url; preview.style.display = 'block'; }
         else { preview.style.display = 'none'; }
     });
-    if (p.fotoUrl) { preview.src = p.fotoUrl; preview.style.display = 'block'; }
+    if (fotoSegura) { preview.src = fotoSegura; preview.style.display = 'block'; }
 }
 
 async function guardarPerfil() {
@@ -89,54 +123,6 @@ async function guardarPerfil() {
         btn.disabled = false;
         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Cambios`;
     }
-}
-
-async function cargarSuscripciones() {
-    const cont = document.getElementById('contenedorSubs');
-    try {
-        // Cargar planes de la barbería 1
-        const planes = await Api.get('/suscripciones/barberia/1');
-        if (!planes || planes.length === 0) {
-            cont.innerHTML = '<p style="color:var(--text3); font-size:0.85rem;">No hay planes de suscripción activos en este momento.</p>';
-            return;
-        }
-
-        cont.innerHTML = planes.map(s => {
-            let precio = '';
-            if (s.tipo === 'MENSUAL') {
-                precio = `$${Number(s.precioMensual).toLocaleString('es-CL')} / mes`;
-            } else if (s.tipo === 'POR_CITA') {
-                precio = `$${Number(s.precioPorCita).toLocaleString('es-CL')} / cita`;
-            } else if (s.tipo === 'AMBAS') {
-                const pm = s.precioMensual != null ? `$${Number(s.precioMensual).toLocaleString('es-CL')} / mes` : '';
-                const pc = s.precioPorCita != null ? `$${Number(s.precioPorCita).toLocaleString('es-CL')} / cita` : '';
-                precio = [pm, pc].filter(Boolean).join(' + ');
-            }
-
-            return `
-                <div class="sub-card ${s.activa ? 'activa-user' : ''}">
-                    <div>
-                        <div class="sub-titulo">${Utils.esc(s.nombre)}</div>
-                        <div class="sub-precio">${precio}</div>
-                        <div class="sub-desc">${Utils.esc(s.descripcion || 'Plan de beneficios y descuentos exclusivos.')}</div>
-                    </div>
-                    <button class="btn-sub-action btn-gestionar-sub" data-id="${Number(s.id)}" data-nombre="${Utils.esc(s.nombre)}">
-                        Gestionar Plan
-                    </button>
-                </div>
-            `;
-        }).join('');
-
-        cont.querySelectorAll('.btn-gestionar-sub').forEach(btn => {
-            btn.addEventListener('click', () => gestionarSuscripcion(Number(btn.dataset.id), btn.dataset.nombre));
-        });
-    } catch (e) {
-        cont.innerHTML = '<p style="color:var(--text3); font-size:0.85rem;">Inicia sesión para ver y gestionar suscripciones.</p>';
-    }
-}
-
-function gestionarSuscripcion(id, nombre) {
-    alert(`Has seleccionado el plan: "${nombre}". Tu membresía está vinculada a tu cuenta.`);
 }
 
 function mostrarMsg(texto, tipo) {
