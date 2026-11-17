@@ -107,6 +107,8 @@ CREATE TABLE barberias (
     pais_codigo     CHAR(2)         NOT NULL DEFAULT 'CL',
     moneda_codigo   CHAR(3)         NOT NULL DEFAULT 'CLP',
     zona_horaria    NVARCHAR(50)    NOT NULL DEFAULT 'America/Santiago',
+    -- Si es 1, la página de la barbería muestra la sección de suscripciones
+    suscripciones_habilitadas BIT   NOT NULL DEFAULT 0,
     fecha_creacion  DATETIME2       NOT NULL DEFAULT SYSDATETIME()
 );
 
@@ -190,6 +192,8 @@ CREATE TABLE citas (
 CREATE INDEX idx_citas_barberia_fecha ON citas(barberia_id, fecha);
 CREATE INDEX idx_citas_empleado_fecha ON citas(empleado_id, fecha);
 CREATE INDEX idx_citas_cliente        ON citas(cliente_id);
+-- Reportes de ganancias: citas completadas por barbería/barbero y rango de fechas
+CREATE INDEX idx_citas_ganancias      ON citas(barberia_id, estado, fecha) INCLUDE (empleado_id, precio_total);
 -- SEC-04: Índice único anti doble reserva en el mismo horario para un barbero (excluye canceladas)
 CREATE UNIQUE INDEX ux_citas_barbero_slot ON citas(empleado_id, fecha, hora) WHERE estado <> 'CANCELADA';
 GO
@@ -435,6 +439,9 @@ VALUES
     (1, N'Plan por Cita',    N'POR_CITA', 9990, NULL,
      N'Descuento fijo garantizado por cita. Ideal para clientes frecuentes sin cargo mensual.',
      1);
+
+-- La barbería 1 ofrece suscripciones: se habilita la sección en su página
+UPDATE barberias SET suscripciones_habilitadas = 1 WHERE id = 1;
 
 INSERT INTO cliente_suscripciones (cliente_id, suscripcion_id, fecha_inicio, fecha_vencimiento, activa)
 SELECT p.id, s.id, CAST(GETDATE() AS DATE), DATEADD(DAY, 30, CAST(GETDATE() AS DATE)), 1

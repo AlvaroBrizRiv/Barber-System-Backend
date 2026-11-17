@@ -241,5 +241,9 @@ SELECT TOP 1 c.id, c.cliente_id, c.barberia_id, c.empleado_id, 5, 5, N'¡Excelen
 FROM citas c WHERE c.estado = N'COMPLETADA';
 GO
 
+-- La barbería 1 ofrece suscripciones: se habilita la sección en su página
+UPDATE barberias SET suscripciones_habilitadas = 1 WHERE id = 1;
+GO
+
 SELECT N'Datos de prueba cargados exitosamente en barberia_db (SQL Server).' AS resultado;
 GO

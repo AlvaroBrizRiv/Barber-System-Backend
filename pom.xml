@@ -22,6 +22,7 @@
         <hikari.version>5.1.0</hikari.version>
         <dotenv.version>3.0.2</dotenv.version>
         <mssql.version>12.8.1.jre11</mssql.version>
+        <postgresql.version>42.7.4</postgresql.version>
     </properties>
 
     <dependencies>
@@ -32,6 +33,13 @@
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <version>${mssql.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL / Supabase: se activa cambiando DB_URL en .env (jdbc:postgresql://...) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- API de SLF4J explícita para evitar versión 1.7 transitiva de HikariCP -->
