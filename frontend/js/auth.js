@@ -159,7 +159,7 @@ const Auth = {
             return { exito: true, respuesta };
         } catch (err) {
             // Retornar el error (ej: "Credenciales incorrectas") para mostrarlo en la UI
-            return { exito: false, error: err.message };
+            return { exito: false, error: err.message, status: err.status, data: err.data };
         }
     },
 

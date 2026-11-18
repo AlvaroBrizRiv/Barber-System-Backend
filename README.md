@@ -36,7 +36,7 @@ Plataforma multi-barbería: cada barbería tiene su página pública con barbero
 
 1. Ejecuta `database/schema.sql` en SSMS (crea `barberia_db`, el usuario y datos de prueba).
    Si ya tenías la base creada, ejecuta en su lugar las migraciones en orden:
-   `database/migraciones/001_suscripciones_ganancias.sql` y `database/migraciones/002_recuperacion_password.sql`.
+   `001_suscripciones_ganancias.sql`, `002_recuperacion_password.sql` y `003_bloqueo_login.sql` (carpeta `database/migraciones/`).
 2. Copia `.env.example` a `.env` y ajusta valores (`CORS_ORIGIN` debe ser el origen exacto del frontend).
    Para enviar los códigos de recuperación configura `SMTP_*` (ver sección *Correo*).
 3. Compila y ejecuta:
@@ -88,6 +88,7 @@ Si tu JDK local es anterior a 25 puedes ejecutar las pruebas con `mvn test -Dmav
 
 - `SecurityMiddleware` valida el JWT en cada ruta no pública; el `barberiaId` se toma siempre del token.
 - Contraseñas con BCrypt (cost 12), rate limiting en login, registro y eliminación de cuenta.
+- Bloqueo progresivo del login por cuenta: 5 intentos fallidos → espera de 15 s, 10 → 30 s, 15 → cuenta bloqueada hasta restablecer la contraseña con "¿Olvidaste tu contraseña?" (que la desbloquea). Un login correcto reinicia el contador.
 - Recuperación de contraseña: el código se guarda como hash BCrypt, la respuesta no revela si el correo existe y el token de recuperación (emisor distinto) no sirve como sesión.
 - La eliminación de cuenta anonimiza los datos personales y conserva el historial contable de la barbería.
 - El frontend escapa todo dato dinámico (`Utils.esc`) y valida URLs (`Utils.urlSegura`).

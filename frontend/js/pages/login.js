@@ -9,7 +9,7 @@ const alerta   = document.getElementById('alertaError');
 
 function mostrarError(msg) {
     alerta.textContent = msg;
-    alerta.classList.add('visible');
+    alerta.className = 'alert error visible';
 }
 
 function ocultarError() {
@@ -44,10 +44,56 @@ form.addEventListener('submit', async (e) => {
 
     if (resultado.exito) {
         Auth.redirigirSegunRol();
+        return;
+    }
+    const codigo = resultado.data?.codigo;
+    if (codigo === 'SUSPENDIDA') {
+        iniciarEspera(Number(resultado.data.segundosRestantes) || 15);
+    } else if (codigo === 'BLOQUEADA') {
+        mostrarBloqueo(email);
     } else {
         mostrarError(resultado.error || 'Credenciales incorrectas.');
     }
 });
+
+// ─── Esperas y bloqueo por intentos fallidos (los aplica el backend por cuenta) ───
+let temporizadorEspera = null;
+
+/** Deshabilita el botón y muestra una cuenta regresiva hasta poder reintentar. */
+function iniciarEspera(segundos) {
+    clearInterval(temporizadorEspera);
+    let restante = Math.max(1, Math.ceil(segundos));
+    const pintar = () => {
+        mostrarError(`Demasiados intentos fallidos. Podrás intentarlo de nuevo en ${restante} s.`);
+        btnLogin.disabled = true;
+        btnLogin.textContent = `ESPERA ${restante} s`;
+    };
+    pintar();
+    temporizadorEspera = setInterval(() => {
+        restante -= 1;
+        if (restante <= 0) {
+            clearInterval(temporizadorEspera);
+            ocultarError();
+            setLoading(false);
+            document.getElementById('password').focus();
+        } else {
+            pintar();
+        }
+    }, 1000);
+}
+
+/** Cuenta bloqueada: solo se puede salir restableciendo la contraseña. */
+function mostrarBloqueo(email) {
+    clearInterval(temporizadorEspera);
+    alerta.textContent = 'Tu cuenta fue bloqueada por demasiados intentos fallidos. ';
+    const enlace = document.createElement('a');
+    enlace.href = `recuperar.html?email=${encodeURIComponent(email)}`;
+    enlace.textContent = 'Restablece tu contraseña para desbloquearla.';
+    enlace.style.color = 'inherit';
+    enlace.style.fontWeight = '600';
+    alerta.appendChild(enlace);
+    alerta.className = 'alert error visible';
+}
 
 // Lleva el correo escrito a la pantalla de recuperación para no tener que repetirlo
 document.getElementById('linkRecuperar')?.addEventListener('click', (e) => {

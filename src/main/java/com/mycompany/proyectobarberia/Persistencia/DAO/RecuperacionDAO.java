@@ -48,7 +48,9 @@ public class RecuperacionDAO {
             "UPDATE recuperaciones_password SET usado = 1 WHERE id = ? AND persona_id = ? AND usado = 0";
 
     private static final String SQL_CAMBIAR_PASSWORD =
-            "UPDATE personas SET password_hash = ? WHERE id = ? AND activo = 1";
+            // Restablecer la contraseña también desbloquea la cuenta y reinicia los intentos de login
+            "UPDATE personas SET password_hash = ?, intentos_fallidos = 0, bloqueado_hasta = NULL, bloqueada = 0 " +
+            "WHERE id = ? AND activo = 1";
 
     /**
      * Busca una persona activa por email (clientes, empleados y superadmins).

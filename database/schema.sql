@@ -85,7 +85,11 @@ CREATE TABLE personas (
                             CONSTRAINT ck_personas_auth CHECK (auth_provider IN ('LOCAL','GOOGLE','GITHUB')),
     mfa_habilitado          BIT             NOT NULL DEFAULT 0,
     fecha_registro          DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
-    activo                  BIT             NOT NULL DEFAULT 1
+    activo                  BIT             NOT NULL DEFAULT 1,
+    -- Control de intentos de login: 5 fallos → 15 s, 10 → 30 s, 15 → cuenta bloqueada
+    intentos_fallidos       INT             NOT NULL DEFAULT 0,
+    bloqueado_hasta         DATETIME2       NULL,
+    bloqueada               BIT             NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_personas_email ON personas(email);

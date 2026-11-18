@@ -41,7 +41,11 @@ CREATE TABLE personas (
                         CONSTRAINT ck_personas_auth CHECK (auth_provider IN ('LOCAL','GOOGLE','GITHUB')),
     mfa_habilitado      SMALLINT     NOT NULL DEFAULT 0 CHECK (mfa_habilitado IN (0,1)),
     fecha_registro      TIMESTAMP    NOT NULL DEFAULT now(),
-    activo              SMALLINT     NOT NULL DEFAULT 1 CHECK (activo IN (0,1))
+    activo              SMALLINT     NOT NULL DEFAULT 1 CHECK (activo IN (0,1)),
+    -- Control de intentos de login: 5 fallos → 15 s, 10 → 30 s, 15 → cuenta bloqueada
+    intentos_fallidos   INT          NOT NULL DEFAULT 0,
+    bloqueado_hasta     TIMESTAMP    NULL,
+    bloqueada           SMALLINT     NOT NULL DEFAULT 0 CHECK (bloqueada IN (0,1))
 );
 
 -- ─── barberias ───────────────────────────────────────────────────────
