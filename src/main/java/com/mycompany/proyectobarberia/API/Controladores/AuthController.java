@@ -5,6 +5,8 @@ import com.mycompany.proyectobarberia.API.Seguridad.JwtUtils;
 import com.mycompany.proyectobarberia.Logica.Cliente;
 import com.mycompany.proyectobarberia.Logica.Empleado;
 import com.mycompany.proyectobarberia.Logica.Persona;
+import com.mycompany.proyectobarberia.Logica.PoliticaBloqueo;
+import com.mycompany.proyectobarberia.Persistencia.DAO.BloqueoLoginDAO;
 import com.mycompany.proyectobarberia.Logica.SuperAdmin;
 import com.mycompany.proyectobarberia.Logica.enums.Rol;
 import com.mycompany.proyectobarberia.Persistencia.DAO.ClienteDAO;
@@ -20,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,9 +53,26 @@ public class AuthController {
         //Constructor privado
     }
     
-    private static final ClienteDAO    clienteDAO    = new ClienteDAO();
-    private static final EmpleadoDAO   empleadoDAO   = new EmpleadoDAO();
-    private static final SuperAdminDAO superAdminDAO = new SuperAdminDAO();
+    private static ClienteDAO      clienteDAO    = new ClienteDAO();
+    private static EmpleadoDAO     empleadoDAO   = new EmpleadoDAO();
+    private static SuperAdminDAO   superAdminDAO = new SuperAdminDAO();
+    private static BloqueoLoginDAO bloqueoDAO    = new BloqueoLoginDAO();
+    private static Clock           reloj         = Clock.systemDefaultZone();
+
+    /** Permite reemplazar las dependencias en las pruebas. */
+    static void configurar(ClienteDAO c, EmpleadoDAO e, SuperAdminDAO s, BloqueoLoginDAO b, Clock r) {
+        clienteDAO = c;
+        empleadoDAO = e;
+        superAdminDAO = s;
+        bloqueoDAO = b;
+        reloj = r;
+    }
+
+    static final String CODIGO_SUSPENDIDA = "SUSPENDIDA";
+    static final String CODIGO_BLOQUEADA = "BLOQUEADA";
+    static final String MSG_BLOQUEADA =
+            "Tu cuenta fue bloqueada por demasiados intentos fallidos. "
+            + "Restablécela con \"¿Olvidaste tu contraseña?\".";
 
     // Hash ficticio precalculado para igualar el tiempo de respuesta ante usuarios inexistentes (timing attack)
     private static final String HASH_FALSO = BCrypt.withDefaults().hashToString(12, "x".toCharArray());
@@ -62,6 +83,10 @@ public class AuthController {
         // Stubs SSO/MFA — implementación en fase de producción
         ApiBuilder.get("/sso/google",   AuthController::ssoGoogleStub);
         ApiBuilder.post("/mfa/verify",  AuthController::mfaVerifyStub);
+        // Recuperación de contraseña por código enviado al correo
+        ApiBuilder.post("/recuperar/solicitar",   RecuperacionController::solicitar);
+        ApiBuilder.post("/recuperar/verificar",   RecuperacionController::verificar);
+        ApiBuilder.post("/recuperar/restablecer", RecuperacionController::restablecer);
     }
 
     /**
@@ -85,9 +110,10 @@ public class AuthController {
      * @throws UnauthorizedResponse si las credenciales son incorrectas
      */
     @SuppressWarnings("unchecked")
-    private static void login(Context ctx) throws SQLException {
-        // SEC-07: Rate limiting (máximo 10 intentos por cada 10 minutos por IP)
-        NaiveRateLimit.requestPerTimeUnit(ctx, 10, TimeUnit.MINUTES);
+    static void login(Context ctx) throws SQLException {
+        // SEC-07: Rate limiting por IP (30 intentos por minuto). La protección por cuenta
+        // (esperas de 15 s / 30 s y bloqueo) la aplica PoliticaBloqueo en responderLogin().
+        NaiveRateLimit.requestPerTimeUnit(ctx, 30, TimeUnit.MINUTES);
 
         // Parsea el cuerpo de la petición como un mapa para extraer credenciales
         Map<String, String> body = ctx.bodyAsClass(Map.class);
@@ -218,8 +244,42 @@ public class AuthController {
      * @param usuario    Datos públicos a devolver (sin hash ni documento).
      */
     private static void responderLogin(Context ctx, String password, Persona persona, Rol rol,
-                                       Integer barberiaId, Map<String, Object> usuario) {
-        verificarPassword(password, persona.getPasswordHash());
+                                       Integer barberiaId, Map<String, Object> usuario) throws SQLException {
+        int id = persona.getId();
+        LocalDateTime ahora = LocalDateTime.now(reloj);
+        PoliticaBloqueo.Estado estado = bloqueoDAO.obtener(id);
+
+        // 1. Cuenta bloqueada o en espera: no se evalúa la contraseña ni se cuenta el intento
+        if (estado.bloqueada()) {
+            responderBloqueo(ctx, 423, CODIGO_BLOQUEADA, MSG_BLOQUEADA, 0);
+            return;
+        }
+        long espera = PoliticaBloqueo.segundosRestantes(estado, ahora);
+        if (espera > 0) {
+            responderBloqueo(ctx, 429, CODIGO_SUSPENDIDA, mensajeEspera(espera), espera);
+            return;
+        }
+
+        // 2. Contraseña incorrecta: se registra el fallo y se aplica la política
+        if (!BCrypt.verifyer().verify(password.toCharArray(), persona.getPasswordHash()).verified) {
+            PoliticaBloqueo.Resultado r = PoliticaBloqueo.registrarFallo(estado, ahora);
+            bloqueoDAO.guardar(id, r.nuevoEstado());
+            if (r.bloqueoDefinitivo()) {
+                LOG.warn("Cuenta {} bloqueada tras {} intentos fallidos", id, r.nuevoEstado().intentosFallidos());
+                responderBloqueo(ctx, 423, CODIGO_BLOQUEADA, MSG_BLOQUEADA, 0);
+            } else if (r.suspendida()) {
+                long seg = r.espera().toSeconds();
+                responderBloqueo(ctx, 429, CODIGO_SUSPENDIDA, mensajeEspera(seg), seg);
+            } else {
+                throw new UnauthorizedResponse("Credenciales incorrectas.");
+            }
+            return;
+        }
+
+        // 3. Login correcto: se reinicia el contador
+        if (estado.intentosFallidos() > 0 || estado.bloqueadoHasta() != null) {
+            bloqueoDAO.reiniciar(id);
+        }
         Map<String, Object> resp = new HashMap<>();
         resp.put("token", JwtUtils.generarToken(persona.getId(), rol, barberiaId));
         resp.put("rol", rol.name());
@@ -245,18 +305,19 @@ public class AuthController {
         return m;
     }
 
+    private static String mensajeEspera(long segundos) {
+        return "Demasiados intentos fallidos. Espera " + segundos + " segundos para volver a intentarlo.";
+    }
+
     /**
-     * Verifica la validez de una contraseña comparándola con su hash.
-     * 
-     * @param password La contraseña en texto claro
-     * @param hash El hash BCrypt almacenado
-     * @throws UnauthorizedResponse si las credenciales no coinciden
+     * Respuesta de cuenta en espera (429) o bloqueada (423). Incluye un código
+     * legible por el frontend para mostrar la cuenta regresiva o el enlace de recuperación.
      */
-    private static void verificarPassword(String password, String hash) {
-        BCrypt.Result resultado = BCrypt.verifyer()
-                .verify(password.toCharArray(), hash);
-        if (!resultado.verified) {
-            throw new UnauthorizedResponse("Credenciales incorrectas.");
-        }
+    private static void responderBloqueo(Context ctx, int status, String codigo, String mensaje, long segundos) {
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("error", mensaje);
+        resp.put("codigo", codigo);
+        resp.put("segundosRestantes", segundos);
+        ctx.status(status).json(resp);
     }
 }

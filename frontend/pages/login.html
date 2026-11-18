@@ -28,7 +28,7 @@
                 <p>SYSTEM</p>
             </div>
 
-            <div class="alert" id="alertaError" role="alert"></div>
+            <div class="alert error" id="alertaError" role="alert"></div>
 
             <form id="formLogin" novalidate>
                 <div class="form-group">
@@ -41,6 +41,10 @@
                     <label for="password">Contraseña</label>
                     <input type="password" id="password" placeholder="••••••••"
                            autocomplete="current-password" required>
+                </div>
+
+                <div class="forgot-link">
+                    <a href="recuperar.html" id="linkRecuperar">¿Olvidaste tu contraseña?</a>
                 </div>
 
                 <button type="submit" class="btn-login" id="btnLogin">

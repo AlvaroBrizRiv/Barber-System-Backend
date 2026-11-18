@@ -110,8 +110,9 @@ const Api = {
                 headers
             });
 
-            // Si el servidor responde 401 (No autorizado), la sesión expiró
-            if (response.status === 401) {
+            // 401 con token enviado = la sesión expiró. Sin token (ej. login con contraseña
+            // incorrecta) es un error normal y se muestra el mensaje del servidor.
+            if (response.status === 401 && token) {
                 this.clearToken();  // Limpiar datos de sesión obsoletos
 
                 // Determinar la ruta base correcta según la ubicación actual
@@ -137,7 +138,10 @@ const Api = {
 
             // Si la respuesta no fue exitosa (código 4xx o 5xx), lanzar error
             if (!response.ok) {
-                throw new Error(data.error || data.mensaje || `Error ${response.status}`);
+                const error = new Error(data.error || data.mensaje || `Error ${response.status}`);
+                error.status = response.status; // ej. 429 (espera) o 423 (cuenta bloqueada)
+                error.data = data;              // ej. { codigo, segundosRestantes }
+                throw error;
             }
 
             // Todo bien: retornar los datos de la respuesta
@@ -229,6 +233,12 @@ const Api = {
         login:   (email, password) => Api.post('/auth/login', { email, password }),
         // Registra un nuevo cliente en el sistema
         registro: (datos)          => Api.post('/auth/registro', datos),
+        // Recuperación de contraseña: 1) envía código al correo, 2) verifica, 3) cambia la contraseña
+        recuperar: {
+            solicitar:   (email)                  => Api.post('/auth/recuperar/solicitar', { email }),
+            verificar:   (email, codigo)          => Api.post('/auth/recuperar/verificar', { email, codigo }),
+            restablecer: (resetToken, password)   => Api.post('/auth/recuperar/restablecer', { resetToken, password }),
+        },
         // STUB: SSO Google (retorna 501 — pendiente de implementar)
         ssoGoogle:  () => Api.get('/auth/sso/google'),
         // STUB: Verificación MFA (retorna 501 — pendiente de implementar)

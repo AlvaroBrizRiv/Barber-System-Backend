@@ -13,12 +13,23 @@ body::before {
     z-index: 0;
 }
 
+/* Centrado vertical y horizontal de la tarjeta.
+   margin:auto dentro de un flex en columna centra la tarjeta y, si es más
+   alta que la pantalla (registro en móvil), permite hacer scroll sin cortarla. */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
 /* Contenedores principales */
 .login-container, .registro-container {
     position: relative;
     z-index: 1;
     width: 100%;
     padding: 1rem;
+    margin: auto;
 }
 
 .login-container { max-width: 440px; }
@@ -211,3 +222,36 @@ input::placeholder { color: rgba(255,255,255,0.25); }
     margin-right: 8px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Enlace "¿Olvidaste tu contraseña?" */
+.forgot-link { text-align: right; margin-top: -0.5rem; }
+.forgot-link a { color: #D4AF37; font-size: 0.8rem; text-decoration: none; }
+.forgot-link a:hover, .forgot-link a:focus-visible { color: #F5D57A; text-decoration: underline; }
+
+/* ═══ Recuperación de contraseña ═══ */
+[hidden] { display: none !important; }
+.pasos { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.75rem; }
+.paso {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4);
+}
+.paso.activo { border-color: #D4AF37; color: #D4AF37; background: rgba(212,175,55,0.1); }
+.paso.hecho { border-color: #D4AF37; background: #D4AF37; color: #0a0a0a; }
+.paso-linea { align-self: center; width: 28px; height: 1px; background: rgba(255,255,255,0.15); }
+.paso-titulo { font-family: 'Cinzel', serif; color: #fff; font-size: 1.1rem; text-align: center; margin-bottom: 0.5rem; }
+.paso-texto { color: rgba(255,255,255,0.55); font-size: 0.85rem; text-align: center; line-height: 1.6; margin-bottom: 1.5rem; }
+.paso-texto strong { color: #D4AF37; font-weight: 600; word-break: break-all; }
+.input-codigo { text-align: center; font-size: 1.6rem; letter-spacing: 0.6rem; font-family: 'Montserrat', monospace; padding-left: 1.6rem; }
+.acciones-secundarias { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+.btn-link {
+    background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+    color: #D4AF37; font-size: 0.8rem;
+}
+.btn-link:disabled { color: rgba(255,255,255,0.3); cursor: not-allowed; }
+.btn-link:not(:disabled):hover { text-decoration: underline; }
+
+@media (max-width: 400px) {
+    .login-card, .registro-card { padding: 2rem 1.25rem; }
+    .row { grid-template-columns: 1fr; gap: 0; }
+    .input-codigo { letter-spacing: 0.4rem; font-size: 1.4rem; }
+}

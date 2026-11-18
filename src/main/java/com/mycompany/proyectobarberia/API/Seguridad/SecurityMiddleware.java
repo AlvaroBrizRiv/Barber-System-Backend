@@ -37,7 +37,10 @@ public class SecurityMiddleware {
             "/api/auth/login",
             "/api/auth/registro",
             "/api/auth/sso/google",
-            "/api/auth/mfa/verify"
+            "/api/auth/mfa/verify",
+            "/api/auth/recuperar/solicitar",
+            "/api/auth/recuperar/verificar",
+            "/api/auth/recuperar/restablecer"
     );
 
     // Endpoints públicos exclusivamente para GET

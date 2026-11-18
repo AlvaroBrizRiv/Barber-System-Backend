@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' http://localhost:7070 http://127.0.0.1:7070 https:; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="description" content="Recupera el acceso a tu cuenta de Barber System con un código enviado a tu correo.">
+    <title>Recuperar Contraseña — Barber System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/pages/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <main class="login-card">
+            <div class="brand">
+                <div class="brand-icon" aria-hidden="true">✂️</div>
+                <h1>BARBERÍA</h1>
+                <p>SYSTEM</p>
+            </div>
+
+            <div class="pasos" aria-hidden="true">
+                <span class="paso activo" id="indPaso1">1</span><span class="paso-linea"></span>
+                <span class="paso" id="indPaso2">2</span><span class="paso-linea"></span>
+                <span class="paso" id="indPaso3">3</span>
+            </div>
+
+            <div class="alert" id="alerta" role="alert" aria-live="assertive"></div>
+
+            <!-- Paso 1: correo -->
+            <form id="formEmail" novalidate>
+                <h2 class="paso-titulo">¿Olvidaste tu contraseña?</h2>
+                <p class="paso-texto">Ingresa el correo de tu cuenta y te enviaremos un código de verificación.</p>
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" placeholder="tu@correo.cl" autocomplete="email" maxlength="150" required>
+                </div>
+                <button type="submit" class="btn-login" id="btnEnviar">ENVIAR CÓDIGO</button>
+            </form>
+
+            <!-- Paso 2: código -->
+            <form id="formCodigo" novalidate hidden>
+                <h2 class="paso-titulo">Revisa tu correo</h2>
+                <p class="paso-texto" id="textoCodigo"></p>
+                <div class="form-group">
+                    <label for="codigo">Código de 6 dígitos</label>
+                    <input type="text" id="codigo" class="input-codigo" inputmode="numeric" pattern="\d{6}"
+                           maxlength="6" autocomplete="one-time-code" placeholder="000000" required>
+                </div>
+                <button type="submit" class="btn-login" id="btnVerificar">VERIFICAR CÓDIGO</button>
+                <div class="acciones-secundarias">
+                    <button type="button" class="btn-link" id="btnCambiarEmail">Cambiar correo</button>
+                    <button type="button" class="btn-link" id="btnReenviar">Reenviar código</button>
+                </div>
+            </form>
+
+            <!-- Paso 3: nueva contraseña -->
+            <form id="formPassword" novalidate hidden>
+                <h2 class="paso-titulo">Crea una nueva contraseña</h2>
+                <p class="paso-texto">Debe tener entre 8 y 72 caracteres.</p>
+                <div class="form-group">
+                    <label for="password">Nueva contraseña</label>
+                    <input type="password" id="password" autocomplete="new-password" minlength="8" maxlength="72" required>
+                    <div class="password-strength"><div class="strength-bar" id="barraFuerza"></div></div>
+                </div>
+                <div class="form-group">
+                    <label for="password2">Repite la contraseña</label>
+                    <input type="password" id="password2" autocomplete="new-password" minlength="8" maxlength="72" required>
+                </div>
+                <button type="submit" class="btn-login" id="btnGuardar">GUARDAR CONTRASEÑA</button>
+            </form>
+
+            <div class="back-link">
+                <a href="login.html">← Volver a iniciar sesión</a>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/pages/recuperar.js"></script>
+</body>
+</html>

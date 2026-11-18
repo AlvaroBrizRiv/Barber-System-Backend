@@ -47,6 +47,7 @@ ALTER ROLE [db_datawriter] ADD MEMBER [barberia_user];
 GO
 
 -- ─── LIMPIEZA PREVIA PARA RE-EJECUCIÓN SEGURA ───────────────────────
+DROP TABLE IF EXISTS recuperaciones_password;
 DROP TABLE IF EXISTS calificaciones;
 DROP TABLE IF EXISTS cita_servicios;
 DROP TABLE IF EXISTS citas;
@@ -84,7 +85,11 @@ CREATE TABLE personas (
                             CONSTRAINT ck_personas_auth CHECK (auth_provider IN ('LOCAL','GOOGLE','GITHUB')),
     mfa_habilitado          BIT             NOT NULL DEFAULT 0,
     fecha_registro          DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
-    activo                  BIT             NOT NULL DEFAULT 1
+    activo                  BIT             NOT NULL DEFAULT 1,
+    -- Control de intentos de login: 5 fallos → 15 s, 10 → 30 s, 15 → cuenta bloqueada
+    intentos_fallidos       INT             NOT NULL DEFAULT 0,
+    bloqueado_hasta         DATETIME2       NULL,
+    bloqueada               BIT             NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_personas_email ON personas(email);
@@ -318,6 +323,25 @@ CREATE TABLE calificaciones (
 
 CREATE INDEX idx_calificaciones_barberia ON calificaciones(barberia_id);
 CREATE INDEX idx_calificaciones_empleado ON calificaciones(empleado_id);
+GO
+
+-- =====================================================================
+-- TABLA: recuperaciones_password
+-- Códigos de un solo uso para "¿Olvidaste tu contraseña?".
+-- Solo se guarda el hash BCrypt del código (nunca el código en claro).
+-- =====================================================================
+CREATE TABLE recuperaciones_password (
+    id              INT IDENTITY(1,1) PRIMARY KEY,
+    persona_id      INT             NOT NULL,
+    codigo_hash     NVARCHAR(100)   NOT NULL,
+    expira          DATETIME2       NOT NULL,
+    intentos        INT             NOT NULL DEFAULT 0,
+    usado           BIT             NOT NULL DEFAULT 0,
+    fecha_creacion  DATETIME2       NOT NULL,
+    CONSTRAINT fk_recuperaciones_personas FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_recuperaciones_persona ON recuperaciones_password(persona_id, usado);
 GO
 
 -- =====================================================================

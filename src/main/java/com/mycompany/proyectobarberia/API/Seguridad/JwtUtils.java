@@ -88,6 +88,56 @@ public class JwtUtils {
                 .getPayload();
     }
 
+    // ─── Token de recuperación de contraseña ─────────────────────────
+
+    /**
+     * Emisor distinto al de sesión: validarToken() exige "barber-system", por lo que
+     * un token de recuperación NUNCA sirve para autenticarse en el resto de la API.
+     */
+    private static final String EMISOR_RECUPERACION = "barber-system-recuperacion";
+
+    /** Datos que transporta el token de recuperación. */
+    public record DatosRecuperacion(int personaId, int codigoId) { }
+
+    /**
+     * Genera un token de corta duración que autoriza a cambiar la contraseña
+     * después de verificar el código enviado por correo.
+     *
+     * @param personaId ID de la persona.
+     * @param codigoId  ID del código verificado (se consume al cambiar la contraseña).
+     * @param minutos   Validez en minutos.
+     * @return Token firmado.
+     */
+    public static String generarTokenRecuperacion(int personaId, int codigoId, int minutos) {
+        return Jwts.builder()
+                .issuer(EMISOR_RECUPERACION)
+                .subject(String.valueOf(personaId))
+                .claim("cid", codigoId)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + minutos * 60_000L))
+                .signWith(SECRET_KEY)
+                .compact();
+    }
+
+    /**
+     * Valida un token de recuperación.
+     *
+     * @param token Token recibido del frontend.
+     * @return Persona y código asociados.
+     * @throws io.jsonwebtoken.JwtException si es inválido, expiró o no es de recuperación.
+     */
+    public static DatosRecuperacion validarTokenRecuperacion(String token) {
+        Claims c = Jwts.parser()
+                .requireIssuer(EMISOR_RECUPERACION)
+                .verifyWith(SECRET_KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        Number cid = c.get("cid", Number.class);
+        if (cid == null) throw new io.jsonwebtoken.MalformedJwtException("Token de recuperación sin código.");
+        return new DatosRecuperacion(Integer.parseInt(c.getSubject()), cid.intValue());
+    }
+
     // ─── Extracción de claims ─────────────────────────────────────────
 
     /** 
