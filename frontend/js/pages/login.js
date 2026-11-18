@@ -48,3 +48,18 @@ form.addEventListener('submit', async (e) => {
         mostrarError(resultado.error || 'Credenciales incorrectas.');
     }
 });
+
+// Lleva el correo escrito a la pantalla de recuperación para no tener que repetirlo
+document.getElementById('linkRecuperar')?.addEventListener('click', (e) => {
+    const email = document.getElementById('email').value.trim();
+    if (email) {
+        e.preventDefault();
+        window.location.href = `recuperar.html?email=${encodeURIComponent(email)}`;
+    }
+});
+
+// Aviso tras restablecer la contraseña
+if (new URLSearchParams(location.search).get('restablecida') === '1') {
+    alerta.textContent = 'Tu contraseña fue actualizada. Inicia sesión con la nueva contraseña.';
+    alerta.className = 'alert success visible';
+}

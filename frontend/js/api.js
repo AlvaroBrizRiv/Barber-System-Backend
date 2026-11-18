@@ -229,6 +229,12 @@ const Api = {
         login:   (email, password) => Api.post('/auth/login', { email, password }),
         // Registra un nuevo cliente en el sistema
         registro: (datos)          => Api.post('/auth/registro', datos),
+        // Recuperación de contraseña: 1) envía código al correo, 2) verifica, 3) cambia la contraseña
+        recuperar: {
+            solicitar:   (email)                  => Api.post('/auth/recuperar/solicitar', { email }),
+            verificar:   (email, codigo)          => Api.post('/auth/recuperar/verificar', { email, codigo }),
+            restablecer: (resetToken, password)   => Api.post('/auth/recuperar/restablecer', { resetToken, password }),
+        },
         // STUB: SSO Google (retorna 501 — pendiente de implementar)
         ssoGoogle:  () => Api.get('/auth/sso/google'),
         // STUB: Verificación MFA (retorna 501 — pendiente de implementar)

@@ -62,6 +62,10 @@ public class AuthController {
         // Stubs SSO/MFA — implementación en fase de producción
         ApiBuilder.get("/sso/google",   AuthController::ssoGoogleStub);
         ApiBuilder.post("/mfa/verify",  AuthController::mfaVerifyStub);
+        // Recuperación de contraseña por código enviado al correo
+        ApiBuilder.post("/recuperar/solicitar",   RecuperacionController::solicitar);
+        ApiBuilder.post("/recuperar/verificar",   RecuperacionController::verificar);
+        ApiBuilder.post("/recuperar/restablecer", RecuperacionController::restablecer);
     }
 
     /**

@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,6 +81,45 @@ class DaoIntegracionTest {
         assertEquals(hoy.minusDays(3), serie.get(0).fecha());
 
         assertTrue(dao.serieDiaria(barberiaId, hoy, hoy, null).isEmpty(), "hoy solo hay citas pendientes");
+    }
+
+    @Test
+    void recuperacionDeContrasenaDeUnSoloUso() throws Exception {
+        ClienteDAO clientes = new ClienteDAO();
+        RecuperacionDAO dao = new RecuperacionDAO();
+        String sufijo = String.valueOf(System.nanoTime());
+        String email = "recupera" + sufijo + "@test.cl";
+        int id = clientes.registrarCliente(new Cliente("R" + sufijo.substring(sufijo.length() - 9), "OTRO",
+                "Rita", "Prueba", email, null, "$2a$12$viejo", "CL"));
+
+        assertNull(dao.buscarPersonaActiva("noexiste" + sufijo + "@test.cl"));
+        RecuperacionDAO.PersonaRecuperable p = dao.buscarPersonaActiva(email);
+        assertEquals(id, p.id());
+
+        LocalDateTime ahora = LocalDateTime.now().withNano(0);
+        int primero = dao.crearCodigo(id, "$2a$10$hash1", ahora, ahora.plusMinutes(15));
+        int segundo = dao.crearCodigo(id, "$2a$10$hash2", ahora, ahora.plusMinutes(15));
+        assertEquals(2, dao.contarSolicitudesDesde(id, ahora.minusMinutes(1)));
+        assertEquals(0, dao.contarSolicitudesDesde(id, ahora.plusMinutes(1)));
+
+        RecuperacionDAO.Codigo vigente = dao.buscarVigente(id);
+        assertEquals(segundo, vigente.id(), "pedir otro código invalida el anterior");
+        assertEquals("$2a$10$hash2", vigente.codigoHash());
+        assertEquals(ahora.plusMinutes(15), vigente.expira());
+
+        dao.registrarIntentoFallido(segundo);
+        assertEquals(1, dao.buscarVigente(id).intentos());
+
+        assertFalse(dao.restablecerPassword(primero, id, "$2a$12$nuevo"), "el código reemplazado no sirve");
+        assertFalse(dao.restablecerPassword(segundo, id + 1, "$2a$12$nuevo"), "código de otra persona");
+        assertTrue(dao.restablecerPassword(segundo, id, "$2a$12$nuevo"));
+        assertFalse(dao.restablecerPassword(segundo, id, "$2a$12$otro"), "un solo uso");
+        assertNull(dao.buscarVigente(id));
+        assertEquals("$2a$12$nuevo", clientes.buscarPorEmail(email).getPasswordHash());
+
+        // Una cuenta eliminada no puede recuperar contraseña
+        clientes.eliminarCuenta(id, LocalDate.now());
+        assertNull(dao.buscarPersonaActiva(email));
     }
 
     @Test

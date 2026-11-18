@@ -56,6 +56,19 @@ class SecurityMiddlewareTest {
             assertDoesNotThrow(() -> SecurityMiddleware.validar(peticion(HandlerType.POST, "/api/auth/registro", null)));
         }
 
+        @ParameterizedTest
+        @ValueSource(strings = {"/api/auth/recuperar/solicitar", "/api/auth/recuperar/verificar", "/api/auth/recuperar/restablecer"})
+        void recuperacionDeContrasenaEsPublica(String ruta) {
+            assertDoesNotThrow(() -> SecurityMiddleware.validar(peticion(HandlerType.POST, ruta, null)));
+        }
+
+        @Test
+        void tokenDeRecuperacionNoAutenticaRutasPrivadas() {
+            String reset = JwtUtils.generarTokenRecuperacion(5, 1, 10);
+            assertThrows(UnauthorizedResponse.class, () ->
+                    SecurityMiddleware.validar(peticion(HandlerType.GET, "/api/perfil", "Bearer " + reset)));
+        }
+
         @Test
         void escrituraSobrePrefijoPublicoExigeToken() {
             // PATCH /api/barberias/1/suscripciones empieza con un prefijo público, pero no es GET
