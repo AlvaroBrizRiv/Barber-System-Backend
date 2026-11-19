@@ -35,7 +35,7 @@ const opcional = (promesa, porDefecto) => promesa.catch(() => porDefecto);
 
 async function cargarBarberia() {
     try {
-        const [barberia, servicios, barberos, productos, planes, calificaciones, promedioData] = await Promise.all([
+        const [barberia, servicios, barberos, productos, planes, calificaciones, promedioData, horario] = await Promise.all([
             Api.barberias.obtener(BARBERIA_ID),
             opcional(Api.servicios.listar(BARBERIA_ID), []),
             opcional(Api.empleados.listarBarberos(BARBERIA_ID), []),
@@ -43,23 +43,36 @@ async function cargarBarberia() {
             opcional(Api.suscripciones.listar(BARBERIA_ID), []),
             opcional(Api.calificaciones.listar(BARBERIA_ID), []),
             opcional(Api.calificaciones.promedioBarberia(BARBERIA_ID), { promedio: 0 }),
+            opcional(Api.barberias.horarios(BARBERIA_ID), null),
         ]);
 
-        if (!barberia || barberia.activa === false) throw new Error('Barbería no disponible');
+        if (!barberia || barberia.activa === false) {
+            const e = new Error('Barbería no disponible');
+            e.status = 404;
+            throw e;
+        }
 
         document.title = `${barberia.nombre} — Barber System`;
-        renderizarHero(barberia, Number(promedioData?.promedio) || 0);
+        renderizarHero(barberia, Number(promedioData?.promedio) || 0, horario);
         renderizarBarberos(barberos);
         renderizarServicios(servicios.filter(s => s.activo !== false));
         renderizarProductos(productos);
         renderizarSuscripciones(barberia, planes);
         renderizarCalificaciones(calificaciones);
         document.getElementById('contenidoMain').hidden = false;
-    } catch {
-        document.getElementById('contenidoHero').innerHTML =
-            `<div style="text-align:center;padding:4rem 1rem;color:rgba(255,255,255,0.4)">
-                No se pudo cargar la barbería. <br><a href="../index.html" style="color:#D4AF37;">Volver al inicio</a>
-            </div>`;
+    } catch (err) {
+        const cont = document.getElementById('contenidoHero');
+        cont.innerHTML = '<div class="estado-pagina"></div>';
+        const caja = cont.firstElementChild;
+        if (err.status === 404) {
+            caja.innerHTML = `<h1>No encontramos esta barbería</h1>
+                <p>Puede que ya no esté recibiendo reservas.</p>
+                <a class="btn-primary" href="../index.html#barberias">Ver todas las barberías</a>`;
+        } else {
+            Utils.mostrarError(caja, err.sinConexion
+                ? 'No pudimos cargar la barbería. Revisa tu conexión e inténtalo de nuevo.'
+                : 'No pudimos cargar la barbería. Inténtalo de nuevo en un momento.', () => location.reload());
+        }
     }
 }
 
@@ -68,7 +81,18 @@ function urlReserva(extra = {}) {
     return `${Auth.getBasePath()}/reserva.html?${q}`;
 }
 
-function renderizarHero(b, promedio) {
+/** Texto del horario de hoy, ej. "Hoy de 09:00 a 20:00" o "Hoy cerrado". */
+function textoHorarioHoy(horario) {
+    const dias = horario?.dias;
+    if (!Array.isArray(dias)) return '';
+    const hoy = ((new Date().getDay() + 6) % 7) + 1; // 1 = lunes … 7 = domingo
+    const d = dias.find(x => Number(x.diaSemana) === hoy);
+    if (!d) return '';
+    if (!d.abierto) return 'Hoy cerrado';
+    return `Hoy de ${String(d.apertura).slice(0, 5)} a ${String(d.cierre).slice(0, 5)}`;
+}
+
+function renderizarHero(b, promedio, horario) {
     const base = Auth.getBasePath();
     const redondeado = Math.min(5, Math.max(0, Math.round(promedio)));
     const estrellas = '★'.repeat(redondeado) + '☆'.repeat(5 - redondeado);
@@ -78,19 +102,20 @@ function renderizarHero(b, promedio) {
         <div class="hero">
             ${fondo ? `<img src="${Utils.esc(fondo)}" class="hero-bg" alt="">` : ''}
             <div class="hero-content">
-                <span class="hero-badge">BARBERÍA VERIFICADA</span>
+                <a class="hero-volver" href="${base}/index.html#barberias">← Todas las barberías</a>
                 <h1 class="hero-titulo">${Utils.esc(b.nombre)}</h1>
-                <p class="hero-desc">${Utils.esc(b.descripcion || '')}</p>
+                ${b.descripcion ? `<p class="hero-desc">${Utils.esc(b.descripcion)}</p>` : ''}
                 <div class="hero-meta">
-                    <span>${ICONOS.ubicacion} ${Utils.esc(b.direccion || 'Ubicación central')}</span>
-                    ${b.telefono ? `<span>${ICONOS.telefono} ${Utils.esc(b.telefono)}</span>` : ''}
-                    <span class="stars-display" aria-label="Calificación ${promedio.toFixed(1)} de 5">
-                        ${estrellas} <small style="color:rgba(255,255,255,0.6)">(${promedio.toFixed(1)})</small>
-                    </span>
+                    ${b.direccion ? `<span>${ICONOS.ubicacion} ${Utils.esc(b.direccion)}</span>` : ''}
+                    ${b.telefono ? `<span>${ICONOS.telefono} <a href="tel:${Utils.esc(String(b.telefono).replace(/[^\d+]/g, ''))}">${Utils.esc(b.telefono)}</a></span>` : ''}
+                    ${textoHorarioHoy(horario) ? `<span>${ICONOS.reloj} ${Utils.esc(textoHorarioHoy(horario))}</span>` : ''}
+                    ${promedio > 0 ? `<span class="stars-display" role="img" aria-label="Calificación ${promedio.toFixed(1)} de 5">
+                        <span aria-hidden="true">${estrellas}</span> <small>${promedio.toFixed(1)}</small>
+                    </span>` : ''}
                 </div>
                 <div class="hero-actions">
-                    <a href="${Utils.esc(urlReserva())}" class="btn-primary">${ICONOS.calendario} Agendar Cita</a>
-                    <a href="${base}/pages/tienda.html?barberiaId=${BARBERIA_ID}" class="btn-secondary">${ICONOS.bolsa} Ver Tienda</a>
+                    <a href="${Utils.esc(urlReserva())}" class="btn-primary">${ICONOS.calendario} Reservar hora</a>
+                    <a href="${base}/pages/tienda.html?barberiaId=${BARBERIA_ID}" class="btn-secondary">${ICONOS.bolsa} Ver tienda</a>
                 </div>
             </div>
         </div>`;
@@ -98,7 +123,7 @@ function renderizarHero(b, promedio) {
 
 function renderizarBarberos(barberos) {
     const grid = document.getElementById('gridBarberos');
-    if (!barberos.length) { grid.innerHTML = '<p class="empty">No hay barberos disponibles.</p>'; return; }
+    if (!barberos.length) { grid.innerHTML = '<p class="empty">Esta barbería aún no tiene barberos con agenda.</p>'; return; }
 
     grid.innerHTML = barberos.map(b => {
         const foto = Utils.urlSegura(b.fotoUrl);
@@ -108,18 +133,17 @@ function renderizarBarberos(barberos) {
             : `<div class="barbero-avatar-inicial" aria-hidden="true">${Utils.esc((b.nombre || 'B')[0])}</div>`;
         return `
             <a class="barbero-card" href="${Utils.esc(urlReserva({ barberoId: Number(b.id) }))}"
-               aria-label="Agendar con ${Utils.esc(nombre)}">
+               aria-label="Reservar hora con ${Utils.esc(nombre)}">
                 ${avatar}
                 <div class="barbero-nombre">${Utils.esc(nombre)}</div>
-                <div class="barbero-rol">Barbero Profesional</div>
-                <div class="barbero-cta">Agendar con él →</div>
+                <div class="barbero-cta">Reservar con ${Utils.esc(b.nombre || 'este barbero')} →</div>
             </a>`;
     }).join('');
 }
 
 function renderizarServicios(servicios) {
     const grid = document.getElementById('gridServicios');
-    if (!servicios.length) { grid.innerHTML = '<p class="empty">No hay servicios disponibles.</p>'; return; }
+    if (!servicios.length) { grid.innerHTML = '<p class="empty">Esta barbería aún no publica sus servicios.</p>'; return; }
 
     grid.innerHTML = servicios.map(s => `
         <div class="servicio-card">
@@ -193,7 +217,7 @@ function renderizarCalificaciones(cals) {
         return `
             <div class="calificacion-card">
                 <div class="cal-header">
-                    <span class="cal-autor">Cliente Verificado</span>
+                    <span class="cal-autor">Cliente</span>
                     <span class="cal-estrellas" aria-label="${n} de 5 estrellas">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>
                 </div>
                 ${c.comentario ? `<p class="cal-comentario">"${Utils.esc(c.comentario)}"</p>` : ''}

@@ -24,7 +24,7 @@
     padding:0.35rem 0.9rem; border-radius:20px;
     font-size:0.75rem; font-weight:700; letter-spacing:2px; margin-bottom:1rem;
 }
-.hero-titulo { font-family:'Cinzel',serif; font-size:2.8rem; margin-bottom:0.8rem; line-height:1.15; color:#fff; }
+.hero-titulo { font-family: var(--font-display); font-size:2.8rem; margin-bottom:0.8rem; line-height:1.15; color:#fff; }
 .hero-desc { color:var(--text2); line-height:1.7; margin-bottom:1.5rem; font-size:0.95rem; }
 
 /* Metadatos en el Hero (Ubicación, estrellas) */
@@ -36,7 +36,7 @@
 .hero-actions { display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap; }
 .btn-secondary {
     background:rgba(255,255,255,0.04); border:1px solid var(--gold); color:var(--gold);
-    padding:0.85rem 2rem; border-radius:8px; font-family:'Montserrat',sans-serif;
+    padding:0.85rem 2rem; border-radius:8px; font-family: var(--font-body);
     font-weight:600; font-size:0.9rem; cursor:pointer; text-decoration:none;
     display:flex; align-items:center; gap:0.5rem; transition:all 0.3s;
 }
@@ -60,7 +60,7 @@
 .servicio-nombre { font-size:1.05rem; font-weight:600; margin-bottom:0.4rem; color: #fff; }
 .servicio-desc { font-size:0.85rem; color:var(--text2); margin-bottom:1rem; line-height:1.5; }
 .servicio-footer { display:flex; justify-content:space-between; align-items:center; }
-.servicio-precio { font-family:'Cinzel',serif; color:var(--gold); font-weight:700; font-size:1.1rem; }
+.servicio-precio { font-family: var(--font-display); color:var(--gold); font-weight:700; font-size:1.1rem; }
 .servicio-duracion { font-size:0.8rem; color:var(--text3); display:flex; align-items:center; gap:0.3rem; }
 
 /* Grid y tarjetas de barberos */
@@ -150,9 +150,9 @@ section[id^="sec"] { scroll-margin-top: 90px; }
     border: 1px solid var(--border-gold); border-radius: 14px; padding: 1.6rem;
 }
 .sub-tipo { font-size: 0.7rem; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
-.sub-nombre { font-family: 'Cinzel', serif; font-size: 1.25rem; margin: 0.4rem 0 0.8rem; color: #fff; }
-.sub-precio { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.4rem; font-weight: 700; }
-.sub-precio small { font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--text2); font-weight: 400; }
+.sub-nombre { font-family: var(--font-display); font-size: 1.25rem; margin: 0.4rem 0 0.8rem; color: #fff; }
+.sub-precio { font-family: var(--font-display); color: var(--gold); font-size: 1.4rem; font-weight: 700; }
+.sub-precio small { font-family: var(--font-body); font-size: 0.75rem; color: var(--text2); font-weight: 400; }
 .sub-desc { color: var(--text2); font-size: 0.85rem; line-height: 1.6; margin-top: 0.8rem; }
 
 @media (min-width: 600px) {
@@ -171,3 +171,33 @@ section[id^="sec"] { scroll-margin-top: 90px; }
     .barbero-card { width: calc(50% - 0.75rem); }
     .barberos-grid { gap: 1rem; }
 }
+
+/* ─── Volver, horario de hoy y estados de la página ─────────── */
+.hero-volver {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 0.92rem;
+    margin-bottom: 0.5rem;
+}
+.hero-volver:hover { color: var(--gold-light); text-decoration: underline; }
+.hero-meta { font-size: 0.95rem; }
+.hero-meta a { color: inherit; }
+.hero-meta a:hover { color: var(--gold-light); }
+.stars-display small { color: var(--text2); }
+.hero-titulo { font-weight: 600; }
+.estado-pagina {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 5rem 1.25rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.estado-pagina h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 600; }
+.estado-pagina p { color: var(--text2); }
+.estado-pagina .estado-error { text-align: left; }

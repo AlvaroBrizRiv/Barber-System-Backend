@@ -1,6 +1,6 @@
-// Si ya está autenticado, redirigir
+// Si ya está autenticado, redirigir (al destino pendiente si lo hay)
 if (Auth.estaAutenticado()) {
-    Auth.redirigirSegunRol();
+    Auth.redirigirTrasLogin();
 }
 
 const form     = document.getElementById('formLogin');
@@ -10,6 +10,7 @@ const alerta   = document.getElementById('alertaError');
 function mostrarError(msg) {
     alerta.textContent = msg;
     alerta.className = 'alert error visible';
+    alerta.setAttribute('role', 'alert');
 }
 
 function ocultarError() {
@@ -22,7 +23,7 @@ function setLoading(loading) {
         btnLogin.innerHTML = '<span class="spinner"></span>Verificando...';
     } else {
         btnLogin.disabled = false;
-        btnLogin.innerHTML = 'INICIAR SESIÓN';
+        btnLogin.innerHTML = 'Entrar';
     }
 }
 
@@ -43,7 +44,7 @@ form.addEventListener('submit', async (e) => {
     setLoading(false);
 
     if (resultado.exito) {
-        Auth.redirigirSegunRol();
+        Auth.redirigirTrasLogin();
         return;
     }
     const codigo = resultado.data?.codigo;
@@ -66,7 +67,7 @@ function iniciarEspera(segundos) {
     const pintar = () => {
         mostrarError(`Demasiados intentos fallidos. Podrás intentarlo de nuevo en ${restante} s.`);
         btnLogin.disabled = true;
-        btnLogin.textContent = `ESPERA ${restante} s`;
+        btnLogin.textContent = `Espera ${restante} s`;
     };
     pintar();
     temporizadorEspera = setInterval(() => {
@@ -103,6 +104,15 @@ document.getElementById('linkRecuperar')?.addEventListener('click', (e) => {
         window.location.href = `recuperar.html?email=${encodeURIComponent(email)}`;
     }
 });
+
+// Viene de una reserva a medio hacer: explicar por qué se pide la sesión
+if (Auth.vieneDeReserva()) {
+    alerta.textContent = 'Inicia sesión o crea tu cuenta para confirmar tu cita. Guardamos lo que elegiste.';
+    alerta.className = 'alert info visible';
+    alerta.setAttribute('role', 'status');
+    const sub = document.getElementById('loginSub');
+    if (sub) sub.textContent = 'Ya casi: falta confirmar tu cita';
+}
 
 // Aviso tras restablecer la contraseña
 if (new URLSearchParams(location.search).get('restablecida') === '1') {

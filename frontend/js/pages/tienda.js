@@ -15,7 +15,7 @@ async function cargarBarberiaInfo() {
     try {
         const b = await Api.get(`/barberias/${BARBERIA_ID}`);
         if (b?.nombre) {
-            document.getElementById('txtBarberiaNombre').textContent = b.nombre;
+            document.getElementById('tituloTienda').textContent = `Productos de ${b.nombre}`;
         }
     } catch (e) {
         console.warn("No se pudo cargar datos de barbería", e);

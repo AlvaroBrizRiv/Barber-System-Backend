@@ -59,5 +59,44 @@ const Utils = {
     debounce(fn, ms = 300) {
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    },
+
+    /**
+     * Muestra un estado de error dentro de un contenedor, con botón "Reintentar".
+     * Reemplaza el contenido del contenedor. Sin XSS: el mensaje se inserta como texto.
+     * @param {HTMLElement} contenedor
+     * @param {string} mensaje   Qué pasó, en palabras del usuario.
+     * @param {Function} [reintentar] Acción del botón; si se omite no se muestra.
+     */
+    mostrarError(contenedor, mensaje, reintentar) {
+        if (!contenedor) return;
+        const caja = document.createElement('div');
+        caja.className = 'estado-vacio estado-error';
+        caja.setAttribute('role', 'alert');
+        const texto = document.createElement('p');
+        texto.textContent = mensaje;
+        caja.appendChild(texto);
+        if (typeof reintentar === 'function') {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline btn-sm';
+            btn.textContent = 'Reintentar';
+            btn.addEventListener('click', reintentar);
+            caja.appendChild(btn);
+        }
+        contenedor.replaceChildren(caja);
+    },
+
+    /**
+     * Muestra un estado vacío o de carga (texto tenue) dentro de un contenedor.
+     * @param {HTMLElement} contenedor
+     * @param {string} mensaje
+     */
+    mostrarAviso(contenedor, mensaje) {
+        if (!contenedor) return;
+        const caja = document.createElement('div');
+        caja.className = 'estado-vacio';
+        caja.textContent = mensaje;
+        contenedor.replaceChildren(caja);
     }
 };

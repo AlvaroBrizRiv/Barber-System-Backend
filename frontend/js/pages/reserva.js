@@ -1,267 +1,393 @@
-let datos = { barberiaId: null, barberoId: null, servicios: [], fecha: null, hora: null };
-let barberiaSeleccionada = null;
-let barberoSeleccionado = null;
+/**
+ * Asistente de reserva en 5 pasos: barbería → barbero → servicios → fecha y hora → confirmar.
+ *
+ * - Se puede recorrer sin sesión; la cuenta se pide solo al confirmar.
+ * - Lo elegido se guarda en sessionStorage para no perderlo al iniciar sesión o registrarse.
+ * - Las horas vienen del backend (horario de la barbería, citas del barbero y duración
+ *   de los servicios), así que solo se ofrecen horas que realmente se pueden reservar.
+ */
+const CLAVE_PENDIENTE = 'reservaPendiente';
+
+let datos = { barberiaId: null, barberoId: null, servicios: [], fecha: null, hora: null, notas: '' };
+let barberias = [];
+let barberos = [];
 let serviciosDisponibles = [];
+let pasoActual = 1;
+
+const $ = (id) => document.getElementById(id);
+const NOMBRES_PASO = ['', 'Barbería', 'Barbero', 'Servicios', 'Fecha y hora', 'Confirmar'];
 
 document.addEventListener('DOMContentLoaded', async () => {
     Navbar.init();
     await I18n.init();
 
-    if (!Auth.estaAutenticado()) {
-        sessionStorage.setItem('redirectAfterLogin', window.location.href);
-        window.location.href = 'pages/login.html';
-        return;
-    }
+    document.querySelectorAll('[data-ir]').forEach(b =>
+        b.addEventListener('click', () => irPaso(Number(b.dataset.ir))));
+    $('btnConfirmar').addEventListener('click', confirmarCita);
+    $('fechaCita').addEventListener('change', () => {
+        datos.fecha = $('fechaCita').value || null;
+        datos.hora = null;
+        guardarPendiente();
+        void cargarHoras();
+    });
+    $('notasCita').addEventListener('input', () => {
+        datos.notas = $('notasCita').value;
+        guardarPendiente();
+    });
 
-    // Fecha mínima = hoy
     const hoy = Utils.fechaISO();
-    document.getElementById('fechaCita').min = hoy;
-    document.getElementById('fechaCita').value = hoy;
+    const limite = new Date();
+    limite.setDate(limite.getDate() + 90);
+    $('fechaCita').min = hoy;
+    $('fechaCita').max = Utils.fechaISO(limite);
 
-    // Generar horarios de 9:00 a 19:30
-    const selectHora = document.getElementById('horaCita');
-    for (let h = 9; h <= 19; h++) {
-        ['00','30'].forEach(m => {
-            if (h === 19 && m === '30') return;
-            const opt = document.createElement('option');
-            opt.value = `${String(h).padStart(2,'0')}:${m}`;
-            opt.textContent = `${String(h).padStart(2,'0')}:${m} hrs`;
-            selectHora.appendChild(opt);
-        });
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
     const idUrl = (clave) => {
-        const n = Number.parseInt(urlParams.get(clave), 10);
+        const n = Number.parseInt(params.get(clave), 10);
         return Number.isInteger(n) && n > 0 ? n : null;
     };
-    datos.barberiaId = idUrl('barberiaId');
-    // Preselección desde la página de la barbería (se valida al cargar barberos/servicios)
-    if (datos.barberiaId) {
-        datos.barberoId = idUrl('barberoId');
-        const servicioId = idUrl('servicioId');
-        if (servicioId) datos.servicios = [servicioId];
-    }
 
-    await cargarBarberias();
-
-    if (datos.barberiaId && datos.barberoId) {
-        await cargarBarberos();            // valida que el barbero exista en esta barbería
-        irPaso(datos.barberoId ? 3 : 2);
-    } else if (datos.barberiaId) {
-        irPaso(2);
+    const pendiente = leerPendiente();
+    const reanudar = params.get('reanudar') === '1' && pendiente;
+    if (reanudar) {
+        datos = { ...datos, ...pendiente };
+    } else {
+        datos.barberiaId = idUrl('barberiaId');
+        if (datos.barberiaId) {
+            datos.barberoId = idUrl('barberoId');
+            const servicioId = idUrl('servicioId');
+            if (servicioId) datos.servicios = [servicioId];
+        }
     }
+    if (!datos.fecha || datos.fecha < hoy) datos.fecha = hoy;
+    $('fechaCita').value = datos.fecha;
+    $('notasCita').value = datos.notas || '';
+
+    await iniciar(reanudar);
 });
 
-let pasoActual = 1;
+/** Carga lo necesario según lo que ya venga elegido y abre el paso que corresponde. */
+async function iniciar(reanudar) {
+    await cargarBarberias();
+    if (!datos.barberiaId) return mostrarPaso(1, false);
+
+    await cargarBarberos();
+    if (!datos.barberoId) return mostrarPaso(2, false);
+
+    await cargarServicios();
+    if (reanudar && datos.servicios.length && datos.hora) {
+        renderResumen();
+        return mostrarPaso(5, false);
+    }
+    mostrarPaso(3, false);
+}
+
+// ─── Navegación ──────────────────────────────────────────────
 
 function irPaso(paso) {
-    if (paso > 1 && !datos.barberiaId) {
-        showAlert('alertBarberia', 'Selecciona una barbería para continuar.');
-        return;
-    }
-    if (paso > 2 && !datos.barberoId) {
-        showAlert('alertBarbero', 'Selecciona un barbero para continuar.');
-        return;
-    }
-    if (paso > 3 && datos.servicios.length === 0) {
-        showAlert('alertServicios', 'Selecciona al menos un servicio.');
-        return;
-    }
-    if (paso > 4) {
-        const f = document.getElementById('fechaCita').value;
-        const h = document.getElementById('horaCita').value;
-        if (!f || !h) {
-            showAlert('alertFecha', 'Selecciona fecha y hora.');
-            return;
-        }
-        datos.fecha = f;
-        datos.hora = h;
-        datos.notas = document.getElementById('notasCita').value;
-        renderResumen();
-    }
+    ocultarAlertas();
+    if (paso > 1 && !datos.barberiaId) return mostrarAlerta('alertBarberia', 'Elige una barbería para continuar.');
+    if (paso > 2 && !datos.barberoId) return mostrarAlerta('alertBarbero', 'Elige un barbero para continuar.');
+    if (paso > 3 && datos.servicios.length === 0) return mostrarAlerta('alertServicios', 'Elige al menos un servicio.');
+    if (paso > 4 && !datos.hora) return mostrarAlerta('alertFecha', 'Elige una de las horas libres.');
 
+    if (paso === 2) void cargarBarberos();
+    if (paso === 3) void cargarServicios();
+    if (paso === 4) void cargarHoras();
+    if (paso === 5) renderResumen();
+    mostrarPaso(paso, true);
+}
+
+function mostrarPaso(paso, moverFoco) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById(`panel${paso}`)?.classList.add('active');
+    $(paso === 'exito' ? 'panelExito' : `panel${paso}`)?.classList.add('active');
 
     for (let i = 1; i <= 5; i++) {
-        const s = document.getElementById(`step${i}`);
-        if (s) {
-            s.classList.remove('active', 'done');
-            if (i < paso) s.classList.add('done');
-            if (i === paso) s.classList.add('active');
-        }
+        const s = $(`step${i}`);
+        s.classList.toggle('done', paso === 'exito' || i < paso);
+        s.classList.toggle('active', i === paso);
+        if (i === paso) s.setAttribute('aria-current', 'step');
+        else s.removeAttribute('aria-current');
     }
-
     pasoActual = paso;
 
-    if (paso === 2 && datos.barberiaId) cargarBarberos();
-    if (paso === 3 && datos.barberiaId) cargarServicios();
+    if (paso !== 'exito') {
+        $('pasoAnuncio').textContent = `Paso ${paso} de 5: ${NOMBRES_PASO[paso]}`;
+        $(`step${paso}`).scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+    if (moverFoco) {
+        const titulo = $(paso === 'exito' ? 'tituloExito' : `titulo${paso}`);
+        titulo?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    actualizarSubtitulo();
 }
 
-function showAlert(id, msg) {
-    const el = document.getElementById(id);
+function actualizarSubtitulo() {
+    const b = barberias.find(x => x.id === datos.barberiaId);
+    $('reservaSub').textContent = b
+        ? `En ${b.nombre}${b.direccion ? ' · ' + b.direccion : ''}`
+        : 'Elige barbería, barbero, servicios y una hora libre.';
+}
+
+function mostrarAlerta(id, msg) {
+    const el = $(id);
     el.textContent = msg;
     el.classList.add('visible');
-    setTimeout(() => el.classList.remove('visible'), 4000);
 }
+
+function ocultarAlertas() {
+    document.querySelectorAll('.panel .alert').forEach(a => a.classList.remove('visible'));
+}
+
+// ─── Estado pendiente (sobrevive al login) ───────────────────
+
+function guardarPendiente() {
+    try { sessionStorage.setItem(CLAVE_PENDIENTE, JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
+}
+
+function leerPendiente() {
+    try {
+        const d = JSON.parse(sessionStorage.getItem(CLAVE_PENDIENTE) || 'null');
+        if (!d || typeof d !== 'object') return null;
+        return {
+            barberiaId: Number.isInteger(d.barberiaId) ? d.barberiaId : null,
+            barberoId: Number.isInteger(d.barberoId) ? d.barberoId : null,
+            servicios: Array.isArray(d.servicios) ? d.servicios.filter(Number.isInteger) : [],
+            fecha: typeof d.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.fecha) ? d.fecha : null,
+            hora: typeof d.hora === 'string' && /^\d{2}:\d{2}$/.test(d.hora) ? d.hora : null,
+            notas: typeof d.notas === 'string' ? d.notas.slice(0, 500) : ''
+        };
+    } catch { return null; }
+}
+
+function borrarPendiente() {
+    try { sessionStorage.removeItem(CLAVE_PENDIENTE); } catch { /* sin almacenamiento */ }
+}
+
+// ─── Paso 1: barbería ────────────────────────────────────────
 
 async function cargarBarberias() {
-    const grid = document.getElementById('gridBarberias');
+    const grid = $('gridBarberias');
     try {
-        const barberias = await Api.barberias.listar();
-        grid.innerHTML = barberias.map(b => `
-            <div class="selection-card ${datos.barberiaId === b.id ? 'selected' : ''}"
-                 role="button" tabindex="0" data-id="${Number(b.id)}" data-nombre="${Utils.esc(b.nombre)}">
-                <div class="card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
-                </div>
-                <div class="card-nombre">${Utils.esc(b.nombre)}</div>
-                <div class="card-sub">${Utils.esc(b.direccion || 'Ubicación central')}</div>
-            </div>
-        `).join('');
-        activarTarjetas(grid, (el) => seleccionarBarberia(Number(el.dataset.id), el.dataset.nombre, el));
-
-        if (datos.barberiaId) {
-            const sel = barberias.find(b => b.id === datos.barberiaId);
-            if (sel) barberiaSeleccionada = sel.nombre;
-        }
+        barberias = await Api.barberias.listar();
+        if (!barberias.length) return Utils.mostrarAviso(grid, 'Todavía no hay barberías disponibles.');
+        if (datos.barberiaId && !barberias.some(b => b.id === datos.barberiaId)) datos.barberiaId = null;
+        grid.innerHTML = barberias.map(b => tarjeta(b.id, b.nombre, b.direccion || '', datos.barberiaId === b.id)).join('');
+        activarTarjetas(grid, (el) => seleccionarBarberia(Number(el.dataset.id)));
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
+        Utils.mostrarError(grid, mensajeCarga(err, 'las barberías'), cargarBarberias);
     }
 }
 
-function seleccionarBarberia(id, nombre, el) {
-    datos.barberiaId = id;
-    datos.barberoId = null;
-    datos.servicios = [];
-    barberiaSeleccionada = nombre;
-    document.querySelectorAll('#gridBarberias .selection-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
+function seleccionarBarberia(id) {
+    if (datos.barberiaId !== id) {
+        datos = { ...datos, barberiaId: id, barberoId: null, servicios: [], hora: null };
+        barberos = [];
+        serviciosDisponibles = [];
+    }
+    marcarSeleccion($('gridBarberias'), id);
+    actualizarSubtitulo();
+    guardarPendiente();
 }
+
+// ─── Paso 2: barbero ─────────────────────────────────────────
 
 async function cargarBarberos() {
-    const grid = document.getElementById('gridBarberos');
-    grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Cargando barberos...</div>';
+    const grid = $('gridBarberos');
+    Utils.mostrarAviso(grid, 'Cargando barberos…');
     try {
-        const barberos = await Api.empleados.listarBarberos(datos.barberiaId);
+        barberos = await Api.empleados.listarBarberos(datos.barberiaId);
         if (!barberos.length) {
-            grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Esta barbería no tiene barberos disponibles en este momento.</div>';
-            return;
+            datos.barberoId = null;
+            return Utils.mostrarAviso(grid, 'Esta barbería aún no tiene barberos con agenda. Prueba con otra.');
         }
-        // Si venía un barbero preseleccionado que no pertenece a esta barbería, se descarta
-        const pre = barberos.find(b => b.id === datos.barberoId);
-        if (pre) barberoSeleccionado = `${pre.nombre} ${pre.apellido}`;
-        else datos.barberoId = null;
-
-        grid.innerHTML = barberos.map(b => `
-            <div class="selection-card ${datos.barberoId === b.id ? 'selected' : ''}"
-                 role="button" tabindex="0" data-id="${Number(b.id)}" data-nombre="${Utils.esc(`${b.nombre} ${b.apellido}`)}">
-                <div class="card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-                </div>
-                <div class="card-nombre">${Utils.esc(b.nombre)} ${Utils.esc(b.apellido)}</div>
-                <div class="card-sub">Barbero Profesional</div>
-            </div>
-        `).join('');
-        activarTarjetas(grid, (el) => seleccionarBarbero(Number(el.dataset.id), el.dataset.nombre, el));
+        if (!barberos.some(b => b.id === datos.barberoId)) datos.barberoId = null;
+        grid.innerHTML = barberos.map(b =>
+            tarjeta(b.id, `${b.nombre} ${b.apellido}`, '', datos.barberoId === b.id)).join('');
+        activarTarjetas(grid, (el) => seleccionarBarbero(Number(el.dataset.id)));
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
+        Utils.mostrarError(grid, mensajeCarga(err, 'los barberos'), cargarBarberos);
     }
 }
 
-function seleccionarBarbero(id, nombre, el) {
+function seleccionarBarbero(id) {
+    if (datos.barberoId !== id) datos.hora = null;
     datos.barberoId = id;
-    barberoSeleccionado = nombre;
-    document.querySelectorAll('#gridBarberos .selection-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
+    marcarSeleccion($('gridBarberos'), id);
+    guardarPendiente();
 }
 
+// ─── Paso 3: servicios ───────────────────────────────────────
+
 async function cargarServicios() {
-    const grid = document.getElementById('gridServicios');
-    grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Cargando servicios...</div>';
+    const grid = $('gridServicios');
+    Utils.mostrarAviso(grid, 'Cargando servicios…');
     try {
         serviciosDisponibles = await Api.servicios.listar(datos.barberiaId);
         if (!serviciosDisponibles.length) {
-            grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);">Esta barbería no tiene servicios registrados aún.</div>';
-            return;
+            datos.servicios = [];
+            return Utils.mostrarAviso(grid, 'Esta barbería aún no publica sus servicios.');
         }
-        // Descarta servicios preseleccionados que no existan en esta barbería
         datos.servicios = datos.servicios.filter(id => serviciosDisponibles.some(s => s.id === id));
-        grid.innerHTML = serviciosDisponibles.map(s => `
-            <div class="servicio-item ${datos.servicios.includes(s.id) ? 'selected' : ''}"
-                 role="checkbox" tabindex="0" aria-checked="${datos.servicios.includes(s.id)}" data-id="${Number(s.id)}">
-                <div class="servicio-checkbox">
-                    <span style="font-size:0.75rem; ${datos.servicios.includes(s.id) ? '' : 'display:none'}">✓</span>
-                </div>
-                <div class="servicio-info">
-                    <div class="nombre">${Utils.esc(s.nombre)}</div>
-                    <div class="precio">${Utils.dinero(s.precio)}</div>
-                </div>
-            </div>
-        `).join('');
+        grid.innerHTML = serviciosDisponibles.map(s => {
+            const sel = datos.servicios.includes(s.id);
+            const min = Number(s.duracionMinutos) || 30;
+            return `
+            <div class="servicio-item ${sel ? 'selected' : ''}" role="checkbox" tabindex="0"
+                 aria-checked="${sel}" data-id="${Number(s.id)}">
+                <span class="servicio-checkbox" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                <span class="servicio-info">
+                    <span class="nombre">${Utils.esc(s.nombre)}</span>
+                    ${s.descripcion ? `<span class="desc">${Utils.esc(s.descripcion)}</span>` : ''}
+                    <span class="meta"><span class="precio">${Utils.dinero(s.precio)}</span> · ${min} min</span>
+                </span>
+            </div>`;
+        }).join('');
         activarTarjetas(grid, (el) => toggleServicio(Number(el.dataset.id), el));
+        pintarTotalServicios();
     } catch (err) {
-        grid.innerHTML = `<div style="color:#E74C3C;">${Utils.esc(err.message)}</div>`;
+        Utils.mostrarError(grid, mensajeCarga(err, 'los servicios'), cargarServicios);
     }
 }
 
 function toggleServicio(id, el) {
-    el.classList.toggle('selected');
-    el.setAttribute('aria-checked', el.classList.contains('selected'));
-    const checkmark = el.querySelector('.servicio-checkbox span');
-    if (el.classList.contains('selected')) {
-        datos.servicios.push(id);
-        checkmark.style.display = '';
-    } else {
-        datos.servicios = datos.servicios.filter(s => s !== id);
-        checkmark.style.display = 'none';
+    const sel = !datos.servicios.includes(id);
+    datos.servicios = sel ? [...datos.servicios, id] : datos.servicios.filter(s => s !== id);
+    el.classList.toggle('selected', sel);
+    el.setAttribute('aria-checked', String(sel));
+    datos.hora = null; // cambia la duración: hay que volver a elegir hora
+    pintarTotalServicios();
+    guardarPendiente();
+}
+
+function elegidos() {
+    return datos.servicios.map(id => serviciosDisponibles.find(s => s.id === id)).filter(Boolean);
+}
+
+function pintarTotalServicios() {
+    const lista = elegidos();
+    const total = lista.reduce((t, s) => t + Number(s.precio || 0), 0);
+    const min = lista.reduce((t, s) => t + (Number(s.duracionMinutos) || 30), 0);
+    $('serviciosTotal').textContent = lista.length
+        ? `${lista.length} servicio${lista.length > 1 ? 's' : ''} · ${Utils.dinero(total)} · ${min} min aprox.`
+        : '';
+}
+
+// ─── Paso 4: fecha y hora ────────────────────────────────────
+
+let consultaHoras = 0;
+
+async function cargarHoras() {
+    const box = $('horasBox');
+    if (!datos.fecha) return Utils.mostrarAviso(box, 'Elige una fecha para ver las horas libres.');
+    const id = ++consultaHoras;
+    Utils.mostrarAviso(box, 'Buscando horas libres…');
+    try {
+        const disp = await Api.barberias.disponibilidad(datos.barberiaId, datos.barberoId, datos.fecha, datos.servicios);
+        if (id !== consultaHoras) return; // llegó una respuesta más nueva
+        pintarHoras(disp);
+    } catch (err) {
+        if (id !== consultaHoras) return;
+        Utils.mostrarError(box, mensajeCarga(err, 'las horas libres'), cargarHoras);
     }
 }
 
-function renderResumen() {
-    const serviciosNombres = datos.servicios.map(id => {
-        const s = serviciosDisponibles.find(sv => sv.id === id);
-        return s ? `${Utils.esc(s.nombre)} (${Utils.dinero(s.precio)})` : '';
-    });
-    const total = datos.servicios.reduce((sum, id) => {
-        const s = serviciosDisponibles.find(sv => sv.id === id);
-        return sum + (s ? s.precio : 0);
-    }, 0);
+function pintarHoras(disp) {
+    const box = $('horasBox');
+    const fechaTxt = fechaLarga(datos.fecha);
+    if (!disp.abierto) {
+        datos.hora = null;
+        return Utils.mostrarAviso(box, `La barbería no atiende el ${fechaTxt}. Elige otro día.`);
+    }
+    const libres = disp.horas.filter(h => h.disponible);
+    if (datos.hora && !libres.some(h => h.hora === datos.hora)) datos.hora = null;
+    if (!libres.length) {
+        return Utils.mostrarAviso(box, `No quedan horas libres el ${fechaTxt} con este barbero. Prueba otro día u otro barbero.`);
+    }
 
-    document.getElementById('resumen').innerHTML = `
-        <div class="resumen-row">
-            <span class="label">Barbería</span>
-            <span class="value">${Utils.esc(barberiaSeleccionada || 'Barbería')}</span>
-        </div>
-        <div class="resumen-row">
-            <span class="label">Barbero Asignado</span>
-            <span class="value">${Utils.esc(barberoSeleccionado || 'Barbero')}</span>
-        </div>
-        <div class="resumen-row">
-            <span class="label">Servicios</span>
-            <span class="value">${serviciosNombres.join(', ')}</span>
-        </div>
-        <div class="resumen-row">
-            <span class="label">Fecha</span>
-            <span class="value">${new Date(datos.fecha + 'T00:00:00').toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'long'})}</span>
-        </div>
-        <div class="resumen-row">
-            <span class="label">Hora</span>
-            <span class="value">${Utils.esc(datos.hora)} hrs</span>
-        </div>
-        <div class="resumen-row resumen-total">
-            <span class="label">Total Estimado</span>
-            <span class="value">${Utils.dinero(total)}</span>
-        </div>
-    `;
+    // Hoy no tiene sentido mostrar las horas que ya pasaron; solo se tachan las tomadas
+    if (datos.fecha === Utils.fechaISO()) {
+        const d = new Date();
+        const ahora = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        disp = { ...disp, horas: disp.horas.filter(h => h.hora > ahora) };
+    }
+
+    const grupos = [
+        ['Mañana', h => h < '13:00'],
+        ['Tarde', h => h >= '13:00' && h < '18:00'],
+        ['Noche', h => h >= '18:00']
+    ];
+    const html = grupos.map(([nombre, filtro]) => {
+        const horas = disp.horas.filter(h => filtro(h.hora));
+        if (!horas.length) return '';
+        return `
+        <fieldset class="horas-grupo">
+            <legend>${nombre}</legend>
+            <div class="horas-grid">
+                ${horas.map(h => `
+                <label class="hora-chip ${h.disponible ? '' : 'ocupada'}">
+                    <input type="radio" name="hora" value="${Utils.esc(h.hora)}"
+                        ${h.disponible ? '' : 'disabled'} ${datos.hora === h.hora ? 'checked' : ''}>
+                    <span>${Utils.esc(h.hora)}</span>
+                </label>`).join('')}
+            </div>
+        </fieldset>`;
+    }).join('');
+
+    box.innerHTML = `
+        <p class="horas-info">Atiende de ${Utils.esc(disp.apertura)} a ${Utils.esc(disp.cierre)} · tu cita dura ${Number(disp.duracionMinutos)} min aprox.</p>
+        ${html}`;
+    box.querySelectorAll('input[name="hora"]').forEach(r => r.addEventListener('change', () => {
+        datos.hora = r.value;
+        $('alertFecha').classList.remove('visible');
+        guardarPendiente();
+    }));
+}
+
+// ─── Paso 5: resumen y confirmación ──────────────────────────
+
+function renderResumen() {
+    const barberia = barberias.find(b => b.id === datos.barberiaId);
+    const barbero = barberos.find(b => b.id === datos.barberoId);
+    const lista = elegidos();
+    const total = lista.reduce((t, s) => t + Number(s.precio || 0), 0);
+    const min = lista.reduce((t, s) => t + (Number(s.duracionMinutos) || 30), 0);
+    const fila = (label, valor, extra = '') =>
+        `<div class="resumen-row ${extra}"><dt class="label">${label}</dt><dd class="value">${valor}</dd></div>`;
+
+    $('resumen').innerHTML = [
+        fila('Barbería', Utils.esc(barberia?.nombre || '—')),
+        fila('Barbero', Utils.esc(barbero ? `${barbero.nombre} ${barbero.apellido}` : '—')),
+        fila('Servicios', lista.map(s => Utils.esc(s.nombre)).join(', ') || '—'),
+        fila('Cuándo', `${Utils.esc(fechaLarga(datos.fecha))}, ${Utils.esc(datos.hora || '—')} hrs`),
+        fila('Duración', `${min} min aprox.`),
+        fila('Total', Utils.dinero(total), 'resumen-total')
+    ].join('');
+
+    const conSesion = Auth.estaAutenticado();
+    $('avisoSesion').hidden = conSesion;
+    $('btnConfirmar').textContent = conSesion ? 'Confirmar cita' : 'Entrar y confirmar';
 }
 
 async function confirmarCita() {
-    const btn = document.getElementById('btnConfirmar');
-    btn.disabled = true;
-    btn.textContent = 'Agendando...';
+    ocultarAlertas();
+    guardarPendiente();
 
+    if (!Auth.estaAutenticado()) {
+        Auth.guardarDestino(`${window.location.pathname}?reanudar=1`);
+        window.location.href = 'pages/login.html';
+        return;
+    }
+    if (!Auth.esCliente()) {
+        return mostrarAlerta('alertConfirmar', 'Las reservas se hacen con una cuenta de cliente. Tu cuenta es de personal de barbería.');
+    }
+
+    const btn = $('btnConfirmar');
+    btn.disabled = true;
+    btn.textContent = 'Reservando…';
     try {
         await Api.citas.agendar({
             barberiaId: datos.barberiaId,
@@ -271,15 +397,52 @@ async function confirmarCita() {
             servicios: datos.servicios,
             notas: datos.notas || ''
         });
-
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.getElementById('panelExito').classList.add('active');
-
+        const barbero = barberos.find(b => b.id === datos.barberoId);
+        $('exitoDetalle').textContent =
+            `${fechaLarga(datos.fecha)}, ${datos.hora} hrs${barbero ? ' con ' + barbero.nombre : ''}. Te esperamos.`;
+        borrarPendiente();
+        mostrarPaso('exito', true);
     } catch (err) {
-        showAlert('alertConfirmar', err.message);
+        if (err.status === 409) {
+            datos.hora = null;
+            guardarPendiente();
+            mostrarAlerta('alertConfirmar', 'Alguien tomó esa hora recién. Vuelve al paso anterior y elige otra.');
+        } else {
+            mostrarAlerta('alertConfirmar', err.message || 'No pudimos reservar. Inténtalo de nuevo.');
+        }
         btn.disabled = false;
-        btn.textContent = '✓ Confirmar Cita';
+        btn.textContent = 'Confirmar cita';
     }
+}
+
+// ─── Utilidades de la vista ──────────────────────────────────
+
+function tarjeta(id, nombre, sub, seleccionada) {
+    return `
+    <div class="selection-card ${seleccionada ? 'selected' : ''}" role="radio" tabindex="0"
+         aria-checked="${seleccionada}" data-id="${Number(id)}">
+        <span class="card-nombre">${Utils.esc(nombre)}</span>
+        ${sub ? `<span class="card-sub">${Utils.esc(sub)}</span>` : ''}
+    </div>`;
+}
+
+function marcarSeleccion(grid, id) {
+    grid.querySelectorAll('.selection-card').forEach(c => {
+        const sel = Number(c.dataset.id) === id;
+        c.classList.toggle('selected', sel);
+        c.setAttribute('aria-checked', String(sel));
+    });
+}
+
+function mensajeCarga(err, que) {
+    return err.sinConexion
+        ? `No pudimos cargar ${que}. Revisa tu conexión e inténtalo de nuevo.`
+        : (err.message || `No pudimos cargar ${que}.`);
+}
+
+function fechaLarga(iso) {
+    if (!iso) return '—';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 /**

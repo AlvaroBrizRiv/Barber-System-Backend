@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' http://localhost:7070 http://127.0.0.1:7070 https:; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>Mis Citas — Barbería System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/pages/mis-citas.css">
 </head>
@@ -13,19 +13,21 @@
 
     <div id="navbar-root"></div>
 
-    <header>
-        <h1>Mis Citas Agendadas</h1>
-        <p>Revisa el estado de tus turnos, agenda de servicios y califica a tus barberos.</p>
-    </header>
+    <main class="citas-main">
+        <header class="citas-header">
+            <h1 class="citas-titulo">Mis Citas Agendadas</h1>
+            <p class="citas-sub">Revisa el estado de tus turnos, agenda de servicios y califica a tus barberos.</p>
+        </header>
 
-    <div class="tabs-container">
-        <button class="tab active" onclick="cambiarTab('proximas', this)">Próximas Citas</button>
-        <button class="tab" onclick="cambiarTab('historial', this)">Historial Completo</button>
-    </div>
+        <div class="tabs-container">
+            <button class="tab active" onclick="cambiarTab('proximas', this)">Próximas Citas</button>
+            <button class="tab" onclick="cambiarTab('historial', this)">Historial Completo</button>
+        </div>
 
-    <div class="citas-container" id="citasContenedor">
-        <div class="empty-state">Cargando tus citas agendadas...</div>
-    </div>
+        <div class="citas-list" id="citasContenedor">
+            <div class="empty-state">Cargando tus citas agendadas...</div>
+        </div>
+    </main>
 
     <!-- Modal Calificación -->
     <div class="modal-overlay" id="modalCalificacion">
@@ -54,9 +56,9 @@
 
             <div id="calError" style="color:#E74C3C; font-size:0.8rem; margin-bottom:1rem;"></div>
 
-            <div style="display:flex; justify-content:flex-end; gap:0.8rem;">
-                <button class="btn-submit" style="background:transparent; border:1px solid var(--border); color:var(--text-secondary);" onclick="cerrarModal()">Cancelar</button>
-                <button class="btn-submit" onclick="enviarCalificacion()">Enviar Calificación</button>
+            <div class="modal-btns">
+                <button class="btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-primary" onclick="enviarCalificacion()">Enviar Calificación</button>
             </div>
         </div>
     </div>

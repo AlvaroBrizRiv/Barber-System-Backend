@@ -4,124 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' http://localhost:7070 http://127.0.0.1:7070 https:; object-src 'none'; base-uri 'self'; form-action 'self'">
-    <meta name="description" content="Barbería System — Agenda tu cita con el barbero que prefieras. Elige barbería, barbero, fecha y hora.">
-    <title>Agendar Cita — Barbería System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Reserva tu hora en una barbería de tu comuna: elige barbero, servicios y una hora libre.">
+    <title>Reservar hora — Barber System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/reserva.css">
 </head>
 <body>
     <div id="navbar-root"></div>
 
-    <div class="page-container">
-        <h1 class="page-title">Agendar Cita</h1>
-        <p class="page-sub">Elige tu barbería, barbero y horario preferido</p>
+    <main class="page-container" id="contenido">
+        <header class="reserva-header">
+            <h1 class="page-title">Reserva tu hora</h1>
+            <p class="page-sub" id="reservaSub">Elige barbería, barbero, servicios y una hora libre.</p>
+        </header>
 
-        <!-- Steps indicator -->
-        <div class="steps">
-            <div class="step active" id="step1"><div class="step-circle">1</div><div class="step-label">Barbería</div></div>
-            <div class="step-line"></div>
-            <div class="step" id="step2"><div class="step-circle">2</div><div class="step-label">Barbero</div></div>
-            <div class="step-line"></div>
-            <div class="step" id="step3"><div class="step-circle">3</div><div class="step-label">Servicios</div></div>
-            <div class="step-line"></div>
-            <div class="step" id="step4"><div class="step-circle">4</div><div class="step-label">Fecha y Hora</div></div>
-            <div class="step-line"></div>
-            <div class="step" id="step5"><div class="step-circle">5</div><div class="step-label">Confirmar</div></div>
-        </div>
+        <!-- Indicador de pasos -->
+        <ol class="steps" id="steps" aria-label="Pasos de la reserva">
+            <li class="step active" id="step1"><span class="step-circle">1</span><span class="step-label">Barbería</span></li>
+            <li class="step" id="step2"><span class="step-circle">2</span><span class="step-label">Barbero</span></li>
+            <li class="step" id="step3"><span class="step-circle">3</span><span class="step-label">Servicios</span></li>
+            <li class="step" id="step4"><span class="step-circle">4</span><span class="step-label">Fecha y hora</span></li>
+            <li class="step" id="step5"><span class="step-circle">5</span><span class="step-label">Confirmar</span></li>
+        </ol>
+        <p class="sr-only" id="pasoAnuncio" aria-live="polite"></p>
 
         <!-- Panel 1: Barbería -->
-        <div class="panel active" id="panel1">
-            <h2 class="section-title">Selecciona una barbería</h2>
-            <div class="selection-grid" id="gridBarberias">
-                <div style="color:rgba(255,255,255,0.4);">Cargando barberías...</div>
+        <section class="panel active" id="panel1" aria-labelledby="titulo1">
+            <h2 class="section-title" id="titulo1" tabindex="-1">¿En qué barbería?</h2>
+            <div class="selection-grid" id="gridBarberias" role="radiogroup" aria-labelledby="titulo1">
+                <div class="estado-vacio">Cargando barberías…</div>
             </div>
-            <div class="alert" id="alertBarberia"></div>
+            <div class="alert error" id="alertBarberia" role="alert"></div>
             <div class="nav-btns">
-                <div></div>
-                <button class="btn btn-primary" onclick="irPaso(2)">Siguiente →</button>
+                <span></span>
+                <button type="button" class="btn btn-primary" data-ir="2">Siguiente</button>
             </div>
-        </div>
+        </section>
 
         <!-- Panel 2: Barbero -->
-        <div class="panel" id="panel2">
-            <h2 class="section-title">Selecciona tu barbero</h2>
-            <div class="selection-grid" id="gridBarberos">
-                <div style="color:rgba(255,255,255,0.4);">Selecciona primero una barbería</div>
+        <section class="panel" id="panel2" aria-labelledby="titulo2">
+            <h2 class="section-title" id="titulo2" tabindex="-1">¿Con quién te atiendes?</h2>
+            <div class="selection-grid" id="gridBarberos" role="radiogroup" aria-labelledby="titulo2">
+                <div class="estado-vacio">Selecciona primero una barbería.</div>
             </div>
-            <div class="alert" id="alertBarbero"></div>
+            <div class="alert error" id="alertBarbero" role="alert"></div>
             <div class="nav-btns">
-                <button class="btn btn-outline" onclick="irPaso(1)">← Atrás</button>
-                <button class="btn btn-primary" onclick="irPaso(3)">Siguiente →</button>
+                <button type="button" class="btn btn-outline" data-ir="1">Atrás</button>
+                <button type="button" class="btn btn-primary" data-ir="3">Siguiente</button>
             </div>
-        </div>
+        </section>
 
         <!-- Panel 3: Servicios -->
-        <div class="panel" id="panel3">
-            <h2 class="section-title">Selecciona los servicios</h2>
-            <div class="servicios-grid" id="gridServicios">
-                <div style="color:rgba(255,255,255,0.4);">Cargando servicios...</div>
+        <section class="panel" id="panel3" aria-labelledby="titulo3">
+            <h2 class="section-title" id="titulo3" tabindex="-1">¿Qué te vas a hacer?</h2>
+            <p class="panel-ayuda">Puedes elegir más de uno. La duración total define qué horas quedan libres.</p>
+            <div class="servicios-grid" id="gridServicios" role="group" aria-labelledby="titulo3">
+                <div class="estado-vacio">Cargando servicios…</div>
             </div>
-            <div class="alert" id="alertServicios"></div>
+            <p class="servicios-total" id="serviciosTotal" aria-live="polite"></p>
+            <div class="alert error" id="alertServicios" role="alert"></div>
             <div class="nav-btns">
-                <button class="btn btn-outline" onclick="irPaso(2)">← Atrás</button>
-                <button class="btn btn-primary" onclick="irPaso(4)">Siguiente →</button>
+                <button type="button" class="btn btn-outline" data-ir="2">Atrás</button>
+                <button type="button" class="btn btn-primary" data-ir="4">Siguiente</button>
             </div>
-        </div>
+        </section>
 
         <!-- Panel 4: Fecha y hora -->
-        <div class="panel" id="panel4">
-            <h2 class="section-title">Elige fecha y hora</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date" id="fechaCita" min="">
-                </div>
-                <div class="form-group">
-                    <label>Hora</label>
-                    <select id="horaCita">
-                        <option value="">Selecciona una hora</option>
-                    </select>
-                </div>
+        <section class="panel" id="panel4" aria-labelledby="titulo4">
+            <h2 class="section-title" id="titulo4" tabindex="-1">¿Cuándo?</h2>
+            <div class="form-group fecha-group">
+                <label for="fechaCita">Fecha</label>
+                <input type="date" id="fechaCita">
+            </div>
+            <div class="horas-box" id="horasBox" aria-live="polite">
+                <div class="estado-vacio">Elige una fecha para ver las horas libres.</div>
             </div>
             <div class="form-group">
-                <label>Notas adicionales (opcional)</label>
-                <textarea id="notasCita" rows="3" placeholder="Ej: Quiero un corte fade, con perfilado de barba..."></textarea>
+                <label for="notasCita">Notas para el barbero (opcional)</label>
+                <textarea id="notasCita" rows="3" maxlength="500" placeholder="Ej: fade bajo y perfilado de barba"></textarea>
             </div>
-            <div class="alert" id="alertFecha"></div>
+            <div class="alert error" id="alertFecha" role="alert"></div>
             <div class="nav-btns">
-                <button class="btn btn-outline" onclick="irPaso(3)">← Atrás</button>
-                <button class="btn btn-primary" onclick="irPaso(5)">Ver resumen →</button>
+                <button type="button" class="btn btn-outline" data-ir="3">Atrás</button>
+                <button type="button" class="btn btn-primary" data-ir="5">Ver resumen</button>
             </div>
-        </div>
+        </section>
 
         <!-- Panel 5: Confirmar -->
-        <div class="panel" id="panel5">
-            <h2 class="section-title">Confirma tu cita</h2>
-            <div class="resumen-card" id="resumen"></div>
-            <div class="alert" id="alertConfirmar"></div>
+        <section class="panel" id="panel5" aria-labelledby="titulo5">
+            <h2 class="section-title" id="titulo5" tabindex="-1">Revisa y confirma</h2>
+            <dl class="resumen-card" id="resumen"></dl>
+            <p class="panel-ayuda" id="avisoSesion" hidden>Para confirmar necesitas una cuenta. Guardamos lo que elegiste y volverás aquí después de entrar.</p>
+            <div class="alert error" id="alertConfirmar" role="alert"></div>
             <div class="nav-btns">
-                <button class="btn btn-outline" onclick="irPaso(4)">← Atrás</button>
-                <button class="btn btn-primary" id="btnConfirmar" onclick="confirmarCita()">✓ Confirmar Cita</button>
+                <button type="button" class="btn btn-outline" data-ir="4">Atrás</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmar">Confirmar cita</button>
             </div>
-        </div>
+        </section>
 
         <!-- Panel Éxito -->
-        <div class="panel" id="panelExito">
+        <section class="panel" id="panelExito" aria-labelledby="tituloExito">
             <div class="success-panel">
-                <div class="success-icon">
+                <div class="success-icon" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <h2>¡Cita Agendada!</h2>
-                <p>Tu cita ha sido registrada exitosamente en el sistema.<br>El barbero y la administración ya pueden verla en su agenda.</p>
-                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
-                    <a href="pages/mis-citas.html" class="btn btn-outline" style="text-decoration:none;">Ver mis citas</a>
-                    <a href="index.html" class="btn btn-primary" style="text-decoration:none;">Ir al inicio</a>
+                <h2 id="tituloExito" tabindex="-1">¡Listo, tu hora quedó reservada!</h2>
+                <p id="exitoDetalle">El barbero ya la ve en su agenda.</p>
+                <div class="success-acciones">
+                    <a href="pages/mis-citas.html" class="btn btn-primary">Ver mis citas</a>
+                    <a href="index.html" class="btn btn-outline">Volver al inicio</a>
                 </div>
             </div>
-        </div>
-
-    </div>
+        </section>
+    </main>
 
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>

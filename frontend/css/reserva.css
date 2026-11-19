@@ -1,225 +1,347 @@
 /* === MÓDULO: RESERVA === */
 
-/* Contenedor de la página de reserva */
 .page-container {
-    max-width: 900px;
+    max-width: 880px;
     margin: 0 auto;
-    padding: 3.5rem 1.5rem 5rem;
+    padding: 3rem 1.25rem 6rem;
 }
 
-/* Título de la página */
+.reserva-header { margin-bottom: 2.25rem; }
+
 .page-title {
-    font-family: 'Cinzel', serif;
-    font-size: 2.2rem;
-    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--text);
     margin-bottom: 0.5rem;
-    text-align: center;
-    letter-spacing: 2px;
 }
 
-/* Subtítulo de la página */
 .page-sub {
-    text-align: center;
-    color: rgba(255,255,255,0.6);
-    margin-bottom: 3rem;
-    font-size: 0.95rem;
+    color: var(--text2);
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
-/* Indicadores de pasos */
+/* ─── Indicador de pasos ─────────────────────────────────── */
 .steps {
+    list-style: none;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 3rem;
-    gap: 0;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0 0 2.5rem;
+    padding: 0;
+    counter-reset: paso;
 }
 
 .step {
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 0.5rem;
+    position: relative;
 }
 
-/* Círculo del paso */
-.step-circle {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-    border: 2px solid rgba(255,255,255,0.15);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: rgba(255,255,255,0.5);
-    transition: all 0.3s;
+/* Barra de progreso de cada paso */
+.step::before {
+    content: '';
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background-color 0.3s var(--ease-out);
 }
+.step.done::before,
+.step.active::before { background: var(--gold); }
 
-/* Paso activo y completado */
-.step.active .step-circle {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #0a0a0a;
-}
-.step.done .step-circle {
-    background: rgba(212,175,55,0.2);
-    border-color: var(--gold);
-    color: var(--gold);
-}
+.step-circle { display: none; }
 
-/* Etiqueta del paso */
 .step-label {
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.4);
-    white-space: nowrap;
+    font-size: 0.8rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .step.active .step-label { color: var(--gold); }
-.step.done .step-label { color: rgba(212,175,55,0.8); }
+.step.done .step-label { color: var(--text2); }
 
-/* Línea conectora de pasos */
-.step-line {
-    height: 1px;
-    width: 50px;
-    background: rgba(255,255,255,0.1);
-    margin: 0 0.5rem 1.3rem;
-    flex-shrink: 0;
-}
-
-/* Paneles de pasos */
+/* ─── Paneles ────────────────────────────────────────────── */
 .panel { display: none; }
 .panel.active { display: block; }
+
+.panel .section-title { outline: none; }
+
+.panel-ayuda {
+    color: var(--text2);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: -0.75rem 0 1.25rem;
+    max-width: 60ch;
+}
 
 /* Grid de selección (barbería, barbero) */
 .selection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.2rem;
-    margin-bottom: 2rem;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
-/* Tarjeta de selección */
 .selection-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     border-radius: 12px;
-    padding: 1.6rem 1.2rem;
-    text-align: center;
+    padding: 1.1rem 1.2rem;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
 }
-.selection-card:hover {
-    border-color: rgba(212,175,55,0.5);
-    background: rgba(212,175,55,0.05);
-    transform: translateY(-3px);
-}
+.selection-card:hover { border-color: rgba(212, 175, 55, 0.55); }
 .selection-card.selected {
     border-color: var(--gold);
-    background: rgba(212,175,55,0.1);
-    box-shadow: 0 0 15px rgba(212,175,55,0.2);
+    background: rgba(212, 175, 55, 0.1);
+}
+.selection-card.selected .card-nombre::after {
+    content: ' ✓';
+    color: var(--gold);
 }
 
-/* Icono dentro de la tarjeta */
-.card-icon {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: rgba(212,175,55,0.12); border: 1px solid var(--border-gold);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold); margin: 0 auto 0.8rem;
-}
-.card-nombre { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; color: #fff; }
-.card-sub { color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; }
+.card-nombre { font-weight: 600; font-size: 1rem; color: var(--text); }
+.card-sub { color: var(--text2); font-size: 0.85rem; line-height: 1.4; }
 
-/* Grid de servicios */
+/* Servicios */
 .servicios-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-/* Item de servicio individual */
 .servicio-item {
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
     cursor: pointer;
-    transition: all 0.2s;
-    display: flex; align-items: center; gap: 0.9rem;
+    transition: border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
 }
-.servicio-item:hover { border-color: rgba(212,175,55,0.4); }
-.servicio-item.selected { border-color: var(--gold); background: rgba(212,175,55,0.08); }
+.servicio-item:hover { border-color: rgba(212, 175, 55, 0.55); }
+.servicio-item.selected { border-color: var(--gold); background: rgba(212, 175, 55, 0.08); }
 
-/* Checkbox visual del servicio */
 .servicio-checkbox {
     width: 22px; height: 22px;
-    border: 2px solid rgba(255,255,255,0.25);
-    border-radius: 4px;
+    margin-top: 1px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
     flex-shrink: 0;
-    color: #000; font-weight: 800; font-size: 0.75rem;
+    color: transparent;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .servicio-item.selected .servicio-checkbox {
     background: var(--gold);
     border-color: var(--gold);
+    color: #0a0a0a;
 }
 
-.servicio-info .nombre { font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 0.2rem; }
-.servicio-info .precio { font-size: 0.82rem; color: var(--gold); font-weight: 700; }
+.servicio-info { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.servicio-info .nombre { font-size: 0.98rem; font-weight: 600; color: var(--text); }
+.servicio-info .desc { font-size: 0.85rem; color: var(--text2); line-height: 1.4; }
+.servicio-info .meta { font-size: 0.85rem; color: var(--text2); font-variant-numeric: tabular-nums; }
+.servicio-info .precio { color: var(--gold); font-weight: 700; }
 
-/* Formulario fecha/hora */
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+.servicios-total {
+    min-height: 1.4em;
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.5rem;
+}
+
+/* ─── Fecha y horas ──────────────────────────────────────── */
+.fecha-group { max-width: 280px; }
+
+.horas-box { margin: 0.5rem 0 1.75rem; min-height: 4rem; }
+
+.horas-info {
+    color: var(--text2);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.horas-grupo {
+    border: 0;
+    padding: 0;
+    margin: 0 0 1.25rem;
+    min-width: 0;
+}
+.horas-grupo legend {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text2);
+    margin-bottom: 0.6rem;
+    padding: 0;
+}
+
+.horas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 0.5rem;
+}
+
+.hora-chip { position: relative; display: block; }
+.hora-chip input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+}
+.hora-chip span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-card);
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+.hora-chip:hover span { border-color: rgba(212, 175, 55, 0.6); }
+.hora-chip input:checked + span {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0a0a0a;
+}
+.hora-chip input:focus-visible + span {
+    outline: 2px solid var(--gold-light);
+    outline-offset: 2px;
+}
+.hora-chip.ocupada span {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    background: transparent;
+    border-style: dashed;
+    cursor: not-allowed;
+}
+.hora-chip.ocupada input { cursor: not-allowed; }
+
+/* Formularios */
 .form-group { margin-bottom: 1.2rem; }
-.form-group label { display: block; color: rgba(255,255,255,0.6); font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem; }
+.form-group label {
+    display: block;
+    color: var(--text2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+}
 .form-group input, .form-group textarea, .form-group select {
     width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
+    background: #2b2929;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
-    padding: 0.85rem;
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
+    padding: 0.8rem 0.85rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1rem;
     transition: border-color 0.2s;
+    color-scheme: dark;
 }
-.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--gold); }
+.form-group input:focus-visible, .form-group textarea:focus-visible, .form-group select:focus-visible {
+    border-color: var(--gold);
+    outline: 2px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 1px;
+}
 
-/* Resumen de reserva */
+/* ─── Resumen ────────────────────────────────────────────── */
 .resumen-card {
-    background: #141414;
+    background: var(--card);
     border: 1px solid var(--border-gold);
     border-radius: 12px;
-    padding: 1.8rem;
-    margin-bottom: 2rem;
+    padding: 0.5rem 1.4rem;
+    margin: 0 0 1.5rem;
 }
 .resumen-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 .resumen-row:last-child { border-bottom: none; }
-.resumen-row .label { color: rgba(255,255,255,0.6); font-size: 0.85rem; }
-.resumen-row .value { font-weight: 600; font-size: 0.95rem; }
-.resumen-total .value { color: var(--gold); font-size: 1.25rem; font-family: 'Cinzel', serif; font-weight: 700; }
+.resumen-row .label { color: var(--text2); font-size: 0.9rem; flex-shrink: 0; }
+.resumen-row .value { font-weight: 600; font-size: 0.98rem; text-align: right; margin: 0; }
+.resumen-row .value::first-letter { text-transform: uppercase; }
+.resumen-total .value {
+    color: var(--gold);
+    font-size: 1.35rem;
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+}
 
-/* Navegación entre pasos */
-.nav-btns { display: flex; justify-content: space-between; margin-top: 2rem; }
-.btn { padding: 0.85rem 2rem; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; border: none; letter-spacing: 0.5px; }
+/* ─── Navegación entre pasos ─────────────────────────────── */
+.nav-btns {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+.nav-btns .btn { min-height: 48px; }
 
-/* Mensaje de éxito de reserva */
-.success-panel { text-align: center; padding: 4rem 2rem; }
+/* ─── Éxito ──────────────────────────────────────────────── */
+.success-panel { text-align: center; padding: 3rem 0.5rem; }
 .success-icon {
     width: 70px; height: 70px; border-radius: 50%;
-    background: rgba(212,175,55,0.15); border: 2px solid var(--gold);
+    background: rgba(212, 175, 55, 0.15); border: 2px solid var(--gold);
     color: var(--gold); display: flex; align-items: center; justify-content: center;
     margin: 0 auto 1.5rem;
 }
-.success-panel h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 2rem; margin-bottom: 0.75rem; }
-.success-panel p { color: rgba(255,255,255,0.6); margin-bottom: 2rem; font-size: 0.95rem; }
+.success-panel h2 {
+    font-family: var(--font-display);
+    color: var(--text);
+    font-size: clamp(1.6rem, 4vw, 2.1rem);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    outline: none;
+}
+.success-panel p { color: var(--text2); margin-bottom: 2rem; font-size: 1rem; }
+.success-panel p::first-letter { text-transform: uppercase; }
+.success-acciones { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+/* ─── Móvil ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .page-container { padding: 2rem 1rem 7rem; }
+
+    /* Solo se nombra el paso actual; el resto queda como barra de progreso */
+    .step-label { display: none; }
+    .step.active .step-label { display: block; overflow: visible; }
+
+    /* Botones de navegación pegados abajo, al alcance del pulgar */
+    .panel.active .nav-btns {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 50;
+        margin: 0;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+        background: rgba(10, 10, 10, 0.96);
+        border-top: 1px solid var(--border-strong);
+    }
+    .nav-btns .btn { flex: 1; }
+    .nav-btns > span:empty { display: none; }
+
+    .horas-grid { grid-template-columns: repeat(4, 1fr); }
+    .resumen-row { flex-direction: column; gap: 0.2rem; }
+    .resumen-row .value { text-align: left; }
+}

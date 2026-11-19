@@ -9,15 +9,21 @@
     --border: rgba(255, 255, 255, 0.08);
     --border-gold: rgba(212, 175, 55, 0.25);
     --text: #fff;
-    --text2: rgba(255, 255, 255, 0.65);
-    --text3: rgba(255, 255, 255, 0.3);
+    /* Texto secundario: todos ≥ 4.5:1 sobre --bg y --card */
+    --text2: rgba(255, 255, 255, 0.72);
+    --text3: rgba(255, 255, 255, 0.58);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    /* Tipografía: Young Serif (títulos, tono de letrero de barrio) + Figtree (lectura) */
+    --font-display: 'Young Serif', Georgia, 'Times New Roman', serif;
+    --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --success: #2ECC71;
     --error: #E74C3C;
     /* Alias usados por los paneles (antes no estaban definidos) */
     --danger: var(--error);
-    --text-muted: rgba(255, 255, 255, 0.45);
+    --text-muted: rgba(255, 255, 255, 0.58);
     --text-secondary: var(--text2);
-    --gold-gradient: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    --gold-gradient: linear-gradient(135deg, var(--gold-light), var(--gold));
 }
 
 /* Reseteo básico de márgenes y paddings para todos los elementos */
@@ -29,18 +35,38 @@
 
 /* Configuración básica del cuerpo de la página */
 body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* === TIPOGRAFÍA GLOBAL === */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap');
+h1, h2, h3, .font-classic {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-wrap: balance;
+}
+/* Young Serif tiene un solo peso: nunca simular negrita */
+h1, h2, h3, .font-classic, .section-title, .page-title { font-synthesis: none; }
+p { text-wrap: pretty; }
+
+/* Superficies del navegador con la paleta de la marca */
+::selection { background: rgba(212, 175, 55, 0.35); color: #fff; }
+html { scrollbar-color: rgba(212, 175, 55, 0.35) var(--bg); accent-color: var(--gold); }
+a { text-underline-offset: 0.2em; }
+
+/* Foco visible para teclado en todos los controles */
+:focus-visible {
+    outline: 2px solid var(--gold-light);
+    outline-offset: 2px;
+}
 
 /* Título de sección general */
 .section-title {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-display);
     font-size: 1.6rem;
     color: var(--gold);
     margin-bottom: 1.8rem;
@@ -72,26 +98,27 @@ body {
     border: none;
     padding: 0.85rem 2rem;
     border-radius: 8px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    transition: all 0.3s ease;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    transition: background-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
+/* Fondo sólido: el texto negro mantiene ≥ 7:1 en todo el botón */
+.btn-primary, .btn-gold { background: var(--gold); }
 
 /* Efecto hover para el botón principal */
 .btn-primary:hover, .btn-gold:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+    background: var(--gold-light);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     color: #000;
 }
+.btn-primary:disabled, .btn-gold:disabled { opacity: 0.6; cursor: wait; box-shadow: none; }
 
 /* Botón fantasma (borde transparente) */
 .btn-ghost, .btn-outline {
@@ -101,10 +128,9 @@ body {
     padding: 0.75rem 1.8rem;
     border-radius: 8px;
     font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -132,6 +158,31 @@ body {
 /* Variantes de alerta */
 .alert.error { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: #E74C3C; }
 .alert.success { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.4); color: #2ECC71; }
+.alert.info { background: rgba(212,175,55,0.1); border: 1px solid var(--border-gold); color: var(--gold-light); }
+.alert.error { color: #FF7B6E; }
+
+/* Botón pequeño (ej. "Reintentar") */
+.btn-sm { padding: 0.5rem 1.1rem; font-size: 0.85rem; }
+
+/* Estados de carga, vacío y error dentro de listas y grillas */
+.estado-vacio {
+    grid-column: 1 / -1;
+    color: var(--text2);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 1.25rem 0;
+}
+.estado-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(231, 76, 60, 0.4);
+    border-radius: 10px;
+    background: rgba(231, 76, 60, 0.08);
+}
+.estado-error p { color: #FFB1A8; margin: 0; flex: 1 1 240px; }
 .alert.visible { display: block; }
 
 /* Etiquetas estilo badge */
@@ -181,6 +232,16 @@ body {
     /* Ajustes de tipografía para móviles muy pequeños */
     .section-title {
         font-size: 1.3rem;
+    }
+}
+
+/* Movimiento reducido: sin desplazamientos ni animaciones decorativas */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 

@@ -46,7 +46,13 @@ function renderizarCitas(tipo) {
         const div = document.createElement('div');
         div.className = 'cita-card';
 
-        const fechaTexto = `${cita.fecha} — ${cita.hora ? cita.hora.substring(0,5) : ''} hrs`;
+        const f = new Date(`${cita.fecha}T00:00:00`);
+        const dia = isNaN(f) ? '--' : String(f.getDate()).padStart(2, '0');
+        const mes = isNaN(f) ? '' : f.toLocaleDateString('es-CL', { month: 'short' }).replace('.', '');
+        const diaSemana = isNaN(f) ? '' : f.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric' });
+        const hora = cita.hora ? cita.hora.substring(0, 5) : '--:--';
+        const servicios = (cita.servicios || []).map(s => s.nombre).join(', ');
+        const total = Number(cita.precioTotal || 0).toLocaleString('es-CL');
 
         let barberoNombre = 'Barbero Asignado';
         let barberoId = null;
@@ -57,17 +63,26 @@ function renderizarCitas(tipo) {
 
         let accionesHtml = '';
         if (cita.estado === 'COMPLETADA') {
-            accionesHtml = `<button class="btn-calificar btn-abrir-cal" data-id="${Number(cita.id)}" data-barberia="${Number(cita.barberiaId)}" data-empleado="${Number(barberoId)}">Calificar Atención</button>`;
+            accionesHtml = `<button class="btn-accion calificar btn-abrir-cal" data-id="${Number(cita.id)}" data-barberia="${Number(cita.barberiaId)}" data-empleado="${Number(barberoId)}">★ Calificar</button>`;
         }
 
         div.innerHTML = `
-            <div class="cita-info">
-                <h3>${Utils.esc(fechaTexto)}</h3>
-                <p>Barbero: <span class="barbero">${Utils.esc(barberoNombre)}</span></p>
-                <p style="font-size:0.8rem; color:var(--text-muted);">${cita.notas ? 'Detalle: ' + Utils.esc(cita.notas) : ''}</p>
+            <div class="cita-fecha-box">
+                <span class="cita-dia">${Utils.esc(dia)}</span>
+                <span class="cita-mes">${Utils.esc(mes)}</span>
+                <span class="cita-hora">${Utils.esc(hora)}</span>
             </div>
-            <div class="cita-status">
-                <span class="badge estado-${Utils.esc(cita.estado)}">${Utils.esc(cita.estado)}</span>
+            <div class="cita-info">
+                <div class="cita-barberia">${Utils.esc(diaSemana)}</div>
+                <div class="cita-detalles">
+                    <span>✂ ${Utils.esc(barberoNombre)}</span>
+                    ${servicios ? `<span>• ${Utils.esc(servicios)}</span>` : ''}
+                    <span class="cita-total">$${Utils.esc(total)}</span>
+                </div>
+                ${cita.notas ? `<p class="cita-notas">${Utils.esc(cita.notas)}</p>` : ''}
+            </div>
+            <div class="cita-acciones">
+                <span class="estado-badge ${Utils.esc(String(cita.estado).toLowerCase())}">${Utils.esc(cita.estado)}</span>
                 ${accionesHtml}
             </div>
         `;
