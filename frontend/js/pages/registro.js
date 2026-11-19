@@ -1,4 +1,4 @@
-if (Auth.estaAutenticado()) Auth.redirigirSegunRol();
+if (Auth.estaAutenticado()) Auth.redirigirTrasLogin();
 
 // Indicador de fuerza de contraseña
 const pwdInput = document.getElementById('password');
@@ -64,14 +64,21 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
         password
     });
 
-    btn.disabled = false;
-    btn.textContent = 'CREAR MI CUENTA';
+    if (!resultado.exito) {
+        btn.disabled = false;
+        btn.textContent = 'Crear mi cuenta';
+        return mostrarError(resultado.error || 'No pudimos crear la cuenta. Revisa los datos e inténtalo de nuevo.');
+    }
 
-    if (resultado.exito) {
-        alertaX.textContent = '¡Cuenta creada! Redirigiendo al inicio de sesión...';
-        alertaX.classList.add('visible');
-        setTimeout(() => window.location.href = 'login.html', 2000);
+    // Cuenta creada: se inicia sesión de inmediato y se vuelve a la reserva pendiente (si la hay)
+    alertaX.textContent = Auth.vieneDeReserva()
+        ? '¡Cuenta creada! Volviendo a tu reserva…'
+        : '¡Cuenta creada! Entrando…';
+    alertaX.classList.add('visible');
+    const sesion = await Auth.login(email, password);
+    if (sesion.exito) {
+        Auth.redirigirTrasLogin();
     } else {
-        mostrarError(resultado.error || 'Error al crear la cuenta.');
+        window.location.href = 'login.html';
     }
 });

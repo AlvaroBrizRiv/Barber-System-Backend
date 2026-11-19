@@ -9,7 +9,7 @@
 
     <!-- Fuentes premium de Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
 
     <!--
         CSS Externos separados por responsabilidad:
@@ -23,12 +23,12 @@
     <div class="login-container">
         <div class="login-card">
             <div class="brand">
-                <div class="brand-icon">✂️</div>
-                <h1>BARBERÍA</h1>
-                <p>SYSTEM</p>
+                <div class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
+                <h1>Barber System</h1>
+                <p id="loginSub">Entra para reservar y ver tus citas</p>
             </div>
 
-            <div class="alert error" id="alertaError" role="alert"></div>
+            <div class="alert error" id="alertaError" role="alert" aria-live="polite"></div>
 
             <form id="formLogin" novalidate>
                 <div class="form-group">
@@ -48,7 +48,7 @@
                 </div>
 
                 <button type="submit" class="btn-login" id="btnLogin">
-                    INICIAR SESIÓN
+                    Entrar
                 </button>
             </form>
 

@@ -58,14 +58,14 @@ body {
     margin-bottom: 0.5rem;
 }
 .brand h1 {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-display);
     color: #D4AF37;
     font-size: 1.5rem;
     letter-spacing: 4px;
     font-weight: 400;
 }
 .brand p {
-    color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.6);
     font-size: 0.75rem;
     letter-spacing: 2px;
     margin-top: 0.25rem;
@@ -101,21 +101,21 @@ input, select {
     border-radius: 8px;
     padding: 0.85rem 1rem;
     color: #fff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.95rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     outline: none;
 }
 input:focus, select:focus {
     border-color: rgba(212,175,55,0.5);
-    box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+    box-shadow: none;
 }
-input::placeholder { color: rgba(255,255,255,0.25); }
+input::placeholder { color: rgba(255,255,255,0.6); }
 
 /* Notas y ayudas visuales */
 .hint {
-    color: rgba(255,255,255,0.3);
-    font-size: 0.7rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
     margin-top: 0.3rem;
 }
 
@@ -142,7 +142,7 @@ input::placeholder { color: rgba(255,255,255,0.25); }
     border-radius: 8px;
     padding: 1rem;
     color: #0a0a0a;
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-display);
     font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 2px;
@@ -154,7 +154,7 @@ input::placeholder { color: rgba(255,255,255,0.25); }
 }
 .btn-login:hover, .btn-registro:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(212,175,55,0.3);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.45);
 }
 .btn-login:active, .btn-registro:active { transform: translateY(0); }
 .btn-login:disabled, .btn-registro:disabled {
@@ -166,7 +166,7 @@ input::placeholder { color: rgba(255,255,255,0.25); }
 /* Divisor de opciones */
 .divider {
     text-align: center;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.6);
     font-size: 0.8rem;
     margin: 1.5rem 0;
     position: relative;
@@ -181,12 +181,12 @@ input::placeholder { color: rgba(255,255,255,0.25); }
 }
 .divider::before { left: 0; }
 .divider::after  { right: 0; }
-.divider span { color: rgba(255,255,255,0.2); font-size: 0.8rem; }
+.divider span { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
 
 /* Enlaces adicionales */
 .register-link, .login-link {
     text-align: center;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.6);
     font-size: 0.85rem;
     margin-top: 1.5rem;
 }
@@ -202,7 +202,7 @@ input::placeholder { color: rgba(255,255,255,0.25); }
     margin-top: 1.5rem;
 }
 .back-link a {
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.6);
     font-size: 0.8rem;
     text-decoration: none;
     transition: color 0.2s;
@@ -233,21 +233,21 @@ input::placeholder { color: rgba(255,255,255,0.25); }
 .pasos { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.75rem; }
 .paso {
     width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4);
+    font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
 }
 .paso.activo { border-color: #D4AF37; color: #D4AF37; background: rgba(212,175,55,0.1); }
 .paso.hecho { border-color: #D4AF37; background: #D4AF37; color: #0a0a0a; }
 .paso-linea { align-self: center; width: 28px; height: 1px; background: rgba(255,255,255,0.15); }
-.paso-titulo { font-family: 'Cinzel', serif; color: #fff; font-size: 1.1rem; text-align: center; margin-bottom: 0.5rem; }
-.paso-texto { color: rgba(255,255,255,0.55); font-size: 0.85rem; text-align: center; line-height: 1.6; margin-bottom: 1.5rem; }
+.paso-titulo { font-family: var(--font-display); color: #fff; font-size: 1.1rem; text-align: center; margin-bottom: 0.5rem; }
+.paso-texto { color: rgba(255,255,255,0.6); font-size: 0.85rem; text-align: center; line-height: 1.6; margin-bottom: 1.5rem; }
 .paso-texto strong { color: #D4AF37; font-weight: 600; word-break: break-all; }
-.input-codigo { text-align: center; font-size: 1.6rem; letter-spacing: 0.6rem; font-family: 'Montserrat', monospace; padding-left: 1.6rem; }
+.input-codigo { text-align: center; font-size: 1.6rem; letter-spacing: 0.6rem; font-family: var(--font-body); padding-left: 1.6rem; }
 .acciones-secundarias { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
 .btn-link {
     background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
     color: #D4AF37; font-size: 0.8rem;
 }
-.btn-link:disabled { color: rgba(255,255,255,0.3); cursor: not-allowed; }
+.btn-link:disabled { color: rgba(255,255,255,0.6); cursor: not-allowed; }
 .btn-link:not(:disabled):hover { text-decoration: underline; }
 
 @media (max-width: 400px) {
@@ -255,3 +255,17 @@ input::placeholder { color: rgba(255,255,255,0.25); }
     .row { grid-template-columns: 1fr; gap: 0; }
     .input-codigo { letter-spacing: 0.4rem; font-size: 1.4rem; }
 }
+
+/* ─── Tono cercano: sin mayúsculas espaciadas, botón sólido legible ─── */
+.brand h1 { letter-spacing: -0.01em; font-weight: 600; font-size: 1.7rem; color: var(--text); }
+.brand p { letter-spacing: normal; font-size: 0.92rem; color: var(--text2); }
+.brand-icon { color: var(--gold); display: flex; justify-content: center; }
+label { letter-spacing: normal; text-transform: none; font-size: 0.88rem; font-weight: 600; color: var(--text2); }
+.btn-login, .btn-registro, .btn-enviar {
+    background: var(--gold);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    letter-spacing: normal;
+    min-height: 50px;
+}
+.btn-login:hover, .btn-registro:hover, .btn-enviar:hover { background: var(--gold-light); transform: none; }

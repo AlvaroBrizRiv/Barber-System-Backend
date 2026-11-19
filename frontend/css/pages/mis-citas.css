@@ -1,16 +1,28 @@
 /* === MÓDULO: MIS CITAS === */
 
-.citas-main { max-width:900px; margin:2.5rem auto; padding:0 1.5rem 4rem; }
+.citas-main { max-width:900px; margin:0 auto; padding:3.5rem 1.5rem 5rem; }
 
-/* Cabecera principal de la página Mis Citas */
+/* Cabecera principal de la página Mis Citas (mismo formato que Reserva) */
 .citas-header {
-    display:flex; justify-content:space-between; align-items:flex-end;
-    margin-bottom:2rem; border-bottom:1px solid var(--border-gold); padding-bottom:1rem;
+    text-align:center; margin-bottom:2.5rem;
+    border-bottom:1px solid var(--border-gold); padding-bottom:1.5rem;
 }
 .citas-titulo {
-    font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); margin-bottom:0.3rem;
+    font-family: var(--font-display); font-size:2.2rem; color:#fff;
+    letter-spacing:2px; margin-bottom:0.5rem;
 }
-.citas-sub { color:var(--text2); font-size:0.9rem; }
+.citas-sub { color:rgba(255,255,255,0.6); font-size:0.95rem; }
+
+/* Pestañas Próximas / Historial */
+.tabs-container { display:flex; justify-content:center; gap:0.6rem; margin-bottom:2rem; flex-wrap:wrap; }
+.tab {
+    background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text2);
+    padding:0.65rem 1.4rem; border-radius:20px; font-family: var(--font-body);
+    font-size:0.8rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase;
+    cursor:pointer; transition:all 0.2s;
+}
+.tab:hover { background:rgba(255,255,255,0.1); color:#fff; }
+.tab.active { background:rgba(212,175,55,0.15); border-color:var(--gold); color:var(--gold); }
 
 /* Filtros de estado de citas */
 .filtros { display:flex; gap:0.5rem; margin-bottom:2rem; overflow-x:auto; padding-bottom:0.5rem; }
@@ -39,7 +51,7 @@
     border-radius:10px; min-width:85px; text-align:center; padding:0.8rem 0;
     display:flex; flex-direction:column; color:var(--gold); flex-shrink:0;
 }
-.cita-dia { font-size:1.8rem; font-weight:700; font-family:'Cinzel',serif; line-height:1; }
+.cita-dia { font-size:1.8rem; font-weight:700; font-family: var(--font-display); line-height:1; }
 .cita-mes { font-size:0.75rem; text-transform:uppercase; font-weight:600; letter-spacing:1px; margin-top:0.2rem; }
 .cita-hora { font-size:0.85rem; color:#fff; font-weight:600; margin-top:0.5rem; background:rgba(0,0,0,0.3); padding:0.2rem; border-radius:4px; }
 
@@ -48,6 +60,9 @@
 .cita-barberia { font-weight:700; font-size:1.1rem; color:#fff; margin-bottom:0.2rem; }
 .cita-detalles { color:var(--text2); font-size:0.85rem; display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:0.8rem; }
 .cita-detalles span { display:flex; align-items:center; gap:0.4rem; }
+.cita-total { color:var(--gold); font-weight:700; }
+.cita-notas { color:var(--text-muted); font-size:0.8rem; font-style:italic; }
+.cita-barberia { text-transform:capitalize; }
 
 /* Badges de estado de cita */
 .estado-badge {
@@ -56,10 +71,11 @@
 }
 .estado-badge.completada { background:rgba(46,204,113,0.1); color:var(--success); border:1px solid rgba(46,204,113,0.3); }
 .estado-badge.pendiente { background:rgba(241,196,15,0.1); color:#F1C40F; border:1px solid rgba(241,196,15,0.3); }
+.estado-badge.confirmada { background:rgba(52,152,219,0.1); color:#3498DB; border:1px solid rgba(52,152,219,0.3); }
 .estado-badge.cancelada { background:rgba(231,76,60,0.1); color:var(--error); border:1px solid rgba(231,76,60,0.3); }
 
 /* Acciones en la cita */
-.cita-acciones { display:flex; gap:0.8rem; flex-shrink:0; }
+.cita-acciones { display:flex; flex-direction:column; align-items:flex-end; gap:0.8rem; flex-shrink:0; }
 .btn-accion {
     background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff;
     padding:0.6rem; border-radius:8px; cursor:pointer; transition:all 0.2s;
@@ -74,13 +90,42 @@
 .loader, .empty-state { text-align:center; padding:4rem 1rem; color:var(--text3); }
 .empty-state i { font-size:3rem; color:rgba(212,175,55,0.3); margin-bottom:1rem; }
 .empty-state p { font-size:0.95rem; margin-bottom:1.5rem; }
+.empty-state { background:var(--card); border:1px dashed var(--border-gold); border-radius:12px; }
+
+/* Modal de calificación */
+.modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:1000; padding:1rem;
+}
+.modal-overlay.visible { display:flex; }
+.modal-box {
+    background:#141414; border:1px solid var(--border-gold); border-radius:12px;
+    padding:2rem; width:100%; max-width:460px;
+}
+.modal-box h2 { font-family: var(--font-display); color:var(--gold); font-size:1.5rem; margin-bottom:1.5rem; text-align:center; }
+.modal-btns { display:flex; justify-content:flex-end; gap:0.8rem; }
+
+/* Estrellas de calificación (orden invertido para hover acumulativo) */
+.stars { display:flex; flex-direction:row-reverse; justify-content:flex-end; gap:0.3rem; margin-bottom:1.2rem; }
+.stars input { display:none; }
+.stars label { font-size:1.8rem; color: rgba(255,255,255,0.6); cursor:pointer; transition:color 0.15s; }
+.stars label:hover, .stars label:hover ~ label,
+.stars input:checked ~ label { color:var(--gold); }
+
+/* Comentario */
+.form-control {
+    width:100%; background:#2b2929; border:1px solid var(--border); border-radius:8px;
+    padding:0.85rem; color:#fff; font-family: var(--font-body); font-size:0.9rem;
+    outline:none; resize:vertical; margin-bottom:1rem; transition:border-color 0.2s;
+}
+.form-control:focus { border-color:var(--gold); }
 
 /* Responsividad para móviles */
 @media(max-width:650px) {
-    .citas-header { flex-direction:column; align-items:center; text-align:center; gap:1rem; }
+    .citas-titulo { font-size:1.7rem; }
     .cita-card { flex-direction:column; align-items:flex-start; gap:1rem; }
     .cita-fecha-box { width:100%; flex-direction:row; justify-content:center; align-items:center; gap:1rem; padding:0.5rem; }
     .cita-dia { font-size:1.4rem; }
     .cita-mes, .cita-hora { margin:0; }
-    .cita-acciones { width:100%; justify-content:flex-end; border-top:1px solid var(--border); padding-top:1rem; }
+    .cita-acciones { width:100%; flex-direction:row; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:1rem; }
 }

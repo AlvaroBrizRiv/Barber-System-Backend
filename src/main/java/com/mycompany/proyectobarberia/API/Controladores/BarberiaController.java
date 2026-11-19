@@ -21,6 +21,9 @@ import java.util.Map;
  * PUT    /api/barberias/{id}    → Actualizar MI barbería (ADMIN_BARBERIA o SUPERADMIN).
  * DELETE /api/barberias/{id}    → Desactivar barbería (solo SUPERADMIN).
  * PATCH  /api/barberias/{id}/suscripciones → Mostrar/ocultar sección de suscripciones (ADMIN de esa barbería).
+ * GET    /api/barberias/{id}/horarios       → Horario semanal de atención (público).
+ * PUT    /api/barberias/{id}/horarios       → Cambiar el horario (ADMIN de esa barbería).
+ * GET    /api/barberias/{id}/disponibilidad → Horas libres de un barbero en una fecha (público).
  */
 public class BarberiaController {
 
@@ -33,6 +36,9 @@ public class BarberiaController {
         ApiBuilder.put("/{id}",    BarberiaController::actualizar);
         ApiBuilder.delete("/{id}", BarberiaController::desactivar);
         ApiBuilder.patch("/{id}/suscripciones", BarberiaController::configurarSuscripciones);
+        ApiBuilder.get("/{id}/horarios",        HorarioController::obtenerHorario);
+        ApiBuilder.put("/{id}/horarios",        HorarioController::guardarHorario);
+        ApiBuilder.get("/{id}/disponibilidad",  HorarioController::disponibilidad);
     }
 
     /**

@@ -1,224 +1,254 @@
 /**
- * =====================================================================
- * index.css — Estilos de la Página de Inicio (Landing Page)
- * =====================================================================
- * Este archivo contiene los estilos EXCLUSIVOS de index.html:
- *   - Fondo hero de la barbería (imagen con overlay oscuro)
- *   - Tarjetas de barberías disponibles (.barberia-card)
- *   - Tarjetas de servicios (.servicio-card)
- *   - Iconos circulares de servicios (.service-icon-box)
- *   - Sección footer
- *   - Media queries propias del index
- *
- * REQUIERE: css/global.css (para variables, botones y navbar)
- * =====================================================================
+ * index.css — Página de inicio: buscador de barberías, directorio y "cómo reservar".
+ * REQUIERE: css/global.css (variables, botones, estados).
  */
 
-/* =====================================================================
-   SECCIÓN 1: Hero / Sección Principal
-   La imagen de fondo se superpone con un overlay oscuro para
-   garantizar que el texto sea legible.
-   ===================================================================== */
-
-/* Fondo del hero con imagen de barbería + degradado oscuro */
-.bg-barber-vintage {
-    background:
-        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
-        url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1920')
-        no-repeat center center;
-    background-size: cover;
+/* ─── Portada ────────────────────────────────────────────── */
+.portada {
     position: relative;
-    min-height: 85vh;
+    padding: clamp(3rem, 8vw, 6rem) 1.25rem clamp(2.5rem, 6vw, 4rem);
+    background:
+        linear-gradient(90deg, rgba(10, 10, 10, 0.97) 0%, rgba(10, 10, 10, 0.88) 45%, rgba(10, 10, 10, 0.55) 100%),
+        url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=75&w=1600') center right / cover no-repeat;
+    border-bottom: 1px solid var(--border-gold);
 }
 
-/* Sección de barberías con fondo ligeramente más claro */
-.section-barberias {
-    background: #0f0f0f;
-    padding: 6rem 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+.portada-inner {
+    max-width: 1120px;
+    margin: 0 auto;
 }
 
-/* Sección de servicios con fondo más oscuro para contrastar */
-.section-servicios {
-    background: #080808;
-    padding: 6rem 1.5rem;
+.portada h1 {
+    font-size: clamp(2.2rem, 5.5vw, 3.9rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    max-width: 16ch;
+    margin-bottom: 1rem;
 }
 
-/* =====================================================================
-   SECCIÓN 2: Tarjetas de Barberías
-   Cada barbería disponible se muestra como una tarjeta con:
-   foto, nombre, dirección, teléfono y botón de acceso.
-   ===================================================================== */
+.portada-sub {
+    color: var(--text2);
+    font-size: clamp(1.02rem, 1.6vw, 1.2rem);
+    line-height: 1.5;
+    max-width: 46ch;
+    margin-bottom: 2rem;
+}
 
-/* Contenedor de la tarjeta de barbería */
-.barberia-card {
-    background: #181818;
-    border: 1px solid rgba(212,175,55,0.2);
+/* Buscador */
+.buscador {
+    position: relative;
+    max-width: 560px;
+}
+.buscador svg {
+    position: absolute;
+    left: 1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    pointer-events: none;
+}
+.buscador input {
+    width: 100%;
+    min-height: 58px;
+    padding: 0 1.2rem 0 3.1rem;
+    background: #1c1b1a;
+    border: 1px solid rgba(212, 175, 55, 0.45);
     border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1.08rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    transition: border-color 0.2s var(--ease-out);
+}
+.buscador input::placeholder { color: rgba(255, 255, 255, 0.55); }
+.buscador input:focus-visible {
+    border-color: var(--gold);
+    outline: 2px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 2px;
+}
+
+/* ─── Directorio ─────────────────────────────────────────── */
+.directorio {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 3.5rem;
+}
+
+.directorio-cabecera {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-bottom: 1.25rem;
+}
+.directorio-cabecera h2 {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-weight: 600;
+}
+.buscador-estado {
+    color: var(--text2);
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.barberias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+
+.barberia-card {
     display: flex;
     flex-direction: column;
-    height: 100%;
-}
-
-/* Efecto hover: eleva la tarjeta y resalta el borde dorado */
-.barberia-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--gold);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-}
-
-/* Contenedor de la imagen de la barbería */
-.barberia-img-wrap {
-    height: 200px;
-    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
     overflow: hidden;
-    background: #000;
-    position: relative;
+    transition: border-color 0.2s var(--ease-out);
 }
+.barberia-card:hover { border-color: rgba(212, 175, 55, 0.45); }
 
-/* Imagen de la barbería - cubre el espacio sin distorsión */
-.barberia-img-wrap img {
+.barberia-foto {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    background: #1b1a18;
+    overflow: hidden;
+}
+.barberia-foto img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    display: block;
+    transition: transform 0.5s var(--ease-out);
 }
-
-/* Zoom sutil en la imagen al hacer hover en la tarjeta padre */
-.barberia-card:hover .barberia-img-wrap img {
-    transform: scale(1.05);
+.barberia-card:hover .barberia-foto img { transform: scale(1.03); }
+.barberia-foto-icono {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: rgba(212, 175, 55, 0.6);
 }
+.barberia-foto.sin-foto img { display: none; }
+.barberia-foto.sin-foto .barberia-foto-icono { display: flex; }
 
-/* Cuerpo de la tarjeta: nombre, dirección y botón */
 .barberia-body {
-    padding: 1.5rem;
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 1.15rem 1.25rem 1.3rem;
+    flex: 1;
+}
+.barberia-body h3 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.15rem;
+}
+.barberia-body h3 a { color: var(--text); text-decoration: none; }
+.barberia-body h3 a:hover { color: var(--gold-light); text-decoration: underline; }
+
+.barberia-dato {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--text2);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+.barberia-dato svg { color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+.barberia-dato a { color: var(--text2); }
+.barberia-dato a:hover { color: var(--gold-light); }
+
+.barberia-desc {
+    color: var(--text2);
+    font-size: 0.92rem;
+    line-height: 1.5;
 }
 
-/* =====================================================================
-   SECCIÓN 3: Tarjetas de Servicios
-   Grid de 4 servicios que ofrece la plataforma.
-   ===================================================================== */
-
-/* Tarjeta individual de servicio */
-.servicio-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
+.barberia-acciones {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
 }
+.barberia-acciones a { flex: 1; min-height: 46px; padding: 0.6rem 1rem; }
 
-.servicio-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(212,175,55,0.4);
-    background: rgba(255,255,255,0.04);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+/* ─── Cómo reservar ──────────────────────────────────────── */
+.como {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4.5rem;
+    border-top: 1px solid var(--border);
 }
-
-/* Caja circular que contiene el ícono SVG del servicio */
-.service-icon-box {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 1.2rem;
+.como h2 {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+}
+.como-pasos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem 2.5rem;
+    counter-reset: paso;
+}
+.como-pasos li {
+    counter-increment: paso;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 0.9rem;
+    row-gap: 0.3rem;
+}
+.como-pasos li::before {
+    content: counter(paso);
+    grid-row: 1 / 3;
+    width: 2.1rem;
+    height: 2.1rem;
     border-radius: 50%;
-    background: rgba(212,175,55,0.1);
-    border: 1px solid rgba(212,175,55,0.3);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gold);
-    transition: all 0.3s ease;
 }
+.como-pasos strong { color: var(--text); font-size: 1.02rem; }
+.como-pasos span { color: var(--text2); font-size: 0.95rem; line-height: 1.5; max-width: 42ch; }
 
-/* El ícono crece al hacer hover en la tarjeta padre */
-.servicio-card:hover .service-icon-box {
-    background: rgba(212,175,55,0.2);
-    transform: scale(1.1);
-}
-
-/* =====================================================================
-   SECCIÓN 4: Footer
-   ===================================================================== */
-
-/* Pie de página con fondo muy oscuro */
-.footer-custom {
-    background: #050505;
-    color: rgba(255,255,255,0.6);
-    padding: 3rem 1.5rem;
-    border-top: 1px solid rgba(255,255,255,0.06);
+/* ─── Pie ────────────────────────────────────────────────── */
+.pie {
+    border-top: 1px solid var(--border);
+    background: #070707;
+    color: var(--text2);
     text-align: center;
+    padding: 2.5rem 1.25rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
 }
-
-.footer-brand {
-    font-family: var(--font-heading);
-    color: #fff;
-    letter-spacing: 2px;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
+.pie-marca {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: 1.15rem;
+    font-weight: 600;
 }
+.pie-legal { margin-top: 0.75rem; font-size: 0.85rem; }
 
-.footer-copy {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.3);
-    margin-top: 1rem;
-}
-
-/* =====================================================================
-   SECCIÓN 5: Responsive Design del Index
-   ===================================================================== */
-
-/* --- Tablets (menor a 1024px) --- */
-/* Buscador de barberías (mobile first) */
-.buscador-barberias {
-    display: flex; align-items: center; gap: 0.6rem;
-    width: 100%; max-width: 560px; margin: 0 auto 0.75rem;
-    background: #151515; border: 1px solid rgba(212,175,55,0.3);
-    border-radius: 999px; padding: 0.7rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.buscador-barberias:focus-within { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212,175,55,0.15); }
-.buscador-barberias input {
-    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-    color: #fff; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;
-}
-.buscador-estado { text-align: center; color: rgba(255,255,255,0.45); font-size: 0.8rem; min-height: 1.2rem; margin-bottom: 1.5rem; }
-
-@media (max-width: 1024px) {
-    .section-barberias,
-    .section-servicios {
-        padding: 4rem 1.5rem;
+/* ─── Móvil ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .portada {
+        background:
+            linear-gradient(rgba(10, 10, 10, 0.86), rgba(10, 10, 10, 0.94)),
+            url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=70&w=800') center / cover no-repeat;
     }
-}
-
-/* --- Móvil (menor a 768px) --- */
-@media (max-width: 768px) {
-    /* Hero más pequeño */
-    .bg-barber-vintage {
-        min-height: 60vh;
-    }
-
-    /* Servicios en 1 columna */
-    .servicio-card {
-        padding: 1.5rem 1rem;
-        margin-bottom: 1rem;
-    }
-}
-
-/* --- Teléfonos pequeños (menor a 480px) --- */
-@media (max-width: 480px) {
-    .section-barberias,
-    .section-servicios {
-        padding: 3rem 1rem;
-    }
-
-    .barberia-img-wrap {
-        height: 160px;
-    }
+    .portada-sub { margin-bottom: 1.5rem; }
+    .barberias-grid { grid-template-columns: 1fr; }
 }

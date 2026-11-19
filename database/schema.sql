@@ -47,6 +47,7 @@ ALTER ROLE [db_datawriter] ADD MEMBER [barberia_user];
 GO
 
 -- ─── LIMPIEZA PREVIA PARA RE-EJECUCIÓN SEGURA ───────────────────────
+DROP TABLE IF EXISTS horarios_barberia;
 DROP TABLE IF EXISTS recuperaciones_password;
 DROP TABLE IF EXISTS calificaciones;
 DROP TABLE IF EXISTS cita_servicios;
@@ -119,6 +120,23 @@ CREATE TABLE barberias (
 
 CREATE INDEX idx_barberias_activa ON barberias(activa);
 CREATE INDEX idx_barberias_pais   ON barberias(pais_codigo);
+GO
+
+-- =====================================================================
+-- TABLA: horarios_barberia
+-- Horario de atención por día (1 = lunes … 7 = domingo). Un día sin fila
+-- usa el horario por defecto de la aplicación (09:00 a 20:00).
+-- =====================================================================
+CREATE TABLE horarios_barberia (
+    barberia_id     INT         NOT NULL,
+    dia_semana      TINYINT     NOT NULL CONSTRAINT ck_horarios_dia CHECK (dia_semana BETWEEN 1 AND 7),
+    abierto         BIT         NOT NULL DEFAULT 1,
+    hora_apertura   TIME(0)     NULL,
+    hora_cierre     TIME(0)     NULL,
+    CONSTRAINT pk_horarios_barberia PRIMARY KEY (barberia_id, dia_semana),
+    CONSTRAINT fk_horarios_barberias FOREIGN KEY (barberia_id) REFERENCES barberias(id) ON DELETE CASCADE,
+    CONSTRAINT ck_horarios_rango CHECK (abierto = 0 OR (hora_apertura IS NOT NULL AND hora_cierre IS NOT NULL AND hora_apertura < hora_cierre))
+);
 GO
 
 -- =====================================================================

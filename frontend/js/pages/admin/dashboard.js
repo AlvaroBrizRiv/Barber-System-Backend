@@ -16,7 +16,7 @@ document.getElementById('fechaHoy').textContent =
     new Date().toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
 
 // ─── Navegación entre secciones ───────────────────────────────
-const secciones = ['dashboard','agenda','empleados','servicios','productos','suscripciones','calificaciones','ganancias'];
+const secciones = ['dashboard','agenda','empleados','horario','servicios','productos','suscripciones','calificaciones','ganancias'];
 
 function cambiarSeccion(seccion) {
     secciones.forEach(s => {
@@ -26,7 +26,7 @@ function cambiarSeccion(seccion) {
         el.classList.toggle('active', el.dataset.section === seccion);
     });
     document.getElementById('pageTitle').textContent = {
-        dashboard: 'Dashboard', agenda: 'Agenda del Día', empleados: 'Empleados',
+        dashboard: 'Dashboard', agenda: 'Agenda del Día', empleados: 'Empleados', horario: 'Horario',
         servicios: 'Servicios', productos: 'Productos', suscripciones: 'Suscripciones',
         calificaciones: 'Calificaciones', ganancias: 'Ganancias'
     }[seccion] || seccion;
@@ -39,6 +39,118 @@ function cambiarSeccion(seccion) {
     if (seccion === 'calificaciones') void cargarCalificaciones();
     if (seccion === 'ganancias') void iniciarGanancias();
     if (seccion === 'suscripciones') void cargarToggleSuscripciones();
+    if (seccion === 'horario') void cargarHorario();
+}
+
+// ─── Horario de atención ──────────────────────────────────────
+const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+/** Opciones de hora cada 30 minutos (00:00 … 23:30). */
+function opcionesHora(seleccionada) {
+    let html = '';
+    for (let m = 0; m < 24 * 60; m += 30) {
+        const h = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+        html += `<option value="${h}" ${h === seleccionada ? 'selected' : ''}>${h}</option>`;
+    }
+    return html;
+}
+
+async function cargarHorario() {
+    const cont = document.getElementById('horarioDias');
+    const estado = document.getElementById('horarioEstado');
+    estado.textContent = '';
+    try {
+        const { dias } = await Api.barberias.horarios(barberiaId);
+        cont.innerHTML = dias.map(d => {
+            const n = Number(d.diaSemana);
+            const ap = d.apertura ? String(d.apertura).slice(0, 5) : '09:00';
+            const ci = d.cierre ? String(d.cierre).slice(0, 5) : '20:00';
+            return `
+            <div class="horario-dia ${d.abierto ? '' : 'cerrado'}" data-dia="${n}">
+                <label class="horario-abierto">
+                    <input type="checkbox" ${d.abierto ? 'checked' : ''} aria-describedby="horarioNombre${n}">
+                    <span id="horarioNombre${n}">${DIAS_SEMANA[n - 1]}</span>
+                </label>
+                <div class="horario-rango">
+                    <label class="sr-only" for="ap${n}">Apertura del ${DIAS_SEMANA[n - 1]}</label>
+                    <select id="ap${n}" class="horario-ap" ${d.abierto ? '' : 'disabled'}>${opcionesHora(ap)}</select>
+                    <span aria-hidden="true">a</span>
+                    <label class="sr-only" for="ci${n}">Cierre del ${DIAS_SEMANA[n - 1]}</label>
+                    <select id="ci${n}" class="horario-ci" ${d.abierto ? '' : 'disabled'}>${opcionesHora(ci)}</select>
+                    <span class="horario-cerrado-txt">Cerrado</span>
+                </div>
+            </div>`;
+        }).join('');
+        cont.querySelectorAll('.horario-dia input[type="checkbox"]').forEach(chk => chk.addEventListener('change', () => {
+            const fila = chk.closest('.horario-dia');
+            fila.classList.toggle('cerrado', !chk.checked);
+            fila.querySelectorAll('select').forEach(s => { s.disabled = !chk.checked; });
+        }));
+    } catch (err) {
+        Utils.mostrarError(cont, err.message || 'No pudimos cargar el horario.', cargarHorario);
+    }
+    const form = document.getElementById('formHorario');
+    if (!form.dataset.listo) {
+        form.dataset.listo = '1';
+        form.addEventListener('submit', (e) => { e.preventDefault(); void guardarHorario(); });
+        document.getElementById('btnHorarioCopiar').addEventListener('click', copiarLunes);
+    }
+}
+
+function leerHorarioFormulario() {
+    return [...document.querySelectorAll('#horarioDias .horario-dia')].map(f => {
+        const abierto = f.querySelector('input[type="checkbox"]').checked;
+        return {
+            diaSemana: Number(f.dataset.dia),
+            abierto,
+            apertura: abierto ? f.querySelector('.horario-ap').value : null,
+            cierre: abierto ? f.querySelector('.horario-ci').value : null
+        };
+    });
+}
+
+function copiarLunes() {
+    const filas = [...document.querySelectorAll('#horarioDias .horario-dia')];
+    const lunes = filas.find(f => f.dataset.dia === '1');
+    if (!lunes) return;
+    const abierto = lunes.querySelector('input[type="checkbox"]').checked;
+    const ap = lunes.querySelector('.horario-ap').value;
+    const ci = lunes.querySelector('.horario-ci').value;
+    filas.forEach(f => {
+        if (f === lunes) return;
+        const chk = f.querySelector('input[type="checkbox"]');
+        chk.checked = abierto;
+        chk.dispatchEvent(new Event('change'));
+        f.querySelector('.horario-ap').value = ap;
+        f.querySelector('.horario-ci').value = ci;
+    });
+    document.getElementById('horarioEstado').textContent = 'Copiado. Revisa los días y guarda los cambios.';
+}
+
+async function guardarHorario() {
+    const estado = document.getElementById('horarioEstado');
+    const btn = document.getElementById('btnHorarioGuardar');
+    const dias = leerHorarioFormulario();
+    const malo = dias.find(d => d.abierto && d.apertura >= d.cierre);
+    if (malo) {
+        estado.textContent = `El ${DIAS_SEMANA[malo.diaSemana - 1].toLowerCase()} la hora de cierre debe ser posterior a la de apertura.`;
+        estado.className = 'horario-estado error';
+        document.getElementById(`ci${malo.diaSemana}`)?.focus();
+        return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+    try {
+        await Api.barberias.guardarHorarios(barberiaId, dias);
+        estado.textContent = 'Horario guardado. Las reservas nuevas ya usan este horario.';
+        estado.className = 'horario-estado ok';
+    } catch (err) {
+        estado.textContent = err.message || 'No pudimos guardar el horario.';
+        estado.className = 'horario-estado error';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar horario';
+    }
 }
 
 // ─── Dashboard ────────────────────────────────────────────────

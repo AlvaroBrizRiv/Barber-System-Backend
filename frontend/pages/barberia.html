@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CL">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' http://localhost:7070 http://127.0.0.1:7070 https:; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>Barbería — Barber System</title>
     <meta name="description" content="Perfil de barbería: agenda una cita o compra productos directamente aquí.">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/pages/barberia.css">
 </head>
@@ -28,18 +28,18 @@
     </nav>
 
     <section id="secBarberos" aria-labelledby="tituloBarberos">
-        <h2 class="section-titulo" id="tituloBarberos">Elige tu Barbero</h2>
+        <h2 class="section-titulo" id="tituloBarberos">Elige a tu barbero</h2>
         <div class="barberos-grid" id="gridBarberos"></div>
     </section>
 
     <section id="secServicios" aria-labelledby="tituloServicios">
-        <h2 class="section-titulo" id="tituloServicios">Nuestros Servicios</h2>
+        <h2 class="section-titulo" id="tituloServicios">Servicios y precios</h2>
         <div class="servicios-grid" id="gridServicios"></div>
     </section>
 
     <section id="secProductos" aria-labelledby="tituloProductos">
         <div class="section-header">
-            <h2 class="section-titulo" id="tituloProductos">Productos para el Cabello</h2>
+            <h2 class="section-titulo" id="tituloProductos">Productos</h2>
             <a class="link-ver-todo" id="linkTienda" href="#">Ver tienda completa →</a>
         </div>
         <div class="productos-grid" id="gridProductos"></div>
@@ -47,12 +47,12 @@
 
     <!-- Solo visible si la barbería habilitó las suscripciones y tiene planes activos -->
     <section id="secSuscripciones" aria-labelledby="tituloSuscripciones" hidden>
-        <h2 class="section-titulo" id="tituloSuscripciones">Planes de Suscripción</h2>
+        <h2 class="section-titulo" id="tituloSuscripciones">Planes de suscripción</h2>
         <div class="subs-grid" id="gridSuscripciones"></div>
     </section>
 
     <section id="secOpiniones" aria-labelledby="tituloOpiniones">
-        <h2 class="section-titulo" id="tituloOpiniones">Opiniones &amp; Calificaciones</h2>
+        <h2 class="section-titulo" id="tituloOpiniones">Opiniones</h2>
         <div class="calificaciones-list" id="listaCalificaciones"></div>
     </section>
 </main>

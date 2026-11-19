@@ -4,14 +4,14 @@
 
 /* Configuración General y de Tipografía */
 body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     background-color: #543232;
     overflow-x: hidden;
 }
 
 /* Títulos con estilo clásico y de caballero (Cinzel) */
 .font-classic {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-display);
     letter-spacing: 2px;
 }
 

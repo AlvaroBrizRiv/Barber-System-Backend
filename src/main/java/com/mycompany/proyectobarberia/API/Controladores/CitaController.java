@@ -179,6 +179,9 @@ public class CitaController {
         }
         List<Integer> servicioIds = idsRaw.stream().map(Number::intValue).toList();
 
+        // La hora debe estar dentro del horario de la barbería y no cruzarse con otra cita
+        HorarioController.validarReserva(barberiaId, empleadoId, fecha, hora, servicioIds);
+
         // Construir objetos mínimos para la FK (sin datos completos, solo IDs)
         Cliente cliente = new Cliente();
         cliente.setId(clienteId);

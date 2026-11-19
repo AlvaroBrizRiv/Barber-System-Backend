@@ -50,11 +50,11 @@ const Navbar = (() => {
             backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border-bottom: 1px solid rgba(212,175,55,0.2);
             position: sticky; top: 0; z-index: 1000;
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--font-body);
         }
         .nav-logo {
-            font-family: 'Cinzel', serif; font-size: 1.35rem; color: #D4AF37;
-            letter-spacing: 2.5px; font-weight: 700; text-decoration: none;
+            font-family: var(--font-display); font-size: 1.3rem; color: #D4AF37;
+            font-weight: 600; text-decoration: none; min-height: 44px;
             display: flex; align-items: center; gap: 0.6rem;
             transition: opacity 0.2s;
         }
@@ -64,8 +64,8 @@ const Navbar = (() => {
         }
         .nav-links { display: flex; gap: 1.5rem; align-items: center; }
         .nav-link {
-            color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.85rem;
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
+            color: rgba(255,255,255,0.82); text-decoration: none; font-size: 0.92rem;
+            font-weight: 600;
             transition: color 0.2s, transform 0.2s; display: flex; align-items: center; gap: 0.4rem;
         }
         .nav-link:hover, .nav-link.activo { color: #D4AF37; }
@@ -74,20 +74,21 @@ const Navbar = (() => {
 
         /* Botón Iniciar Sesión */
         .btn-nav-login {
-            background: linear-gradient(135deg, #D4AF37, #8B6914);
-            color: #000; border: none; padding: 0.55rem 1.3rem;
-            border-radius: 6px; font-family: 'Montserrat', sans-serif;
-            font-size: 0.8rem; font-weight: 700; cursor: pointer;
-            text-decoration: none; letter-spacing: 0.5px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: #D4AF37;
+            color: #000; border: none; padding: 0.55rem 1.1rem; min-height: 40px;
+            border-radius: 8px; font-family: var(--font-body);
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
             display: flex; align-items: center; gap: 0.4rem;
         }
-        .btn-nav-login:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(212,175,55,0.3); }
+        .btn-nav-login:hover { background: #F5D57A; }
 
         /* Avatar + menú desplegable */
         .nav-perfil { position: relative; }
         .nav-avatar-btn {
             display: flex; align-items: center; gap: 0.6rem; cursor: pointer;
+            font: inherit; color: inherit; min-height: 44px;
             background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,55,0.35);
             border-radius: 30px; padding: 0.35rem 0.9rem 0.35rem 0.35rem;
             transition: background 0.2s, border-color 0.2s;
@@ -104,35 +105,36 @@ const Navbar = (() => {
             font-size: 0.85rem; font-weight: 700; color: #000;
         }
         .nav-nombre { color: #fff; font-size: 0.85rem; font-weight: 600; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .nav-chevron { color: rgba(255,255,255,0.5); font-size: 0.65rem; transition: transform 0.2s; }
+        .nav-chevron { color: rgba(255,255,255,0.6); display: flex; transition: transform 0.2s; }
+        .nav-avatar-btn[aria-expanded="true"] .nav-chevron { transform: rotate(180deg); }
 
         .nav-dropdown {
             position: absolute; top: calc(100% + 0.6rem); right: 0;
             background: #121212; border: 1px solid rgba(212,175,55,0.25);
             border-radius: 12px; min-width: 220px; overflow: hidden;
             box-shadow: 0 15px 35px rgba(0,0,0,0.7);
-            opacity: 0; pointer-events: none;
-            transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s;
+            opacity: 0; pointer-events: none; visibility: hidden;
+            transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s, visibility 0s linear 0.2s;
             z-index: 1001;
         }
-        .nav-dropdown.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .nav-dropdown.visible { opacity: 1; pointer-events: auto; visibility: visible; transform: translateY(0); transition: opacity 0.2s, transform 0.2s; }
         .nav-dropdown-header {
             padding: 0.9rem 1.2rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             background: rgba(255,255,255,0.02);
         }
         .nav-dropdown-user-name { color: #fff; font-size: 0.85rem; font-weight: 600; }
-        .nav-dropdown-user-role { color: #D4AF37; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .nav-dropdown-user-role { color: #D4AF37; font-size: 0.8rem; margin-top: 2px; }
 
         .nav-dropdown-item {
             display: flex; align-items: center; gap: 0.8rem;
-            padding: 0.75rem 1.2rem; color: rgba(255,255,255,0.8);
-            text-decoration: none; font-size: 0.85rem; font-weight: 500;
+            padding: 0.8rem 1.2rem; color: rgba(255,255,255,0.85);
+            text-decoration: none; font-size: 0.92rem; font-weight: 500;
             transition: background 0.2s, color 0.2s; cursor: pointer; border: none;
             background: transparent; width: 100%; text-align: left;
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--font-body);
         }
-        .nav-dropdown-item:hover { background: rgba(212,175,55,0.1); color: #D4AF37; }
+        .nav-dropdown-item:hover, .nav-dropdown-item:focus-visible { background: rgba(212,175,55,0.1); color: #D4AF37; outline-offset: -2px; }
         .nav-dropdown-item.peligro:hover { background: rgba(231,76,60,0.12); color: #E74C3C; }
         .nav-dropdown-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 0.2rem 0; }
 
@@ -140,8 +142,9 @@ const Navbar = (() => {
         .lang-switcher { display: flex; gap: 0.3rem; align-items: center; margin-left: 0.5rem; }
         .btn-lang {
             background: transparent; border: 1px solid rgba(255,255,255,0.12);
-            color: rgba(255,255,255,0.5); padding: 0.25rem 0.5rem; border-radius: 4px;
-            font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            color: rgba(255,255,255,0.72); padding: 0.25rem 0.55rem; border-radius: 6px;
+            min-width: 40px; min-height: 36px;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: border-color 0.2s, color 0.2s, background-color 0.2s;
         }
         .btn-lang:hover, .btn-lang.activo { border-color: #D4AF37; color: #D4AF37; background: rgba(212,175,55,0.08); }
 
@@ -151,6 +154,8 @@ const Navbar = (() => {
         @media (max-width: 480px) {
             #nav-bs { padding: 0.75rem 1rem; }
             .nav-logo span:last-child, .nav-nombre, .nav-chevron, .nav-links .nav-link { display: none; }
+            .nav-logo-icon svg { width: 24px; height: 24px; }
+            .nav-logo { min-width: 44px; justify-content: center; }
             .nav-links { gap: 0.6rem; }
             .lang-switcher { margin-left: 0; }
             .lang-switcher > svg { display: none; }
@@ -174,14 +179,14 @@ const Navbar = (() => {
 
         const labels = {
             es: {
-                perfil: 'Mi Perfil',
-                citas: 'Mis Citas Agendadas',
+                perfil: 'Mi perfil',
+                citas: 'Mis citas',
                 agenda: 'Mi Agenda de Trabajo',
                 ganancias: 'Mis Ganancias',
                 stock: 'Stock de Productos',
                 panelAdmin: 'Panel de Administrador',
-                salir: 'Cerrar Sesión',
-                login: 'Iniciar Sesión',
+                salir: 'Cerrar sesión',
+                login: 'Entrar',
                 rolCliente: 'Cliente',
                 rolBarbero: 'Barbero',
                 rolAdmin: 'Administrador',
@@ -215,9 +220,9 @@ const Navbar = (() => {
         const inicial = esc((usuario.nombre || 'U')[0].toUpperCase());
         const foto = urlSegura(usuario.fotoUrl);
         const avatarHtml = foto
-            ? `<img src="${esc(foto)}" alt="perfil" class="nav-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            ? `<img src="${esc(foto)}" alt="" class="nav-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : '';
-        const inicialHtml = `<div class="nav-avatar-inicial" style="${foto ? 'display:none' : ''}">${inicial}</div>`;
+        const inicialHtml = `<span class="nav-avatar-inicial" aria-hidden="true" style="${foto ? 'display:none' : ''}">${inicial}</span>`;
 
         let rolTexto = L.rolCliente;
         if (rol === 'BARBERO') rolTexto = L.rolBarbero;
@@ -226,7 +231,8 @@ const Navbar = (() => {
 
         let extraLinks = '';
         if (rol === 'CLIENTE') {
-            extraLinks = `<a href="${base}/pages/mis-citas.html" class="nav-dropdown-item">${Icons.calendar} ${L.citas}</a>`;
+            extraLinks = `<a href="${base}/pages/mis-citas.html" class="nav-dropdown-item">${Icons.calendar} ${L.citas}</a>
+                <a href="${base}/reserva.html" class="nav-dropdown-item">${Icons.scissors} Reservar hora</a>`;
         } else if (rol === 'BARBERO') {
             extraLinks = `
                 <a href="${base}/pages/barbero/mi-agenda.html" class="nav-dropdown-item">${Icons.calendar} ${L.agenda}</a>
@@ -238,12 +244,14 @@ const Navbar = (() => {
 
         return `
             <div class="nav-perfil" id="navPerfilRoot">
-                <div class="nav-avatar-btn" onclick="Navbar.toggleDropdown()">
+                <button type="button" class="nav-avatar-btn" id="navAvatarBtn"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="navDropdown"
+                        aria-label="Menú de ${esc(usuario.nombre || 'tu cuenta')}">
                     ${avatarHtml}
                     ${inicialHtml}
                     <span class="nav-nombre">${esc(usuario.nombre || 'Usuario')}</span>
-                    <span class="nav-chevron">▼</span>
-                </div>
+                    <span class="nav-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                </button>
                 <div class="nav-dropdown" id="navDropdown">
                     <div class="nav-dropdown-header">
                         <div class="nav-dropdown-user-name">${esc(usuario.nombre)} ${esc(usuario.apellido)}</div>
@@ -276,9 +284,9 @@ const Navbar = (() => {
 
         const html = `
             <nav id="nav-bs">
-                <a href="${base}/index.html" class="nav-logo">
-                    <span class="nav-logo-icon">${Icons.scissors}</span>
-                    <span>BARBER SYSTEM</span>
+                <a href="${base}/index.html" class="nav-logo" aria-label="Barber System, ir al inicio">
+                    <span class="nav-logo-icon" aria-hidden="true">${Icons.scissors}</span>
+                    <span>Barber System</span>
                 </a>
                 <div class="nav-links">
                     <a href="${base}/index.html" class="nav-link always-show ${activoInicio}">
@@ -287,10 +295,10 @@ const Navbar = (() => {
                     <a href="${base}/index.html#barberias" class="nav-link">
                         ${Icons.store} Barberías
                     </a>
-                    <div class="lang-switcher">
-                        ${Icons.globe}
-                        <button class="btn-lang ${langEs}"   onclick="if(typeof I18n !== 'undefined') I18n.setLang('es')">ES</button>
-                        <button class="btn-lang ${langPtBR}" onclick="if(typeof I18n !== 'undefined') I18n.setLang('pt-BR')">PT</button>
+                    <div class="lang-switcher" role="group" aria-label="Idioma">
+                        <span aria-hidden="true" style="display:flex">${Icons.globe}</span>
+                        <button type="button" class="btn-lang ${langEs}" aria-pressed="${!!langEs}" aria-label="Español" onclick="if(typeof I18n !== 'undefined') I18n.setLang('es')">ES</button>
+                        <button type="button" class="btn-lang ${langPtBR}" aria-pressed="${!!langPtBR}" aria-label="Português" onclick="if(typeof I18n !== 'undefined') I18n.setLang('pt-BR')">PT</button>
                     </div>
                     ${htmlSeccionUsuario(usuario, rol)}
                 </div>
@@ -300,11 +308,32 @@ const Navbar = (() => {
         const root = document.getElementById('navbar-root');
         if (root) root.innerHTML = html;
 
+        document.getElementById('navAvatarBtn')?.addEventListener('click', () => toggleDropdown());
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#navPerfilRoot')) {
-                document.getElementById('navDropdown')?.classList.remove('visible');
-            }
+            if (!e.target.closest('#navPerfilRoot')) cerrarDropdown(false);
         });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') cerrarDropdown(true);
+        });
+    }
+
+    function toggleDropdown() {
+        const menu = document.getElementById('navDropdown');
+        const btn = document.getElementById('navAvatarBtn');
+        if (!menu || !btn) return;
+        const abrir = !menu.classList.contains('visible');
+        menu.classList.toggle('visible', abrir);
+        btn.setAttribute('aria-expanded', String(abrir));
+        if (abrir) menu.querySelector('.nav-dropdown-item')?.focus();
+    }
+
+    function cerrarDropdown(devolverFoco) {
+        const menu = document.getElementById('navDropdown');
+        const btn = document.getElementById('navAvatarBtn');
+        if (!menu?.classList.contains('visible')) return;
+        menu.classList.remove('visible');
+        btn?.setAttribute('aria-expanded', 'false');
+        if (devolverFoco) btn?.focus();
     }
 
     return {
@@ -312,9 +341,7 @@ const Navbar = (() => {
             inyectarCSS();
             render();
         },
-        toggleDropdown() {
-            document.getElementById('navDropdown')?.classList.toggle('visible');
-        },
+        toggleDropdown,
         Icons
     };
 

@@ -19,7 +19,7 @@
 -- Java se conecta con el rol "postgres" (dueño), que no está sujeto a RLS.
 -- =====================================================================
 
-DROP TABLE IF EXISTS recuperaciones_password, calificaciones, cita_servicios, citas, carritos_items,
+DROP TABLE IF EXISTS horarios_barberia, recuperaciones_password, calificaciones, cita_servicios, citas, carritos_items,
     cliente_suscripciones, suscripciones, productos, servicios, superadmins,
     empleados, clientes, barberias, personas CASCADE;
 
@@ -66,6 +66,17 @@ CREATE TABLE barberias (
 );
 CREATE INDEX idx_barberias_activa ON barberias(activa);
 CREATE INDEX idx_barberias_pais   ON barberias(pais_codigo);
+
+-- ─── horarios_barberia (1 = lunes … 7 = domingo; sin fila = 09:00 a 20:00) ───
+CREATE TABLE horarios_barberia (
+    barberia_id   INT      NOT NULL REFERENCES barberias(id) ON DELETE CASCADE,
+    dia_semana    SMALLINT NOT NULL CHECK (dia_semana BETWEEN 1 AND 7),
+    abierto       SMALLINT NOT NULL DEFAULT 1 CHECK (abierto IN (0,1)),
+    hora_apertura TIME     NULL,
+    hora_cierre   TIME     NULL,
+    PRIMARY KEY (barberia_id, dia_semana),
+    CHECK (abierto = 0 OR (hora_apertura IS NOT NULL AND hora_cierre IS NOT NULL AND hora_apertura < hora_cierre))
+);
 
 -- ─── clientes / empleados / superadmins ──────────────────────────────
 CREATE TABLE clientes (

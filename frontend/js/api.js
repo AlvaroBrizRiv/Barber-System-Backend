@@ -127,6 +127,8 @@ const Api = {
 
                 // Redirigir al login solo si no estamos ya en el login
                 if (!window.location.pathname.includes('login')) {
+                    // Recordar dónde estaba para volver ahí después de iniciar sesión
+                    if (typeof Auth !== 'undefined' && Auth.guardarDestino) Auth.guardarDestino(window.location.href);
                     window.location.href = base + '/pages/login.html';
                 }
                 throw new Error('Sesión expirada. Inicia sesión nuevamente.');
@@ -150,7 +152,9 @@ const Api = {
         } catch (err) {
             // Si es un error de red (backend apagado, sin conexión, etc.)
             if (err.name === 'TypeError') {
-                throw new Error('No se pudo conectar con el servidor. ¿Está iniciado el backend?');
+                const sinConexion = new Error('No pudimos conectarnos. Revisa tu conexión a internet e inténtalo de nuevo.');
+                sinConexion.sinConexion = true;
+                throw sinConexion;
             }
             // Re-lanzar cualquier otro error (401 manejado arriba, errores del servidor, etc.)
             throw err;
@@ -255,6 +259,11 @@ const Api = {
         // Solo ADMIN de la barbería: muestra/oculta la sección de suscripciones
         configurarSuscripciones: (id, habilitadas) => Api.patch(`/barberias/${id}/suscripciones`, { habilitadas }),
         obtener:   (id)            => Api.get(`/barberias/${id}`),        // Detalle de una barbería
+        horarios:  (id)            => Api.get(`/barberias/${id}/horarios`), // Horario semanal de atención
+        guardarHorarios: (id, dias) => Api.put(`/barberias/${id}/horarios`, { dias }), // Solo ADMIN de esa barbería
+        // Horas del día para un barbero; servicios = [ids] para calcular la duración de la cita
+        disponibilidad: (id, barberoId, fecha, servicios = []) =>
+            Api.get(`/barberias/${id}/disponibilidad?barberoId=${encodeURIComponent(barberoId)}&fecha=${encodeURIComponent(fecha)}&servicios=${servicios.map(Number).join(',')}`),
         crear:     (datos)         => Api.post('/barberias', datos),      // Solo SUPERADMIN
         actualizar: (id, datos)    => Api.put(`/barberias/${id}`, datos), // Solo ADMIN_BARBERIA o SUPERADMIN
     },

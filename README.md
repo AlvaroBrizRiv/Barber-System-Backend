@@ -36,7 +36,7 @@ Plataforma multi-barbería: cada barbería tiene su página pública con barbero
 
 1. Ejecuta `database/schema.sql` en SSMS (crea `barberia_db`, el usuario y datos de prueba).
    Si ya tenías la base creada, ejecuta en su lugar las migraciones en orden:
-   `001_suscripciones_ganancias.sql`, `002_recuperacion_password.sql` y `003_bloqueo_login.sql` (carpeta `database/migraciones/`).
+   `001_suscripciones_ganancias.sql`, `002_recuperacion_password.sql`, `003_bloqueo_login.sql` y `004_horarios_barberia.sql` (carpeta `database/migraciones/`).
 2. Copia `.env.example` a `.env` y ajusta valores (`CORS_ORIGIN` debe ser el origen exacto del frontend).
    Para enviar los códigos de recuperación configura `SMTP_*` (ver sección *Correo*).
 3. Compila y ejecuta:
@@ -61,7 +61,7 @@ Usuarios de prueba: `admin@elcaballero.cl` / `Admin123!`, `juan@elcaballero.cl` 
 
 El código Java no cambia: los DAO usan SQL estándar y el driver PostgreSQL ya está en `pom.xml`.
 
-1. En Supabase → SQL Editor, ejecuta `database/postgres/schema.sql` y luego `database/postgres/datos_prueba.sql`.
+1. En Supabase → SQL Editor, ejecuta `database/postgres/schema.sql` y luego `database/postgres/datos_prueba.sql`. Si ya tenías el esquema creado, ejecuta solo `database/postgres/004_horarios_barberia.sql`.
 2. En `.env`, reemplaza `DB_URL`, `DB_USER` y `DB_PASSWORD` por la cadena del *Session pooler* (ver `.env.example`).
 3. El esquema activa RLS sin políticas en todas las tablas: la API pública de Supabase (anon key) no expone datos y el backend se conecta como `postgres`.
 

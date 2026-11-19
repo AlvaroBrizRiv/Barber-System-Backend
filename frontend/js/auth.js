@@ -213,6 +213,52 @@ const Auth = {
      *   - BARBERO        → /pages/barbero/mi-agenda.html
      *   - CLIENTE        → /index.html (landing con sus barberías)
      */
+    // ─── SECCIÓN 7a: Volver a donde estaba el cliente ────────────────
+
+    /** Clave en sessionStorage donde se guarda la página a la que volver tras el login. */
+    CLAVE_DESTINO: 'redirectAfterLogin',
+
+    /**
+     * Recuerda una página de la app para volver a ella después de iniciar sesión
+     * (ej. la reserva a medio hacer). Solo acepta URLs del mismo origen.
+     * @param {string} url
+     */
+    guardarDestino(url) {
+        try {
+            const u = new URL(url, window.location.href);
+            if (u.origin !== window.location.origin) return;
+            if (u.pathname.includes('/pages/login') || u.pathname.includes('/pages/registro')) return;
+            sessionStorage.setItem(this.CLAVE_DESTINO, u.pathname + u.search);
+        } catch { /* URL inválida: se ignora */ }
+    },
+
+    /** Página pendiente a la que volver, o null. No la consume. */
+    destinoPendiente() {
+        try {
+            const d = sessionStorage.getItem(this.CLAVE_DESTINO);
+            return d && d.startsWith('/') && !d.startsWith('//') ? d : null;
+        } catch { return null; }
+    },
+
+    /** ¿El destino pendiente es una reserva? (para adaptar los textos del login/registro) */
+    vieneDeReserva() {
+        return (this.destinoPendiente() || '').includes('reserva.html');
+    },
+
+    /**
+     * Tras iniciar sesión: un CLIENTE vuelve a la página que dejó pendiente
+     * (ej. confirmar su cita); el resto va a su panel según el rol.
+     */
+    redirigirTrasLogin() {
+        const destino = this.destinoPendiente();
+        try { sessionStorage.removeItem(this.CLAVE_DESTINO); } catch { /* sin almacenamiento */ }
+        if (destino && this.getRol() === 'CLIENTE') {
+            window.location.href = destino;
+            return;
+        }
+        this.redirigirSegunRol();
+    },
+
     redirigirSegunRol() {
         const rol  = this.getRol();
         const base = this.getBasePath();
